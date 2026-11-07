@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/*
+ * THE MARKETING SITE'S OWN SKIN — same discipline as the studio (paper ground,
+ * ink type, one accent), different voice: bigger display type, generous air,
+ * one accent colour that the reader configures. The palette values themselves
+ * come from `site.config.ts` and are injected as CSS variables on <body> by
+ * main.tsx, so recolouring the site is a config edit, not a CSS edit.
+ */
+
+:root {
+  color-scheme: light;
+  /* Defaults; overridden inline from site.config.ts at boot. */
+  --accent: #1d4ed8;
+  --accent-ink: #ffffff;
+  --ground: #fbfaf8;
+  --ink: #111114;
+  --muted: #63605a;
+  --line: rgba(0, 0, 0, 0.1);
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-ground: var(--ground);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* The section label: small caps in the accent, the one recurring flourish. */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.display {
+  font-size: clamp(2.25rem, 5.5vw, 3.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 650;
+}
+
+.h2 {
+  font-size: clamp(1.625rem, 3vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.375rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+.btn:hover {
+  opacity: 0.88;
+}
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-ghost {
+  border-color: var(--line);
+  color: var(--ink);
+  background: transparent;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.625rem 0.875rem;
+  font: inherit;
+  color: var(--ink);
+}
+.field::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
