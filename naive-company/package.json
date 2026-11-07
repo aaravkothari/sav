@@ -1,0 +1,47 @@
+{
+  "name": "autoshop-receptionist",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "AI receptionist company for independent auto repair shops, on the Na\u00efve agency blueprint (blank template). Public site at /, operator dashboard under /app, a placeholder crew coordinated by the CEO.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && pnpm api:build",
+    "naive:build": "pnpm build",
+    "serve": "node --env-file-if-exists=.env --experimental-strip-types server/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "api:build": "node build-api.mjs",
+    "demo": "node sim/demo.ts",
+    "naive:plan": "node --env-file-if-exists=.env node_modules/@usenaive-sdk/cli/dist/index.js up --dry-run",
+    "naive:up": "node --env-file-if-exists=.env node_modules/@usenaive-sdk/cli/dist/index.js up",
+    "live:run": "node --env-file-if-exists=.env scripts/live-run.ts",
+    "naive": "node --env-file-if-exists=.env node_modules/@usenaive-sdk/cli/dist/index.js"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.10",
+    "@google/model-viewer": "4.4.0",
+    "lucide-react": "^0.548.0",
+    "pg": "^8.16.3",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-router": "8.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.20.1",
+    "@types/pg": "^8.15.6",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@usenaive-sdk/blueprints": "^0.18.0",
+    "@usenaive-sdk/cli": "^1.0.0",
+    "@usenaive-sdk/managed-agents": "0.12.3",
+    "@vitejs/plugin-react": "^5.1.0",
+    "esbuild": "0.28.2",
+    "jsdom": "^30.0.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.1.5",
+    "vitest": "^3.2.7"
+  }
+}

@@ -1,0 +1,32 @@
+# Env & secrets — never commit. Listed first and deliberately broad, because this
+# repository is published on its own: the monorepo's ignore rules do not travel
+# with a split, and a tree copied into a repo whose rules did not travel is how a
+# live provider key gets one commit away from being public. `naive up` reads your
+# keys from the shell (`{ from_env }` in naive.config.ts), so nothing here should
+# ever hold one — these rules are what make "should" into "did not".
+.env
+.env.*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+*.pem
+*.key
+
+# deps
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+.vercel/
+.wrangler/
+*.tsbuildinfo
+
+# Runtime state of the local JSON store (server/store.ts) — never committed.
+data/
+
+# misc
+.DS_Store
+*.log
+coverage/
