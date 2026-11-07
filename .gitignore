@@ -1,0 +1,19 @@
+# Secrets: never commit. Each package keeps its own .env (see its .env.example).
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and build output
+node_modules/
+dist/
+.pnpm-store/
+
+# Local runtime state
+data/
+.DS_Store
+*.log
+
+# Personal Claude Code settings (shared skills under .claude/skills are committed)
+.claude/settings.local.json
