@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, siteLeadMessage, siteLeadsToResearch, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, siteLeadMessage, siteLeadsToResearch, siteLeadsToWelcome, siteWelcomeMessage, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -62,6 +62,14 @@ describe("site-form leads", () => {
     expect(siteLeadsToResearch([site, done, outreach], new Set()).map((c) => c.id)).toEqual(["w1"]);
     expect(siteLeadsToResearch([site], new Set(["w1"]))).toHaveLength(0);
     expect(siteLeadMessage(site).split("\n")[0]).toBe("SITE LEAD: Shop w1");
+  });
+
+  it("never cold-emails a site signup; sales welcomes it once it is researched", () => {
+    const researched = client("w4", { source: "site" });
+    expect(selectCandidates([researched], new Set()).candidates).toHaveLength(0);
+    expect(siteLeadsToWelcome([researched], new Set()).map((c) => c.id)).toEqual(["w4"]);
+    expect(siteLeadsToWelcome([researched], new Set(["w4"]))).toHaveLength(0);
+    expect(siteWelcomeMessage(researched).split("\n")[0]).toBe("SHOP REPLIED: Shop w4");
   });
 });
 

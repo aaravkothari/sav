@@ -80,6 +80,8 @@ export interface EngineState {
   last_inbox_check: string | null;
   /** Site-form leads research was already woken for. */
   site_woken?: string[];
+  /** Site-form leads sales was already woken to welcome. */
+  site_welcomed?: string[];
 }
 
 export interface LedgerRow {
@@ -210,7 +212,28 @@ export function siteLeadMessage(c: CrmClient): string {
     "1. Look the business up (its website, then a Google Maps search with Monid) and confirm it is a real, independent business that takes phone calls.",
     "2. dashboard.add_client_note on this client_id, starting \"RESEARCH:\": rating and review count, phone, address, hours, sector, one line on why it fits, and a line \"Opener detail: <one true, specific thing about it, second person, no trailing period>\".",
     "3. If it is an auto repair shop, build its free preview with autoops.provision_demo (demo true, phone, address, website, hours), then add a \"RECEPTIONIST:\" note with the shop_id and demo_url exactly as returned.",
+    "Do not email them: once your RESEARCH note is filed, the sales seat welcomes them.",
     "Never invent a fact. If it is not a real business, note \"RESEARCH: could not verify\" and stop.",
+  ].join("\n");
+}
+
+/** Researched site signups that sales has not welcomed yet. */
+export function siteLeadsToWelcome(clients: readonly CrmClient[], welcomed: ReadonlySet<string>): CrmClient[] {
+  return clients.filter((c) => c.source === "site" && c.stage === "lead" && !welcomed.has(c.id) && normEmail(c.contact?.email) !== "" &&
+    c.notes.some((n) => n.trimStart().startsWith("RESEARCH:") && !/could not verify/i.test(n)) &&
+    !c.notes.some((n) => /^(REPLY SENT|OUTREACH SENT|UNSUBSCRIBED:)/.test(n.trimStart())));
+}
+
+/** Wakes sales the way a reply does: the form submission is the shop asking for a demo. */
+export function siteWelcomeMessage(c: CrmClient): string {
+  return [
+    `SHOP REPLIED: ${c.name}`,
+    `client_id: ${c.id}`,
+    "thread_id: (none: they used the form on our site, so there is no email thread yet)",
+    `shop email: ${normEmail(c.contact?.email)}`,
+    "reply: Asked for a free demo receptionist through the form on our website.",
+    "",
+    "Treat this as interested. There is no thread to reply on: write ONE new email with agentmail.send_message to the shop email above, thanking them for signing up, with the demo link from the RECEPTIONIST: note if there is one (build it with autoops.provision_demo first if there is none and it is an auto repair shop), and offer a 15-minute onboarding call. Then note REPLY SENT: with the email in full.",
   ].join("\n");
 }
 
@@ -226,6 +249,7 @@ export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: R
     if (!isEmail(email)) { skipped.push({ client, reason: "contact email is not an address" }); continue; }
     if (client.stage !== "lead") { skipped.push({ client, reason: `stage is ${client.stage}, not lead` }); continue; }
     if (!research) { skipped.push({ client, reason: "no RESEARCH note" }); continue; }
+    if (client.source === "site") { skipped.push({ client, reason: "signed up on the site: sales welcomes it, no cold email" }); continue; }
     if (noteStarts(client, ...DONE_PREFIXES)) { skipped.push({ client, reason: "already contacted (CRM note)" }); continue; }
     if (taken.has(email)) { skipped.push({ client, reason: "address already emailed" }); continue; }
     const detail = personalizedDetail(research);
@@ -562,6 +586,20 @@ class Engine {
           await log(`wake    research for site lead ${c.id} "${c.name}"`);
         } catch (e) {
           await log(`error   waking research for ${c.id}: ${(e as Error).message}`);
+        }
+      }
+
+      // A researched site signup gets a welcome from sales, once.
+      const welcomed = new Set(this.state.site_welcomed ?? []);
+      for (const c of siteLeadsToWelcome(clients, welcomed)) {
+        if (this.dry) { await log(`would wake sales to welcome site lead ${c.id} "${c.name}"`); continue; }
+        try {
+          await this.wake(siteWelcomeMessage(c));
+          this.state.site_welcomed = [...welcomed.add(c.id)];
+          await this.save();
+          await log(`wake    sales to welcome site lead ${c.id} "${c.name}"`);
+        } catch (e) {
+          await log(`error   waking sales for ${c.id}: ${(e as Error).message}`);
         }
       }
 
