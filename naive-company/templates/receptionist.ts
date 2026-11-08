@@ -154,6 +154,8 @@ export const NOTES = {
   callRequested: "CALL REQUESTED:",
   callBooked: "CALL BOOKED:",
   meetingScript: "MEETING SCRIPT:",
+  /** Filed by the dashboard's Bookings page after an onboarding call: what Aarav learned, one field per line. */
+  meetingFeedback: "MEETING FEEDBACK:",
   onboardingSent: "ONBOARDING SENT:",
   checkoutSent: "CHECKOUT SENT:",
   paid: "PAID:",
@@ -178,6 +180,10 @@ export const EVENTS = {
   bookCall: "BOOK CALL:",
   /** client-manager, when a shop has said yes -> payments. */
   checkoutNeeded: "CHECKOUT NEEDED:",
+  /** The dashboard's Bookings page, when Aarav asks for a fuller meeting script -> client-manager. */
+  writeScript: "WRITE MEETING SCRIPT:",
+  /** The dashboard's Bookings page, after an onboarding call -> client-manager, to turn into a config. */
+  meetingFeedback: "MEETING FEEDBACK:",
   /** autoops-voice, when a call ends -> monitoring. */
   callEnded: "A receptionist call just ended",
 } as const;
@@ -362,7 +368,7 @@ const clientManager = seat({
     "You are the onboarding agent for SAV.",
     INBOX_RULE,
     `If this session starts with "${EVENTS.freeWeek}", there is no card: an owner started a free week from their demo page, and the message gives shop_id, website, owner name, phone, email and the time. (a) Find the shop with dashboard.list_clients by domain or name; if it is missing, file it with dashboard.create_lead using only what the message gives. (b) Note "${NOTES.saidYes} started a free week from the demo page" with the owner's details verbatim. (c) If the shop is at stage lead, dashboard.advance_pipeline it once, to proposal. (d) Send the onboarding questions (step 1). (e) Hand off to payments (step 4).`,
-    `If it starts with "${EVENTS.bookCall}", book the call (step 2) and write the script (step 3). Otherwise, on a card or a scheduled pass, do steps 1 to 4 for every shop at stage proposal.`,
+    `If it starts with "${EVENTS.bookCall}", book the call (step 2) and write the script (step 3). If it starts with "${EVENTS.writeScript}", the next line gives client_id: do step 3 for that shop only, filing exactly one "${NOTES.meetingScript}" note. If it starts with "${EVENTS.meetingFeedback}", the next lines give client_id and what Aarav learned on the onboarding call: file one "${NOTES.config}" note for that shop only (step 1's format, taken only from that feedback and the shop's earlier answers; leave a key out rather than guess) and send no email. Otherwise, on a card or a scheduled pass, do steps 1 to 4 for every shop at stage proposal.`,
     `1. A shop with no "${NOTES.onboardingSent}" note: send (agentmail.reply_to_message on its thread, else agentmail.send_message to its contact_email) a short email from Aarav that thanks them and asks five things: hours for each day; the services they offer; how the phone should be answered (the greeting); booking rules (how far ahead, how many cars a day, what needs a call-back); and who gets urgent hand-offs, by phone or email. Offer the 15-minute call too. ${BOOKING_RULE} Note "${NOTES.onboardingSent} <message id>". When their answers arrive, file one note "${NOTES.config}" followed by JSON with keys hours, services, greeting, booking_rules, handoff, taken only from what they wrote; leave a key out rather than guess. Set next_action "Move to active to create its receptionist".`,
     `2. Booking the call: if googlecalendar tools are offered, use googlecalendar.get_current_date_time, check the requested time with googlecalendar.find_free_slots, and googlecalendar.create_event for 15 minutes in ${AGENCY_TIMEZONE}, titled "SAV onboarding: <shop name>", the owner as attendee, the shop's phone and demo link in the description. If it is taken, offer the two nearest free slots instead. Without calendar tools, take the time they gave and ask_operator once: "Put <time> with <shop> on your calendar". Confirm by reply in one line, then note "${NOTES.callBooked} <time, zone> <event id or no calendar>". A booking confirmation email in the inbox counts as booked too.`,
     `3. For every booked call, note "${NOTES.meetingScript}" for Aarav: who the owner is and their role; what they said, quoted; likely pain points from the research note and their replies; demo status (the "${NOTES.receptionist}" note, whether they called it); the questions to ask (hours, services, booking rules, hand-off, greeting, how calls are forwarded); and the close: start the free week, then $49.99 a month, the checkout link payments sends.`,

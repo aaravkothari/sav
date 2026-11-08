@@ -43,6 +43,10 @@ export type EventKind =
   | "config"
   | "live"
   | "call"
+  | "call_requested"
+  | "call_booked"
+  | "meeting_script"
+  | "meeting_feedback"
   | "operator_called"
   | "paid"
   | "skipped"
@@ -79,6 +83,11 @@ const PREFIXES: { kind: EventKind; re: RegExp }[] = [
   { kind: "onboarding", re: /^ONBOARDING SENT\b:?/i },
   { kind: "blocked", re: /^ONBOARDING BLOCKED\b:?/i },
   { kind: "operator_called", re: /^OPERATOR CALLED\b:?/i },
+  // Before `CALL:`, the monitor's call log: these are onboarding calls with SAV (`src/bookings.ts`).
+  { kind: "call_requested", re: /^CALL REQUESTED\b:?/i },
+  { kind: "call_booked", re: /^CALL BOOKED\b:?/i },
+  { kind: "meeting_script", re: /^MEETING SCRIPT\b:?/i },
+  { kind: "meeting_feedback", re: /^MEETING FEEDBACK\b:?/i },
   { kind: "call", re: /^CALL\b:?/i },
   { kind: "paid", re: /^PAID\b:?/i },
 ];
@@ -140,6 +149,10 @@ function titleFor(kind: EventKind, c: Client, rest: string): string {
     case "config": return "Receptionist set up from the owner's answers";
     case "live": return "Receptionist is live";
     case "call": return "A call came in";
+    case "call_requested": return "Asked for an onboarding call";
+    case "call_booked": return "Onboarding call booked";
+    case "meeting_script": return "Meeting script ready";
+    case "meeting_feedback": return "Notes from the onboarding call";
     case "operator_called": return "You called the shop";
     case "paid": return "Became a paying customer";
     case "note": return "Note";
@@ -379,7 +392,7 @@ const phoneOf = (c: Client): string | null =>
   /(?:Phone|phone \(public\)):?\s*(\+?1?[\s-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/.exec(c.notes.join("\n"))?.[1] ?? null;
 
 const ratingOf = (c: Client): string | null => {
-  const m = /(\d(?:\.\d)?)\s*(?:★|stars?)?\s*(?:\/|on|from)\s*([\d,]+)\s*(?:Google\s*)?reviews/i.exec(c.notes.join("\n"));
+  const m = /(\d(?:\.\d)?)\s*(?:★|stars?)?\s*(?:\/|on|from|with|across)\s*([\d,]+)\s*(?:Google\s*)?reviews/i.exec(c.notes.join("\n"));
   return m ? `${m[1]} from ${m[2]} reviews` : null;
 };
 
