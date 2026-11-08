@@ -148,6 +148,7 @@ export async function startRun(
       `New run ${run}. Goal: ${goal}`,
       `Read your board with board_read and assign each unassigned card whose title ends in (${run}) to its owner with board_write (op assign), and do nothing else:`,
       "Every other card on the board is closed. Do not reopen, reassign or comment on any card that is not in this run.",
+      "Do not read the CRM, mail, contacts or any client record, and do not comment on the cards: research checks for duplicates itself. Reading people's data would make every call your crew makes wait for the operator.",
       ...PIPELINE.map((step) => `- "${step.title} (${run})" → ${step.owner}`),
       'The "test-call" card belongs to the shop\'s own receptionist (booking--<shop-slug>). If no such agent exists yet, leave that card unassigned and say so.',
       "Then report which cards you assigned. You will be told as each card is done or blocked.",
