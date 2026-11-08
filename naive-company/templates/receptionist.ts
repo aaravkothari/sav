@@ -214,8 +214,11 @@ const INFRA_RULE =
   `If your work needs a tool, an endpoint or data that nothing you hold provides, do not work around it: file one note on the agency's own record (get its id with dashboard.create_lead passing only name "SAV"; a name alone always returns the agency's own record) starting "${NOTES.infra}" with what you needed, why, and what you did instead. The coding liaison collects these.`;
 
 /** A seat that is built for real: the shared preamble and gate, its role, and how it closes its card. */
+/** Seats burned their task budget browsing the tool catalogue (the first test reply, Nov 8): they already hold every tool they need. */
+export const NO_TOOL_SEARCH = "Every tool you need is already in your tool list under its full name (dashboard.get_client, agentmail.reply_to_message, autoops.get_receptionist and so on): call it directly. Never call vetta.tools_search or browse the tool catalogue, and read a thread or a client record once, not again.";
+
 const real = (role: string, mail = false) =>
-  `${PREAMBLE} ${gate} ${mail ? `${mailbox} ` : ""}${role} ${INFRA_RULE} When your card's work is done, close it with board_write: status done and a note that lists what you filed, by cli_ id. If you cannot finish, set it blocked with a comment that says exactly what is missing. A scheduled run or an event message has no card: do the work and stop.`;
+  `${PREAMBLE} ${gate} ${NO_TOOL_SEARCH} ${mail ? `${mailbox} ` : ""}${role} ${INFRA_RULE} When your card's work is done, close it with board_write: status done and a note that lists what you filed, by cli_ id. If you cannot finish, set it blocked with a comment that says exactly what is missing. A scheduled run or an event message has no card: do the work and stop.`;
 
 /** The company's one AgentMail inbox: every mail seat finds it by this display name. */
 export const INBOX_NAME = "Aarav from SAV";

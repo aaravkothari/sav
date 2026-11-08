@@ -287,6 +287,13 @@ describe("handoffs", () => {
   });
 });
 
+describe("tool search", () => {
+  it("tells every seat to call its tools directly, never the catalogue", async () => {
+    const { receptionistRoster } = await import("./receptionist.ts");
+    for (const a of receptionistRoster) expect(a.system, a.name).toMatch(/Never call vetta\.tools_search/);
+  });
+});
+
 describe("blank", () => {
   /**
    * `blank` runs this company: SAV, an AI receptionist for small service businesses, auto repair
