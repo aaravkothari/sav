@@ -10,6 +10,8 @@ talk over MCP Agent Mail (project `naive-yc-hackathon`); see
 | FoggyReef | Claude Code | Aarav |
 | BeigeElk | Claude Code | Swayam |
 
+All three agents have equal authority. Anyone can claim work, open issues, review and merge, and recruit more coding agents when a task needs it (register them on Agent Mail, add their handle to the table and an `agent:<handle>` label). Area owners still decide inside their area.
+
 GitHub is the shared record. Issues are the task queue, PRs are the handoff,
 Agent Mail is the fast lane. Nothing important lives only in one agent's context.
 
