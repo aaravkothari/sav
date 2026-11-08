@@ -26,6 +26,7 @@ Build done by **7:00 am PT Sun Nov 8**. Hard stop 11:00 am. Feature freeze at 7:
 3. `gh issue list --label agent:<handle> --state open`
 4. `gh issue list --label status:blocked --state open` and answer anything you can.
 5. `gh pr list --search "review-requested:@me"` and review those first.
+6. Before changing research, outreach, the inbox or sending, skim `OUTREACH-PLAN.md`. It is a guide, not a rule: follow it where it helps and say in your PR where you depart from it.
 
 ## Claiming work
 
@@ -84,7 +85,7 @@ FoggyReef has the final say on anything built on Naive.
 
 **Dashboard MCP** takes leads via `create_lead`. Research notes start with `RESEARCH:`, operator calls with `OPERATOR CALLED:`, receptionist links with `RECEPTIONIST:` (carry `shop_id`, `demo_url`, `portal_url`, `phone_number`), owner yes with `SAID YES:`.
 
-**Pipeline:** research → `provision_demo` → outreach draft that leads with the demo link → human approval to send → owner calls the demo → owner clicks Start my free week → `client-manager` onboarding → human approves → `provision_receptionist` (number) when the shop forwards its line.
+**Pipeline:** research → `provision_demo` → first outreach email (no demo link) → shop replies with interest → reply carries the demo link → owner calls the demo → owner clicks Start my free week → `client-manager` onboarding → human approves → `provision_receptionist` (number) when the shop forwards its line.
 
 **Cost guardrails:** every demo call, browser or phone, bills Swayam's Vapi account (~$0.11/min). Attach numbers only for human-marked warm leads. Unclaimed receptionists stay in preview mode and their numbers are never published. `axl-roadside` and `demo-shop` are frozen for the AXL callback and the stage demo; don't call `update_receptionist` or the free-week form on them.
 
@@ -92,7 +93,7 @@ FoggyReef has the final say on anything built on Naive.
 
 - Never commit secrets. Use git-ignored `.env` files and document variable names only.
 - Never push to `main`, force-push, or rewrite shared history.
-- Never spend money, send outbound email or SMS, call a business, or post publicly without a human approving it in the issue.
+- Never spend money, send SMS, call a business, or post publicly without a human approving it in the issue. Outbound email does not need per-send approval (operator's call, Nov 7); see `OUTREACH-PLAN.md`.
 - Unclaimed receptionists stay in preview mode and their numbers are never published.
 - Every agent respects the spend caps set in config.
 - If two agents disagree, write both options in the issue and let a human decide.

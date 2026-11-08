@@ -77,12 +77,10 @@ const PROTECTED_RULE = `Never call update_receptionist or provision_receptionist
 export const RECEPTIONIST_NOTE = "RECEPTIONIST:";
 
 /**
- * How outreach email reads. Personal, one-to-one, in the founder's voice. `EMAIL_FOOTER` is the
- * opt-out line and postal address US law (CAN-SPAM) requires on commercial email: until it is set,
- * outreach only drafts, and the operator adds it before approving any send.
+ * How outreach email reads. Personal, one-to-one, in the founder's voice, signed and nothing
+ * after the signature: no footer (the operator's call, Nov 7).
  */
 export const EMAIL_SIGNATURE = "Best,\nAarav\nSAV";
-export const EMAIL_FOOTER = "";
 
 /** The operator's own templates, verbatim. `{{…}}` is filled from the shop's CRM record and research note. */
 export const OUTREACH_TEMPLATES = {
@@ -161,10 +159,9 @@ export const receptionistRoster: AgentDecl[] = [
       `Template "called": ${JSON.stringify(OUTREACH_TEMPLATES.called)}`,
       `Template "partner": ${JSON.stringify(OUTREACH_TEMPLATES.partner)}`,
       "Fill {{first_name}} from the contact name (use \"there\" when none is known), {{shop_name}} from the client name, and {{specific_detail_about_shop}} only from the detail in the research note. The subject is short and plain, like a person would write: e.g. \"Missed calls at <shop name>\".",
-      `When the shop's notes hold a "${RECEPTIONIST_NOTE}" note, add one sentence before the sign-off: "I set up a free demo receptionist for {{shop_name}} so you can hear it for yourself: <demo_url>", with the demo_url copied exactly from that note. Never put a preview phone number in an email.`,
-      EMAIL_FOOTER ? `End every email with this footer, verbatim: ${JSON.stringify(EMAIL_FOOTER)}` : "There is no footer yet: the operator adds the opt-out line and postal address before sending.",
+      "The first email never carries a demo link: every demo call bills the voice account, so the demo is only for warm leads. Never put a preview phone number in an email. Nothing goes after the signature.",
       "3. Create one agentmail.create_draft per shop, to its contact_email. Then dashboard.add_client_note on that shop: \"OUTREACH DRAFTED: <draft id> to <email>\" followed by the email in full, with next_action \"Review and send the opener\".",
-      "4. Replies: read the inbox (agentmail.list_threads, agentmail.get_thread). File each reply verbatim as a note on its shop. When a shop says yes, add a note \"SAID YES:\" with what they said and set next_action \"Move to proposal to start onboarding\".",
+      "4. Replies: read the inbox (agentmail.list_threads, agentmail.get_thread). File each reply verbatim as a note on its shop. When a shop says yes, add a note \"SAID YES:\" with what they said and set next_action \"Move to proposal to start onboarding\". Draft a reply only to a shop that wrote back. When the reply shows interest (yes, a question, asks to try it) and the shop's notes hold a \"" + RECEPTIONIST_NOTE + "\" note, the reply draft may add one sentence: \"I set up a free demo receptionist for <shop name> so you can hear it for yourself: <demo_url>\", with the demo_url copied exactly from that note.",
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
