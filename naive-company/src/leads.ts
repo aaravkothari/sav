@@ -155,7 +155,7 @@ function bodyFor(kind: EventKind, rest: string): string {
   let text = rest;
   if (kind === "emailed" || kind === "drafted" || kind === "reply_sent") {
     const [first, ...others] = text.split("\n");
-    if (others.length > 0 && /^[\w-]*\s*(to\s+\S+@\S+)?\s*$/i.test(scrub(first ?? ""))) text = others.join("\n");
+    if (others.length > 0 && /^[\w-]*\s*(to\s+\S+@\S+)?(\s+from\s+\S+@\S+)?\s*$/i.test(scrub(first ?? ""))) text = others.join("\n");
   }
   return scrub(text);
 }

@@ -13,8 +13,12 @@
  *    100; one level lower when bounces plus failed sends in the last tick exceed 3%; capped at 50 tonight (MAX_LEVEL). At most
  *    2,500 a Pacific day. Never the same address twice: a local ledger (`data/engine-sent.jsonl`),
  *    the inbox's own sent mail, and the CRM note all count, and each send carries an idempotency key.
- *    After each send: note `OUTREACH SENT: <message id> to <email>` plus the full email.
- * 2. Inbox watcher, every 2 min. New inbound mail is matched to the CRM by sender email, then
+ *    After each send: note `OUTREACH SENT: <message id> to <email> from <inbox>` plus the full email.
+ *    Senders: one AgentMail organization per key (AGENTMAIL_API_KEY, AGENTMAIL_API_KEY2, …), each
+ *    sending from its inbox named "Aarav from SAV" (an org's only inbox is renamed to that). When a
+ *    sender hits its limit (HTTP 429), the same lead goes to the next sender; all at their limit
+ *    holds the rest of the batch until the next tick.
+ * 2. Inbox watcher, every 2 min, over every sender's inbox. New inbound mail is matched to the CRM by sender email, then
  *    domain, filed verbatim (`REPLY RECEIVED: <thread id>`), and wakes `sales` once per
  *    message (`SHOP REPLIED: …`). Bounces (`BOUNCED:`) and auto-replies (`AUTO-REPLY:`) are noted
  *    and wake nobody; bounces feed the ramp.
@@ -25,7 +29,7 @@
  * State: `data/engine-state.json` (start time, message ids handled, last tick) and the ledger, both
  * git-ignored. A dry run writes neither. One line per action to stdout and `data/engine.log`.
  *
- * Env: AGENTMAIL_API_KEY, NAIVE_API_KEY (waking sales), DASHBOARD_URL, DASHBOARD_TOKEN
+ * Env: AGENTMAIL_API_KEY (and AGENTMAIL_API_KEY2, AGENTMAIL_API_KEY3, … for more senders), NAIVE_API_KEY (waking sales), DASHBOARD_URL, DASHBOARD_TOKEN
  * (operator bearer; also used for `/mcp` unless DASHBOARD_MCP_TOKEN is set), optional
  * DASHBOARD_MCP_URL (default `$DASHBOARD_URL/mcp`), NAIVE_API_URL (default https://api.vetta.sh).
  */
@@ -92,6 +96,8 @@ export interface LedgerRow {
   at: string;
   /** False until the CRM note is filed; the next tick retries it. */
   noted: boolean;
+  /** The inbox address that sent it (rows from before multi-sender have none: the first sender's). */
+  inbox?: string;
 }
 
 /** The hour and the calendar day of `now` in Pacific time. */
@@ -281,9 +287,126 @@ export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: R
   return { candidates, skipped };
 }
 
-/** The CRM note filed after a send: the header line, then the full email. */
-export function sentNote(messageId: string, email: string, subject: string, text: string): string {
-  return `OUTREACH SENT: ${messageId} to ${email}\n\nSubject: ${subject}\n\n${text}`;
+/**
+ * The CRM note filed after a send: the header line `OUTREACH SENT: <message id> to <email> from <inbox>`,
+ * then the full email. `from` is left off only when the sending inbox is unknown (a retried note
+ * for a ledger row written before multi-sender).
+ */
+export function sentNote(messageId: string, email: string, subject: string, text: string, from?: string | null): string {
+  return `OUTREACH SENT: ${messageId} to ${email}${from ? ` from ${from}` : ""}\n\nSubject: ${subject}\n\n${text}`;
+}
+
+/** The header of an `OUTREACH SENT` note: message id, recipient, and (newer notes) the sending inbox. */
+export function parseSentNote(note: string): { message_id: string; email: string; from: string | null } | null {
+  const m = /^OUTREACH SENT:\s*(\S+)\s+to\s+(\S+@\S+?)(?:\s+from\s+(\S+@\S+?))?\s*(?:\n|$)/.exec(note.trimStart());
+  return m ? { message_id: m[1]!, email: normEmail(m[2]), from: m[3] ? normEmail(m[3]) : null } : null;
+}
+
+/**
+ * Every address any of our senders already mailed: the ledger, each sender's inbox's sent mail,
+ * and the recipients of `OUTREACH SENT` notes in the CRM.
+ */
+export function alreadyMailed(
+  ledgerEmails: Iterable<string>,
+  sentBySender: ReadonlyArray<ReadonlyArray<{ to: string[] | string }>>,
+  clients: readonly CrmClient[] = [],
+): Set<string> {
+  const mailed = new Set<string>();
+  for (const e of ledgerEmails) mailed.add(normEmail(e));
+  for (const sent of sentBySender) {
+    for (const m of sent) for (const to of Array.isArray(m.to) ? m.to : [m.to]) mailed.add(parseAddress(to));
+  }
+  for (const c of clients) {
+    for (const n of c.notes) {
+      const parsed = parseSentNote(n);
+      if (parsed) mailed.add(parsed.email);
+    }
+  }
+  mailed.delete("");
+  return mailed;
+}
+
+/** The AgentMail keys, in order: AGENTMAIL_API_KEY, AGENTMAIL_API_KEY2, AGENTMAIL_API_KEY3, …; whichever are set, each once. */
+export function senderKeys(env: NodeJS.ProcessEnv): string[] {
+  const keys: string[] = [];
+  const names = ["AGENTMAIL_API_KEY", ...Array.from({ length: 19 }, (_, i) => `AGENTMAIL_API_KEY${i + 2}`)];
+  for (const name of names) {
+    const v = env[name]?.trim();
+    if (v && !keys.includes(v)) keys.push(v);
+  }
+  return keys;
+}
+
+export interface InboxInfo {
+  inbox_id: string;
+  email: string;
+  display_name?: string | null;
+  signature?: unknown;
+}
+
+/**
+ * Which inbox of an organization sends: the one named `name`, else the org's only inbox (which
+ * then needs renaming to `name`, so prospects see "Aarav from SAV"), else none.
+ */
+export function pickInbox<I extends InboxInfo>(inboxes: readonly I[], name: string): { inbox: I; rename: boolean } | null {
+  const named = inboxes.find((i) => i.display_name === name);
+  if (named) return { inbox: named, rename: false };
+  if (inboxes.length === 1) return { inbox: inboxes[0]!, rename: true };
+  return null;
+}
+
+/**
+ * Sends a batch across senders. A current-sender pointer starts at the first; when a send hits a
+ * provider limit (`isRateLimit`), that sender is exhausted for this tick and the SAME candidate is
+ * retried on the next one. When every sender is exhausted, the rest of the batch is held.
+ * Any other error fails that candidate only.
+ */
+export async function runBatch<C, R>(
+  batch: readonly C[],
+  senderCount: number,
+  send: (sender: number, c: C) => Promise<R>,
+  on: {
+    sent?: (c: C, sender: number, r: R) => Promise<void> | void;
+    failed?: (c: C, sender: number, message: string) => Promise<void> | void;
+    limited?: (sender: number, message: string) => Promise<void> | void;
+    held?: (count: number) => Promise<void> | void;
+    between?: () => Promise<void> | void;
+  } = {},
+): Promise<{ sent: number; failed: number; held: number; exhausted: number[] }> {
+  let cur = 0;
+  let sent = 0;
+  let failed = 0;
+  const exhausted: number[] = [];
+  for (const [i, c] of batch.entries()) {
+    while (cur < senderCount) {
+      let r: R;
+      try {
+        r = await send(cur, c);
+      } catch (e) {
+        const message = (e as Error).message;
+        if (isRateLimit(message)) {
+          exhausted.push(cur);
+          await on.limited?.(cur, message);
+          cur++;
+          continue;
+        }
+        failed++;
+        await on.failed?.(c, cur, message);
+        break;
+      }
+      // Outside the try: a failure while recording a send must never resend it on another sender.
+      sent++;
+      await on.sent?.(c, cur, r);
+      break;
+    }
+    if (cur >= senderCount) {
+      const held = batch.length - i;
+      await on.held?.(held);
+      return { sent, failed, held, exhausted };
+    }
+    if (i < batch.length - 1) await on.between?.();
+  }
+  return { sent, failed, held: 0, exhausted };
 }
 
 export interface InboundMessage {
@@ -334,14 +457,23 @@ export function replyNote(msg: InboundMessage): string {
   return `REPLY RECEIVED: ${msg.thread_id}\nFrom: ${msg.from}\nSubject: ${msg.subject}\nMessage: ${msg.message_id}\n\n${msg.text}`;
 }
 
-/** The message that wakes sales: first line `SHOP REPLIED: <shop>`, then one field per line. */
-export function wakeMessage(client: CrmClient, msg: InboundMessage): string {
+/** Said to sales when a reply landed in an inbox its email tools cannot reach. */
+export const OTHER_MAILBOX_NOTE = "This thread is in our second mailbox, which your email tools cannot reach: do not reply on the thread. Write ONE new email with agentmail.send_message to the shop email above, from your usual inbox, and say you are following up on their reply.";
+
+/**
+ * The message that wakes sales: first line `SHOP REPLIED: <shop>`, then one field per line, ending
+ * with `inbox: <address>` when known. A reply in any inbox but the first sender's gets one more line
+ * telling sales to write a fresh email instead of replying on the thread.
+ */
+export function wakeMessage(client: CrmClient, msg: InboundMessage, inbox?: { email: string; primary: boolean }): string {
   return [
     `SHOP REPLIED: ${client.name}`,
     `client_id: ${client.id}`,
     `thread_id: ${msg.thread_id}`,
     `shop email: ${parseAddress(msg.from)}`,
     `reply: ${msg.text}`,
+    ...(inbox ? [`inbox: ${inbox.email}`] : []),
+    ...(inbox && !inbox.primary ? ["", OTHER_MAILBOX_NOTE] : []),
   ].join("\n");
 }
 
@@ -366,7 +498,8 @@ export function parseArgs(argv: string[]): Options {
 // The outside world
 
 export interface Env {
-  agentmailKey: string;
+  /** One key per sender, in order (AGENTMAIL_API_KEY, AGENTMAIL_API_KEY2, …). */
+  agentmailKeys: string[];
   naiveKey: string | null;
   naiveUrl: string;
   dashboardUrl: string;
@@ -383,8 +516,9 @@ export function readEnv(env: NodeJS.ProcessEnv = process.env): Env {
   };
   const dashboardUrl = need("DASHBOARD_URL").replace(/\/+$/, "");
   const dashboardToken = need("DASHBOARD_TOKEN");
+  need("AGENTMAIL_API_KEY"); // the first sender is required; the rest are optional
   return {
-    agentmailKey: need("AGENTMAIL_API_KEY"),
+    agentmailKeys: senderKeys(env),
     naiveKey: env["NAIVE_API_KEY"] || null,
     naiveUrl: (env["NAIVE_API_URL"] || "https://api.vetta.sh").replace(/\/+$/, ""),
     dashboardUrl,
@@ -420,9 +554,12 @@ export function agentmail(key: string, fetchImpl: typeof fetch = fetch) {
   const get = <T>(path: string) => http<T>(`${AM}${path}`, { token: key }, fetchImpl);
   return {
     async inboxes() {
-      const r = await get<{ inboxes: Array<{ inbox_id: string; email: string; display_name?: string | null; signature?: unknown }> }>("/inboxes?limit=100");
+      const r = await get<{ inboxes: InboxInfo[] }>("/inboxes?limit=100");
       return r.inboxes;
     },
+    /** PATCH /inboxes/{id}: here only the display name. */
+    renameInbox: (inboxId: string, display_name: string) =>
+      http<InboxInfo>(`${AM}/inboxes/${encodeURIComponent(inboxId)}`, { method: "PATCH", token: key, body: JSON.stringify({ display_name }) }, fetchImpl),
     createInbox: (username: string, display_name: string) =>
       http<{ inbox_id: string; email: string }>(`${AM}/inboxes`, { method: "POST", token: key, body: JSON.stringify({ username, display_name }) }, fetchImpl),
     /** Every message carrying `label`, newest first, following page tokens (bounded). */
@@ -534,23 +671,41 @@ export function latestByEmail(rows: readonly LedgerRow[]): Map<string, LedgerRow
   return map;
 }
 
+/** One AgentMail organization we send from: its key's client and the inbox it sends with. */
+interface Sender {
+  /** 1 for AGENTMAIL_API_KEY, 2 for AGENTMAIL_API_KEY2, … (by position among the keys set). */
+  n: number;
+  mail: ReturnType<typeof agentmail>;
+  inbox: { inbox_id: string; email: string } | null;
+}
+type ReadySender = Sender & { inbox: { inbox_id: string; email: string } };
+
 class Engine {
   /** Addresses whose bounce was already noted in this run. */
   bouncedNoted = new Set<string>();
   readonly opts: Options;
   readonly env: Env;
-  readonly mail: ReturnType<typeof agentmail>;
+  readonly senders: Sender[];
   readonly crm: ReturnType<typeof dashboard>;
   state!: EngineState;
-  inbox: { inbox_id: string; email: string } | null = null;
   busy = { send: false, inbox: false, approve: false };
   sweepAllowed: boolean | null = null;
 
   constructor(opts: Options, env: Env) {
     this.opts = opts;
     this.env = env;
-    this.mail = agentmail(env.agentmailKey);
+    this.senders = env.agentmailKeys.map((key, i) => ({ n: i + 1, mail: agentmail(key), inbox: null }));
     this.crm = dashboard(env);
+  }
+
+  /** Senders that have an inbox to send from, in order. */
+  get ready(): ReadySender[] {
+    return this.senders.filter((s): s is ReadySender => s.inbox !== null);
+  }
+
+  /** The first sender's inbox address: the one sales' own email tools use. */
+  get primaryEmail(): string | null {
+    return this.senders[0]?.inbox?.email ?? null;
   }
 
   get dry() {
@@ -560,18 +715,44 @@ class Engine {
   async init() {
     this.state = await loadState(new Date());
     if (!this.dry) await saveState(this.state); // the first start is persisted, so the ramp counts from it
-    const inboxes = await this.mail.inboxes();
-    const found = inboxes.find((i) => i.display_name === INBOX_NAME);
-    if (found) {
-      this.inbox = found;
-      if (found.signature) await log(`warn    inbox ${found.email} has a signature set; AgentMail appends it after "Aarav". Remove it.`);
-      await log(`inbox   ${found.email} ("${INBOX_NAME}")`);
-    } else if (this.dry) {
-      await log(`inbox   none named "${INBOX_NAME}"; would create aarav.sav`);
-    } else {
-      this.inbox = await this.mail.createInbox("aarav.sav", INBOX_NAME);
-      await log(`inbox   created ${this.inbox.email}`);
+    for (const sender of this.senders) {
+      const tag = `sender ${sender.n}`;
+      let inboxes: InboxInfo[];
+      try {
+        inboxes = await sender.mail.inboxes();
+      } catch (e) {
+        if (sender.n === 1) throw e;
+        await log(`warn    ${tag}: cannot list inboxes, not sending from it: ${(e as Error).message}`);
+        continue;
+      }
+      const picked = pickInbox(inboxes, INBOX_NAME);
+      if (picked) {
+        const { inbox, rename } = picked;
+        sender.inbox = { inbox_id: inbox.inbox_id, email: inbox.email };
+        if (inbox.signature) await log(`warn    inbox ${inbox.email} has a signature set; AgentMail appends it after "Aarav". Remove it.`);
+        if (!rename) {
+          await log(`inbox   ${tag}: ${inbox.email} ("${INBOX_NAME}")`);
+        } else if (this.dry) {
+          await log(`inbox   ${tag}: ${inbox.email} ("${inbox.display_name ?? ""}"), its only inbox; would rename it to "${INBOX_NAME}"`);
+        } else {
+          try {
+            await sender.mail.renameInbox(inbox.inbox_id, INBOX_NAME);
+            await log(`inbox   ${tag}: ${inbox.email}, renamed from "${inbox.display_name ?? ""}" to "${INBOX_NAME}"`);
+          } catch (e) {
+            await log(`warn    ${tag}: ${inbox.email} could not be renamed to "${INBOX_NAME}"; prospects will see "${inbox.display_name ?? ""}": ${(e as Error).message}`);
+          }
+        }
+      } else if (sender.n !== 1) {
+        // Only the first sender may create an inbox.
+        await log(`warn    ${tag}: ${inboxes.length} inboxes, none named "${INBOX_NAME}"; not sending from it`);
+      } else if (this.dry) {
+        await log(`inbox   ${tag}: none named "${INBOX_NAME}"; would create aarav.sav`);
+      } else {
+        sender.inbox = await sender.mail.createInbox("aarav.sav", INBOX_NAME);
+        await log(`inbox   ${tag}: created ${sender.inbox.email}`);
+      }
     }
+    await log(`senders ${this.senders.map((s) => `${s.n}: ${s.inbox?.email ?? "(no inbox)"}`).join(", ")}`);
     await log(`${this.dry ? "DRY RUN" : "EXECUTE"}: engine started (first start ${this.state.started_at})`);
   }
 
@@ -628,13 +809,9 @@ class Engine {
         await this.fileSentNote(row, client, "(email body: see the AgentMail inbox)", "");
       }
 
-      // Every address this inbox ever mailed counts as mailed, ledger or not.
-      const mailed = new Set(latest.keys());
-      if (this.inbox) {
-        for (const m of await this.mail.messages(this.inbox.inbox_id, "sent")) {
-          for (const to of Array.isArray(m.to) ? m.to : [m.to]) mailed.add(parseAddress(to));
-        }
-      }
+      // Every address any sender's inbox ever mailed counts as mailed, ledger or not.
+      const sentBySender = await Promise.all(this.ready.map((s) => s.mail.messages(s.inbox.inbox_id, "sent")));
+      const mailed = alreadyMailed(latest.keys(), sentBySender, clients);
       const today = pacific(now).day;
       const sentToday = ledger.filter((r) => pacific(new Date(r.at)).day === today && latest.get(r.email) === r).length;
       const { size, level, stepped_down } = batchSize(new Date(this.state.started_at), now, this.state.last_tick, sentToday);
@@ -644,35 +821,34 @@ class Engine {
       await log(`send    tick: ${clients.length} in CRM, ${candidates.length} eligible, batch ${size} (level ${level}${stepped_down ? ", stepped down after a bad tick" : ""}, ${sentToday}/${DAILY_SEND_CAP} today); skipped: ${[...reasons].map(([r, n]) => `${n} ${r}`).join(", ") || "none"}`);
 
       const batch = candidates.slice(0, size);
+      const senders = this.ready;
       let sent = 0;
       let failed = 0;
-      for (const [i, c] of batch.entries()) {
-        if (this.dry) {
-          await log(`would send ${c.client.id} "${c.client.name}" to ${c.email}: "${c.subject}"`);
+      if (this.dry) {
+        for (const [i, c] of batch.entries()) {
+          await log(`would send ${c.client.id} "${c.client.name}" to ${c.email} from ${senders[0]?.inbox.email ?? "(no inbox)"}: "${c.subject}"`);
           console.log(`---- email ${i + 1}/${batch.length} ----\nTo: ${c.email}\nSubject: ${c.subject}\n\n${c.text}\n---- end ----`);
-          continue;
         }
-        if (!this.inbox) break;
-        try {
-          const r = await this.mail.send(this.inbox.inbox_id, c.email, c.subject, c.text, coldKey(c.email));
-          const row: LedgerRow = { email: c.email, client_id: c.client.id, message_id: r.message_id, thread_id: r.thread_id ?? null, at: new Date().toISOString(), noted: false };
-          await mkdir(DATA, { recursive: true });
-          await appendFile(LEDGER, `${JSON.stringify(row)}\n`);
-          sent++;
-          await log(`sent    ${c.client.id} "${c.client.name}" to ${c.email} (${r.message_id})`);
-          await this.fileSentNote(row, c.client, c.subject, c.text);
-        } catch (e) {
-          const message = (e as Error).message;
-          // The provider's sending limit (AgentMail's new-account recipient cap): not a bad address.
-          // Stop this tick without counting it against the ramp; the rest go out next tick.
-          if (isRateLimit(message)) {
-            await log(`limit   provider sending limit reached; holding the rest of this batch until the next tick: ${message.slice(0, 220)}`);
-            break;
-          }
-          failed++;
-          await log(`fail    ${c.client.id} "${c.client.name}" to ${c.email}: ${message}`);
-        }
-        if (i < batch.length - 1) await sleep(3000 + Math.floor(Math.random() * 3000));
+      } else if (senders.length > 0) {
+        // The Idempotency-Key is per AgentMail org, so the same key on the next sender is a fresh send there.
+        const r = await runBatch(batch, senders.length, (n, c) => senders[n]!.mail.send(senders[n]!.inbox.inbox_id, c.email, c.subject, c.text, coldKey(c.email)), {
+          sent: async (c, n, res) => {
+            const from = senders[n]!.inbox.email;
+            const row: LedgerRow = { email: c.email, client_id: c.client.id, message_id: res.message_id, thread_id: res.thread_id ?? null, at: new Date().toISOString(), noted: false, inbox: from };
+            await mkdir(DATA, { recursive: true });
+            await appendFile(LEDGER, `${JSON.stringify(row)}\n`);
+            await log(`sent    ${c.client.id} "${c.client.name}" to ${c.email} from ${from} (${res.message_id})`);
+            await this.fileSentNote(row, c.client, c.subject, c.text);
+          },
+          failed: async (c, n, message) => { await log(`fail    ${c.client.id} "${c.client.name}" to ${c.email} from ${senders[n]!.inbox.email}: ${message}`); },
+          // The provider's sending limit (AgentMail's new-account recipient cap): not a bad address,
+          // and not counted against the ramp. The same lead goes to the next sender.
+          limited: async (n, message) => { await log(`limit   ${senders[n]!.inbox.email} hit its sending limit; ${n + 1 < senders.length ? `switching to ${senders[n + 1]!.inbox.email}` : "no sender left"}: ${message.slice(0, 220)}`); },
+          held: async (count) => { await log(`limit   every sender is at its limit; holding ${count} of this batch until the next tick`); },
+          between: async () => { await sleep(3000 + Math.floor(Math.random() * 3000)); },
+        });
+        sent = r.sent;
+        failed = r.failed;
       }
       if (!this.dry) {
         this.state.last_tick = { at: now.toISOString(), sent, failed, bounced: 0 };
@@ -688,7 +864,7 @@ class Engine {
 
   async fileSentNote(row: LedgerRow, client: CrmClient, subject: string, text: string) {
     try {
-      await this.crm.addNote(client.id, sentNote(row.message_id, row.email, subject, text), "Wait for a reply");
+      await this.crm.addNote(client.id, sentNote(row.message_id, row.email, subject, text, row.inbox ?? this.primaryEmail), "Wait for a reply");
       await appendFile(LEDGER, `${JSON.stringify({ ...row, noted: true })}\n`);
       await log(`noted   ${client.id} OUTREACH SENT ${row.message_id}`);
     } catch (e) {
@@ -698,23 +874,30 @@ class Engine {
 
   /** Job 2: the inbox watcher. */
   async inboxTick() {
-    if (this.busy.inbox || !this.inbox) return;
+    const senders = this.ready;
+    if (this.busy.inbox || senders.length === 0) return;
     this.busy.inbox = true;
     try {
       const checkedAt = new Date();
       const seen = new Set(this.state.seen);
       // An hour of overlap: a message that landed while the last check ran is not missed; `seen` dedupes.
       const after = this.state.last_inbox_check ? new Date(new Date(this.state.last_inbox_check).getTime() - 3_600_000).toISOString() : null;
-      const received = await this.mail.messages(this.inbox.inbox_id, "received", after);
-      const bouncedSent = await this.mail.messages(this.inbox.inbox_id, "bounced", after);
-      const fresh = [...received, ...bouncedSent.filter((m) => !received.some((r) => r.message_id === m.message_id))].filter((m) => !seen.has(m.message_id));
-      if (fresh.length === 0) {
-        if (this.opts.once) await log("inbox   no new messages");
-      } else {
-        const clients = await this.crm.clients();
-        const mailed = [...latestByEmail(await loadLedger()).keys()];
+      let clients: CrmClient[] | null = null;
+      let mailed: string[] | null = null;
+      for (const sender of senders) {
+        const received = await sender.mail.messages(sender.inbox.inbox_id, "received", after);
+        const bouncedSent = await sender.mail.messages(sender.inbox.inbox_id, "bounced", after);
+        const fresh = [...received, ...bouncedSent.filter((m) => !received.some((r) => r.message_id === m.message_id))].filter((m) => !seen.has(m.message_id));
+        if (fresh.length === 0) {
+          if (this.opts.once) await log(`inbox   ${sender.inbox.email}: no new messages`);
+          continue;
+        }
+        clients ??= await this.crm.clients();
+        mailed ??= [...latestByEmail(await loadLedger()).keys()];
         for (const item of fresh.reverse()) {
-          await this.handleInbound(item, clients, mailed);
+          if (seen.has(item.message_id)) continue; // the same message seen in another of our inboxes
+          await this.handleInbound(sender, item, clients, mailed);
+          seen.add(item.message_id);
           this.state.seen.push(item.message_id);
         }
       }
@@ -729,9 +912,9 @@ class Engine {
     }
   }
 
-  async handleInbound(item: { message_id: string; thread_id: string; labels: string[]; from: string; to: string[] | string }, clients: CrmClient[], mailed: string[]) {
-    const inbox = this.inbox!;
-    const full = await this.mail.message(inbox.inbox_id, item.message_id);
+  async handleInbound(sender: ReadySender, item: { message_id: string; thread_id: string; labels: string[]; from: string; to: string[] | string }, clients: CrmClient[], mailed: string[]) {
+    const inbox = sender.inbox;
+    const full = await sender.mail.message(inbox.inbox_id, item.message_id);
     const msg: InboundMessage = {
       message_id: full.message_id, thread_id: full.thread_id, from: full.from ?? item.from, subject: full.subject ?? "",
       text: (full.extracted_text ?? full.text ?? "").trim(), labels: full.labels ?? item.labels,
@@ -740,6 +923,8 @@ class Engine {
     const ownBounce = parseAddress(msg.from) === normEmail(inbox.email) && msg.labels.includes("bounced");
     const kind = ownBounce ? "bounce" : classifyInbound(msg, inbox.email);
     if (kind === "own") return;
+    // Mail between our own inboxes is not a shop writing back.
+    if (kind !== "bounce" && this.ready.some((s) => normEmail(s.inbox.email) === parseAddress(msg.from))) return;
     const act = async (what: string, fn: () => Promise<unknown>) => {
       if (this.dry) return log(`would ${what}`);
       await fn();
@@ -761,7 +946,8 @@ class Engine {
       return act(`note    ${client.id} AUTO-REPLY ${msg.thread_id}`, () => this.crm.addNote(client.id, `AUTO-REPLY: ${msg.thread_id}\nFrom: ${msg.from}\nSubject: ${msg.subject}\n\n${msg.text}`));
     }
     await act(`note    ${client.id} REPLY RECEIVED ${msg.thread_id} from ${parseAddress(msg.from)}`, () => this.crm.addNote(client.id, replyNote(msg), "Shop replied: sales is answering"));
-    await act(`wake    sales for ${client.id} "${client.name}" (${msg.message_id})`, () => this.wake(wakeMessage(client, msg)));
+    const primary = normEmail(inbox.email) === normEmail(this.primaryEmail);
+    await act(`wake    sales for ${client.id} "${client.name}" (${msg.message_id}, ${inbox.email})`, () => this.wake(wakeMessage(client, msg, { email: inbox.email, primary })));
   }
 
   async wake(message: string, agentId: string = REPLY_AGENT) {
