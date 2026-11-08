@@ -188,6 +188,15 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       }
       if (referredBy && source !== "referral") throw new ToolError("referred_by is only for a referral");
       const name = need(params, "name");
+      // A shop already in the CRM is not filed twice. Answered without its contact on purpose: a
+      // seat that never reads people's data keeps its outside calls free of the operator (§64), so
+      // research files by domain and never needs list_clients to avoid a duplicate.
+      const domain = text(params, "domain").trim().toLowerCase();
+      const existing = domain === "" ? undefined : store.read().clients.find((c) => c.domain.trim().toLowerCase() === domain);
+      if (existing) {
+        return { id: existing.id, name: existing.name, domain: existing.domain, stage: existing.stage, already_filed: true,
+          notice: `${existing.name} (${existing.id}) is already in the CRM: nothing was filed. Skip this shop.` };
+      }
       const filed = store.createLead({
         name, domain: text(params, "domain"),
         contact: { name: text(params, "contact_name"), email: text(params, "contact_email"), role: text(params, "contact_role") },

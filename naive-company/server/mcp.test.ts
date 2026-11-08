@@ -108,6 +108,19 @@ describe("mcp tools", () => {
     expect(store.read().clients.at(-1)?.id).toBe(lead.id);
   });
 
+  it("create_lead skips a shop whose domain is already filed, answering without its contact", async () => {
+    const store = freshStore();
+    const first = { name: "Meissner Automotive", domain: "meissnerauto.example", contact_name: "Pat Owner", contact_email: "pat@meissnerauto.example", source: "outreach" };
+    await handleMcp(call("create_lead", first), store, null);
+    const before = store.read().clients.length;
+    const answer = (await handleMcp(call("create_lead", { ...first, domain: " MeissnerAuto.example " }), store, null)) as CallResult;
+    const body = JSON.parse(answer.result.content[0]!.text) as Record<string, unknown>;
+    expect(store.read().clients.length).toBe(before);
+    expect(body).toMatchObject({ already_filed: true, name: "Meissner Automotive" });
+    expect(JSON.stringify(body)).not.toContain("pat@meissnerauto.example");
+    expect(JSON.stringify(body)).not.toContain("Pat Owner");
+  });
+
   it("create_lead needs only a name: the agency's own record is filed without a contact to ask for", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio" }), store, null)) as CallResult;

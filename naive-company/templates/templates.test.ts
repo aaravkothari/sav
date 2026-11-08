@@ -375,6 +375,13 @@ describe("blank", () => {
     expect(sales.system).toMatch(/Never put a preview phone number in an email/);
   });
 
+  it("research never reads the CRM, so its paid lookups are not held for having read people's data", () => {
+    const research = blank.agents.find((a) => a.name === "research")!;
+    for (const tool of ["dashboard.list_clients", "dashboard.get_client"]) expect([tool, research.tools?.configs[tool]]).toEqual([tool, undefined]);
+    expect(research.system).toMatch(/Do not read the CRM/);
+    expect(research.system.indexOf("1. Find candidates with Monid")).toBeLessThan(research.system.indexOf("4. For each shop you keep, run monid.monid_inspect once on provider hunterio"));
+  });
+
   it("files the receptionist's kinds of work", () => {
     expect(blank.kinds.map((k) => k.id)).toEqual(["script", "report", "audit"]);
   });
