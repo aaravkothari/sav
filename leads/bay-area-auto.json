@@ -1,0 +1,3346 @@
+[
+ {
+  "name": "San Carlos Auto Solutions Inc.",
+  "domain": "scautosolutions.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 372 Google reviews. Phone (650) 595-2860, 1700 El Camino Real, San Carlos, CA 94070. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 372 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it was established in 2012, founded by a Porsche tech, and services Euro, Asian and domestic cars.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "San Carlos Auto Solutions Inc.",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16505952860",
+   "address": "1700 El Camino Real, San Carlos, CA 94070",
+   "website": "http://www.scautosolutions.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "wheel alignment",
+    "diagnostics",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Expert Auto Care",
+  "domain": "expertautocaremv.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 368 Google reviews. Phone (650) 386-1150, 2570 Leghorn St #1, Mountain View, CA 94043. Hours: mon 7:30-16:00; tue 7:30-16:00; wed 7:30-16:00; thu 7:30-16:00; fri 7:30-16:00; sat closed; sun closed. Fit: independent shop with 368 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site lists a 24 month/24,000 mile warranty and a lifetime warranty on brake pads and shoes.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Expert Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503861150",
+   "address": "2570 Leghorn St #1, Mountain View, CA 94043",
+   "website": "http://www.expertautocaremv.com/",
+   "hours": {
+    "mon": "7:30-16:00",
+    "tue": "7:30-16:00",
+    "wed": "7:30-16:00",
+    "thu": "7:30-16:00",
+    "fri": "7:30-16:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "AC service",
+    "towing",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "The Garage",
+  "domain": "thegaragesf.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 336 Google reviews. Phone (415) 864-0111, 340 10th St, San Francisco, CA 94103. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 336 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is a full repair and body shop with a 2 year warranty on mechanical services.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "The Garage",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14158640111",
+   "address": "340 10th St, San Francisco, CA 94103",
+   "website": "https://www.thegaragesf.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "transmission service",
+    "diagnostics",
+    "collision repair",
+    "body work",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "A+ Auto Repair of Redwood City",
+  "domain": "redwoodcityautorepair.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 298 Google reviews. Phone (650) 414-4526, 535 Whipple Ave, Redwood City, CA 94063. Hours: mon 7:30-17:00; tue 7:30-17:00; wed 7:30-17:00; thu 7:30-17:00; fri 7:30-17:00; sat 7:30-12:00; sun closed. Fit: independent shop with 298 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site offers a 36 month/36k warranty plus courtesy shuttle, pickup and delivery, and rental vehicles.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "A+ Auto Repair of Redwood City",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504144526",
+   "address": "535 Whipple Ave, Redwood City, CA 94063",
+   "website": "https://www.redwoodcityautorepair.com/",
+   "hours": {
+    "mon": "7:30-17:00",
+    "tue": "7:30-17:00",
+    "wed": "7:30-17:00",
+    "thu": "7:30-17:00",
+    "fri": "7:30-17:00",
+    "sat": "7:30-12:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "International Sport Motors",
+  "domain": "ismotors.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 274 Google reviews. Phone (415) 551-9930, 440 9th St, San Francisco, CA 94103. Hours: mon 7:30-17:00; tue 7:30-17:00; wed 7:30-17:00; thu 7:30-17:00; fri 7:30-17:00; sat closed; sun closed. Fit: independent shop with 274 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has served San Francisco for over 46 years with mechanical repair and OEM-certified body work under one roof in SoMa.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "International Sport Motors",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14155519930",
+   "address": "440 9th St, San Francisco, CA 94103",
+   "website": "https://ismotors.com/",
+   "hours": {
+    "mon": "7:30-17:00",
+    "tue": "7:30-17:00",
+    "wed": "7:30-17:00",
+    "thu": "7:30-17:00",
+    "fri": "7:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "tires",
+    "diagnostics",
+    "collision repair",
+    "body work",
+    "towing",
+    "hybrid and EV repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Jim Davis Automotive - Auto Repair Shop In Palo Alto",
+  "domain": "jimdavisautomotive.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 273 Google reviews. Phone (650) 614-5492, 3972 El Camino Real, Palo Alto, CA 94306. Hours: mon 8:00-16:30; tue 8:00-16:30; wed 8:00-16:30; thu 8:00-16:30; fri 8:00-16:30; sat closed; sun closed. Fit: independent shop with 273 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is family owned and has served Palo Alto since 1982.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Jim Davis Automotive - Auto Repair Shop In Palo Alto",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16506145492",
+   "address": "3972 El Camino Real, Palo Alto, CA 94306",
+   "website": "https://jimdavisautomotive.com/",
+   "hours": {
+    "mon": "8:00-16:30",
+    "tue": "8:00-16:30",
+    "wed": "8:00-16:30",
+    "thu": "8:00-16:30",
+    "fri": "8:00-16:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "diagnostics",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Specialized Auto Care Center",
+  "domain": "specializedautorepair.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 269 Google reviews. Phone (650) 458-1050, 1963 El Camino Real, Palo Alto, CA 94306. Hours: mon 9:00-20:00; tue 9:00-20:00; wed 9:00-20:00; thu 9:00-20:00; fri 9:00-20:00; sat 9:00-20:00; sun 9:00-20:00. Fit: independent shop with 269 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site describes it as a family-owned full-service shop covering brakes, diagnostics, transmission, suspension and AC.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Specialized Auto Care Center",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504581050",
+   "address": "1963 El Camino Real, Palo Alto, CA 94306",
+   "website": "https://specializedautorepair.com/",
+   "hours": {
+    "mon": "9:00-20:00",
+    "tue": "9:00-20:00",
+    "wed": "9:00-20:00",
+    "thu": "9:00-20:00",
+    "fri": "9:00-20:00",
+    "sat": "9:00-20:00",
+    "sun": "9:00-20:00"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics",
+    "suspension repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "AAA Mountain View Auto Repair Center",
+  "domain": "mwg.aaa.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 259 Google reviews. Phone (650) 938-2886, 181 W Evelyn Ave, Mountain View, CA 94041. Hours: mon 7:30-17:30; tue 7:30-17:30; wed 7:30-17:30; thu 7:30-17:30; fri 7:30-17:30; sat 8:00-16:00; sun closed. Fit: franchise or chain location, weaker fit, but with 259 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site offers AAA members a 24-month, 24,000-mile warranty on parts and labor.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "AAA Mountain View Auto Repair Center",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509382886",
+   "address": "181 W Evelyn Ave, Mountain View, CA 94041",
+   "website": "https://mwg.aaa.com/agent-office-locations/ca/mountain-view/aaa-mountain-view-auto-repair-center",
+   "hours": {
+    "mon": "7:30-17:30",
+    "tue": "7:30-17:30",
+    "wed": "7:30-17:30",
+    "thu": "7:30-17:30",
+    "fri": "7:30-17:30",
+    "sat": "8:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics",
+    "hybrid and EV repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "The Smog Shop Star Certified Station",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 221 Google reviews. Phone (415) 863-4110, 276 11th St, San Francisco, CA 94103. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 221 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "The Smog Shop Star Certified Station",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14158634110",
+   "address": "276 11th St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Stress-Free Auto Care",
+  "domain": "stressfree.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 215 Google reviews. Phone (650) 963-9212, 2333 El Camino Real, Redwood City, CA 94063. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat closed; sun closed. Fit: franchise or chain location, weaker fit, but with 215 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says the shop took over from Ray's Auto Repair & Tire, which served El Camino Real for over 40 years, and offers a 24-month/24,000-mile nationwide warranty.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Stress-Free Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503678218",
+   "address": "2333 El Camino Real, Redwood City, CA 94063",
+   "website": "https://www.stressfree.com/shops/redwood-city",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Besa Quality Auto Care",
+  "domain": "besaautocare.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 197 Google reviews. Phone (510) 452-3718, 2350 Webster St, Oakland, CA 94612. Hours: mon 8:30-17:00; tue 8:30-17:00; wed 8:30-17:00; thu 8:30-17:00; fri 8:30-17:00; sat closed; sun closed. Fit: independent shop with 197 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has serviced European vehicles in downtown Oakland since 1989, specializing in Land Rover, BMW, Mercedes-Benz, Jaguar, Mini and Audi.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Besa Quality Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15104523718",
+   "address": "2350 Webster St, Oakland, CA 94612",
+   "website": "http://www.besaautocare.com/",
+   "hours": {
+    "mon": "8:30-17:00",
+    "tue": "8:30-17:00",
+    "wed": "8:30-17:00",
+    "thu": "8:30-17:00",
+    "fri": "8:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "oil change",
+    "towing"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Sunnyvale Foreign Car Service Inc",
+  "domain": "sunnyvaleforeigncar.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 181 Google reviews. Phone (650) 960-6988, 15 Pioneer Way, Mountain View, CA 94041. Hours: mon 7:30-17:30; tue 7:30-17:30; wed 7:30-17:30; thu 7:30-17:30; fri 7:30-17:30; sat closed; sun closed. Fit: independent shop with 181 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been run by the Pataky family since 1962.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Sunnyvale Foreign Car Service Inc",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509606988",
+   "address": "15 Pioneer Way, Mountain View, CA 94041",
+   "website": "http://www.sunnyvaleforeigncar.com/",
+   "hours": {
+    "mon": "7:30-17:30",
+    "tue": "7:30-17:30",
+    "wed": "7:30-17:30",
+    "thu": "7:30-17:30",
+    "fri": "7:30-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "hybrid and EV repair",
+    "suspension repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "W. E. Harding Co",
+  "domain": "hardingautoservice.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 179 Google reviews. Phone (408) 286-8989, 502 S Second St, San Jose, CA 95112. Hours: mon 8:30-17:00; tue 8:30-17:00; wed 8:30-17:00; thu 8:30-17:00; fri 8:30-17:00; sat closed; sun closed. Fit: independent shop with 179 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it services all makes, naming BMW, Mercedes, Audi, VW, Honda and Toyota.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "W. E. Harding Co",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082868989",
+   "address": "502 S Second St, San Jose, CA 95112",
+   "website": "https://www.hardingautoservice.com/",
+   "hours": {
+    "mon": "8:30-17:00",
+    "tue": "8:30-17:00",
+    "wed": "8:30-17:00",
+    "thu": "8:30-17:00",
+    "fri": "8:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "transmission service",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Felix's Auto Service Inc",
+  "domain": "felixautoservice.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 143 Google reviews. Phone (650) 961-0138, 191 W Evelyn Ave, Mountain View, CA 94041. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 143 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been family owned and operated since 1969 and also offers towing.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Felix's Auto Service Inc",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509610138",
+   "address": "191 W Evelyn Ave, Mountain View, CA 94041",
+   "website": "http://felixautoservice.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "diagnostics",
+    "towing",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "JR Automotive - San Francisco Auto Repair Services",
+  "domain": "jrautocare.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 136 Google reviews. Phone (415) 658-7626, 155 14th St, San Francisco, CA 94103. Hours: mon 7:00-17:00; tue 7:00-17:00; wed 7:00-17:00; thu 7:00-17:00; fri 7:00-17:00; sat closed; sun closed. Fit: independent shop with 136 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site lists hybrid/EV and box truck repair among its services.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "JR Automotive - San Francisco Auto Repair Services",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14156587626",
+   "address": "155 14th St, San Francisco, CA 94103",
+   "website": "http://jrautocare.com/",
+   "hours": {
+    "mon": "7:00-17:00",
+    "tue": "7:00-17:00",
+    "wed": "7:00-17:00",
+    "thu": "7:00-17:00",
+    "fri": "7:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Independence Car Service",
+  "domain": "indcarservice.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 134 Google reviews. Phone (650) 964-2033, 2415 Old Middlefield Way, Mountain View, CA 94043. Hours: mon 9:30-18:00; tue 9:30-18:00; wed 9:30-18:00; thu 9:30-18:00; fri 9:30-18:00; sat closed; sun closed. Fit: independent shop with 134 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says all parts and service work are guaranteed for 1 year or 10,000 miles.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Independence Car Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509642033",
+   "address": "2415 Old Middlefield Way, Mountain View, CA 94043",
+   "website": "https://www.indcarservice.com/",
+   "hours": {
+    "mon": "9:30-18:00",
+    "tue": "9:30-18:00",
+    "wed": "9:30-18:00",
+    "thu": "9:30-18:00",
+    "fri": "9:30-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Shoreline Auto Care",
+  "domain": "shorelineautocare.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 132 Google reviews. Phone (650) 937-1000, 810 Miramonte Ave, Mountain View, CA 94040. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat closed; sun closed. Fit: independent shop with 132 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been in business since 2003 and offers a 12-month/12,000-mile warranty.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Shoreline Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509371000",
+   "address": "810 Miramonte Ave, Mountain View, CA 94040",
+   "website": "http://shorelineautocare.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "diagnostics",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Broadway Smog and Auto Repair",
+  "domain": "broadwaysmog.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 124 Google reviews. Phone (510) 834-7664, 431 Martin Luther King Jr Way, Oakland, CA 94607. Hours: mon 9:00-17:30; tue 9:00-17:30; wed 9:00-17:30; thu 9:00-17:30; fri 9:00-17:30; sat closed; sun closed. Fit: independent shop with 124 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is a licensed STAR smog station whose ASE techs have over 25 years of experience.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Broadway Smog and Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108347664",
+   "address": "431 Martin Luther King Jr Way, Oakland, CA 94607",
+   "website": "http://www.broadwaysmog.com/",
+   "hours": {
+    "mon": "9:00-17:30",
+    "tue": "9:00-17:30",
+    "wed": "9:00-17:30",
+    "thu": "9:00-17:30",
+    "fri": "9:00-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "diagnostics",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Pak Auto Service",
+  "domain": "pakautoservice.net",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 124 Google reviews. Phone (415) 822-7859, 1748 Folsom St, San Francisco, CA 94103. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-18:00; fri 9:00-18:00; sat 9:00-18:00; sun 10:00-17:00. Fit: independent shop with 124 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site lists local shuttle, towing and loaner vehicles.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Pak Auto Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14158227859",
+   "address": "1748 Folsom St, San Francisco, CA 94103",
+   "website": "https://pakautoservice.net/",
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-18:00",
+    "fri": "9:00-18:00",
+    "sat": "9:00-18:00",
+    "sun": "10:00-17:00"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "diagnostics",
+    "collision repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Reynoso Auto Repair",
+  "domain": "reynosoauto.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 113 Google reviews. Phone (650) 364-0528, 2627 Middlefield Rd, Redwood City, CA 94063. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat 8:30-14:00; sun closed. Fit: independent shop with 113 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has offered complete auto repair since 2004.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Reynoso Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503640528",
+   "address": "2627 Middlefield Rd, Redwood City, CA 94063",
+   "website": "https://www.reynosoauto.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "8:30-14:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "diagnostics",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Elite Auto Performance",
+  "domain": "eliteautostanford.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 105 Google reviews. Phone (650) 331-0121, 1963 El Camino Real, Palo Alto, CA 94306. Hours: mon 9:00-20:00; tue 9:00-20:00; wed 9:00-20:00; thu 9:00-20:00; fri 9:00-20:00; sat 9:00-20:00; sun 9:00-20:00. Fit: independent shop with 105 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it offers a warranty on parts and services it provides.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Elite Auto Performance",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503310121",
+   "address": "1963 El Camino Real, Palo Alto, CA 94306",
+   "website": "https://eliteautostanford.com/",
+   "hours": {
+    "mon": "9:00-20:00",
+    "tue": "9:00-20:00",
+    "wed": "9:00-20:00",
+    "thu": "9:00-20:00",
+    "fri": "9:00-20:00",
+    "sat": "9:00-20:00",
+    "sun": "9:00-20:00"
+   },
+   "services": [
+    "oil change",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Mountain View Auto Repair Inc",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 3.8 on 101 Google reviews. Phone (650) 961-7798, 845 W El Camino Real, Mountain View, CA 94040. Hours: mon 8:30-17:30; tue 8:30-17:30; wed 8:30-17:30; thu 8:30-17:30; fri 8:30-17:30; sat 9:00-16:30; sun closed. Fit: independent shop with 101 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Mountain View Auto Repair Inc",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509617798",
+   "address": "845 W El Camino Real, Mountain View, CA 94040",
+   "website": null,
+   "hours": {
+    "mon": "8:30-17:30",
+    "tue": "8:30-17:30",
+    "wed": "8:30-17:30",
+    "thu": "8:30-17:30",
+    "fri": "8:30-17:30",
+    "sat": "9:00-16:30",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Embarcadero Automotive",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 100 Google reviews. Phone (415) 541-8500, 276 11th St, San Francisco, CA 94103. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 100 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Embarcadero Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14155418500",
+   "address": "276 11th St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "A1 Complete Auto Care",
+  "domain": "a1completeautocare.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 96 Google reviews. Phone (650) 966-8231, 1544 W El Camino Real, Mountain View, CA 94040. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 96 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has served Mountain View since 1983 with ASE-certified technicians.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "A1 Complete Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509668231",
+   "address": "1544 W El Camino Real, Mountain View, CA 94040",
+   "website": "https://a1completeautocare.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "tires",
+    "AC service",
+    "diagnostics",
+    "hybrid and EV repair",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "AutoMend All Foreign Auto Repair",
+  "domain": "automend-ca.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 95 Google reviews. Phone (408) 286-5404, 350 N Montgomery St, San Jose, CA 95110. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-17:00; sun closed. Fit: independent shop with 95 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says its operations date back to 1978 and it focuses on foreign cars.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "AutoMend All Foreign Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082865404",
+   "address": "350 N Montgomery St, San Jose, CA 95110",
+   "website": "https://automend-ca.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-17:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "diagnostics",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Palo Alto Bimmer",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 93 Google reviews. Phone (650) 325-3818, 799 Alma St, Palo Alto, CA 94301. Hours: mon 7:30-18:00; tue 7:30-18:00; wed 7:30-18:00; thu 7:30-18:00; fri 7:30-18:00; sat closed; sun closed. Fit: independent shop with 93 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Palo Alto Bimmer",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503253818",
+   "address": "799 Alma St, Palo Alto, CA 94301",
+   "website": null,
+   "hours": {
+    "mon": "7:30-18:00",
+    "tue": "7:30-18:00",
+    "wed": "7:30-18:00",
+    "thu": "7:30-18:00",
+    "fri": "7:30-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Young's Automotive",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 85 Google reviews. Phone (510) 444-4185, 3509 Grand Ave, Oakland, CA 94610. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat 8:00-15:00; sun closed. Fit: independent shop with 85 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Young's Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15104444185",
+   "address": "3509 Grand Ave, Oakland, CA 94610",
+   "website": null,
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "8:00-15:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "El Camino Auto Clinic formerly Pedro's Auto Clinic",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.3 on 83 Google reviews. Phone (650) 968-8931, 1288 W El Camino Real, Mountain View, CA 94040. Hours: mon 9:30-17:00; tue 9:30-17:00; wed 9:30-17:00; thu 9:30-17:00; fri 9:00-17:00; sat closed; sun closed. Fit: independent shop with 83 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "El Camino Auto Clinic formerly Pedro's Auto Clinic",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509688931",
+   "address": "1288 W El Camino Real, Mountain View, CA 94040",
+   "website": null,
+   "hours": {
+    "mon": "9:30-17:00",
+    "tue": "9:30-17:00",
+    "wed": "9:30-17:00",
+    "thu": "9:30-17:00",
+    "fri": "9:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Palo Alto Shell Gas/C Store 24/7/Auto Repair M To F 8am To 530 Sat 8am To 2pm",
+  "domain": "paloaltoshell.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 82 Google reviews. Phone (650) 469-8785, 2200 El Camino Real, Palo Alto, CA 94306. Hours: mon 8:00-17:30; tue 8:00-17:30; wed 8:00-17:30; thu 8:00-17:30; fri 8:00-17:30; sat 8:00-16:30; sun closed. Fit: independent shop with 82 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Palo Alto Shell Gas/C Store 24/7/Auto Repair M To F 8am To 530 Sat 8am To 2pm",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504698785",
+   "address": "2200 El Camino Real, Palo Alto, CA 94306",
+   "website": "https://www.paloaltoshell.com/contactus/",
+   "hours": {
+    "mon": "8:00-17:30",
+    "tue": "8:00-17:30",
+    "wed": "8:00-17:30",
+    "thu": "8:00-17:30",
+    "fri": "8:00-17:30",
+    "sat": "8:00-16:30",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Metric Motors",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 78 Google reviews. Phone (415) 626-6234, 1480 Howard St, San Francisco, CA 94103. Hours: mon 8:30-17:00; tue 8:30-17:00; wed 8:30-17:00; thu 8:30-17:00; fri 8:30-17:00; sat closed; sun closed. Fit: independent shop with 78 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Metric Motors",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14156266234",
+   "address": "1480 Howard St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": "8:30-17:00",
+    "tue": "8:30-17:00",
+    "wed": "8:30-17:00",
+    "thu": "8:30-17:00",
+    "fri": "8:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Peninsula Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 74 Google reviews. Phone (650) 960-1300, 790 N Shoreline Blvd, Mountain View, CA 94043. Hours: mon 8:30-17:30; tue 8:30-17:30; wed 8:30-17:30; thu 8:30-17:30; fri 8:30-17:30; sat 9:00-16:00; sun closed. Fit: independent shop with 74 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Peninsula Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509601300",
+   "address": "790 N Shoreline Blvd, Mountain View, CA 94043",
+   "website": null,
+   "hours": {
+    "mon": "8:30-17:30",
+    "tue": "8:30-17:30",
+    "wed": "8:30-17:30",
+    "thu": "8:30-17:30",
+    "fri": "8:30-17:30",
+    "sat": "9:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "11th Street Auto Repair",
+  "domain": "11thstreetautorepair.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 65 Google reviews. Phone (415) 255-8900, 270 11th St, San Francisco, CA 94103. Hours: mon 7:30-17:00; tue 7:30-17:00; wed 7:30-17:00; thu 7:30-17:00; fri 7:30-17:00; sat closed; sun closed. Fit: independent shop with 65 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has worked exclusively on Land Rover since 1999.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "11th Street Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14152558900",
+   "address": "270 11th St, San Francisco, CA 94103",
+   "website": "http://www.11thstreetautorepair.com/",
+   "hours": {
+    "mon": "7:30-17:00",
+    "tue": "7:30-17:00",
+    "wed": "7:30-17:00",
+    "thu": "7:30-17:00",
+    "fri": "7:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "diagnostics",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Jason's Auto Services",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 59 Google reviews. Phone (510) 268-0018, 2424 Broadway, Oakland, CA 94612. Hours: mon 8:30-17:30; tue 8:30-17:30; wed 8:30-17:30; thu 8:30-17:30; fri 8:30-17:30; sat closed; sun closed. Fit: independent shop with 59 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Jason's Auto Services",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15102680018",
+   "address": "2424 Broadway, Oakland, CA 94612",
+   "website": null,
+   "hours": {
+    "mon": "8:30-17:30",
+    "tue": "8:30-17:30",
+    "wed": "8:30-17:30",
+    "thu": "8:30-17:30",
+    "fri": "8:30-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Say Ray",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 59 Google reviews. Phone (650) 493-8480, 3251 Ash St, Palo Alto, CA 94306. Hours: mon 7:00-16:00; tue 7:00-16:00; wed 7:00-16:00; thu 7:00-16:00; fri closed; sat closed; sun closed. Fit: independent shop with 59 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Say Ray",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504938480",
+   "address": "3251 Ash St, Palo Alto, CA 94306",
+   "website": null,
+   "hours": {
+    "mon": "7:00-16:00",
+    "tue": "7:00-16:00",
+    "wed": "7:00-16:00",
+    "thu": "7:00-16:00",
+    "fri": "closed",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Nico's Auto Repair & Bodywork Shop",
+  "domain": "nicosautorepairandbodywork.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 59 Google reviews. Phone (510) 830-7819, 155 Gifford Ave, San Jose, CA 95110. Hours: mon 8:00-20:00; tue 8:00-20:00; wed 8:00-20:00; thu 8:00-20:00; fri 8:00-20:00; sat 8:00-20:00; sun 8:00-20:00. Fit: independent shop with 59 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has done repair and bodywork in San Jose since 2005.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Nico's Auto Repair & Bodywork Shop",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108307819",
+   "address": "155 Gifford Ave, San Jose, CA 95110",
+   "website": "https://nicosautorepairandbodywork.com/",
+   "hours": {
+    "mon": "8:00-20:00",
+    "tue": "8:00-20:00",
+    "wed": "8:00-20:00",
+    "thu": "8:00-20:00",
+    "fri": "8:00-20:00",
+    "sat": "8:00-20:00",
+    "sun": "8:00-20:00"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "diagnostics",
+    "collision repair",
+    "body work",
+    "suspension repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "PALO ALTO AUTO CARE",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 58 Google reviews. Phone (650) 494-1303, 699 San Antonio Rd, Palo Alto, CA 94306. Hours: mon 10:00-20:00; tue 10:00-20:00; wed 10:00-20:00; thu 10:00-20:00; fri 10:00-20:00; sat 10:00-20:00; sun closed. Fit: independent shop with 58 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "PALO ALTO AUTO CARE",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504941303",
+   "address": "699 San Antonio Rd, Palo Alto, CA 94306",
+   "website": null,
+   "hours": {
+    "mon": "10:00-20:00",
+    "tue": "10:00-20:00",
+    "wed": "10:00-20:00",
+    "thu": "10:00-20:00",
+    "fri": "10:00-20:00",
+    "sat": "10:00-20:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Bay Auto Center",
+  "domain": "findaloco.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.6 on 56 Google reviews. Phone (510) 839-3833, 610 Oak St, Oakland, CA 94607. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-17:00; fri 9:00-17:00; sat closed; sun closed. Fit: independent shop with 56 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Bay Auto Center",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108393833",
+   "address": "610 Oak St, Oakland, CA 94607",
+   "website": "https://findaloco.com/en/directory/bay-auto-center/",
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-17:00",
+    "fri": "9:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "My Mechanic",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 52 Google reviews. Phone (415) 864-0113, 358 10th St, San Francisco, CA 94103. Hours: mon None; tue None; wed None; thu None; fri None; sat None; sun None. Fit: independent shop with 52 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": false,
+  "shop_input": {
+   "name": "My Mechanic",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14158640113",
+   "address": "358 10th St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": null,
+    "tue": null,
+    "wed": null,
+    "thu": null,
+    "fri": null,
+    "sat": null,
+    "sun": null
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Mountain View Smog Test Only Center",
+  "domain": "mountainviewsmogcheck.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 809 Google reviews. Phone (650) 938-7664, 571 W El Camino Real, Mountain View, CA 94040. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-16:00; sun closed. Fit: independent shop with 809 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is a test-only smog station with a discounted retest if a car fails.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Mountain View Smog Test Only Center",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509387664",
+   "address": "571 W El Camino Real, Mountain View, CA 94040",
+   "website": "http://mountainviewsmogcheck.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "smog check"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Akins Auto Repair",
+  "domain": "akinsautorepair.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 741 Google reviews. Phone (408) 885-1898, 351 Keyes St, San Jose, CA 95112. Hours: mon 7:30-18:00; tue 7:30-18:00; wed 7:30-18:00; thu 7:30-18:00; fri 7:30-17:00; sat closed; sun closed. Fit: independent shop with 741 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has more than 24 years of experience and is a certified brake inspection station.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Akins Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14088851898",
+   "address": "351 Keyes St, San Jose, CA 95112",
+   "website": "https://www.akinsautorepair.com/",
+   "hours": {
+    "mon": "7:30-18:00",
+    "tue": "7:30-18:00",
+    "wed": "7:30-18:00",
+    "thu": "7:30-18:00",
+    "fri": "7:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "diagnostics",
+    "hybrid and EV repair",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Woodside Auto & Tire",
+  "domain": "woodsideautoandtire.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 625 Google reviews. Phone (650) 363-0460, 333 Woodside Rd, Redwood City, CA 94061. Hours: mon 7:30-17:30; tue 7:30-17:30; wed 7:30-17:30; thu 7:30-17:30; fri 7:30-17:30; sat closed; sun closed. Fit: independent shop with 625 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been family owned and serving Redwood City since 1988.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Woodside Auto & Tire",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503630460",
+   "address": "333 Woodside Rd, Redwood City, CA 94061",
+   "website": "https://www.woodsideautoandtire.com/",
+   "hours": {
+    "mon": "7:30-17:30",
+    "tue": "7:30-17:30",
+    "wed": "7:30-17:30",
+    "thu": "7:30-17:30",
+    "fri": "7:30-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics",
+    "suspension repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Stress-Free Auto Care",
+  "domain": "stressfree.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.5 on 622 Google reviews. Phone (650) 963-9212, 301 El Camino Real, Menlo Park, CA 94025. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-16:00; sun 8:00-16:00. Fit: franchise or chain location, weaker fit, but with 622 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site offers a 24-month/24,000-mile nationwide warranty on qualifying repairs and text updates with digital inspection photos.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Stress-Free Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503280287",
+   "address": "301 El Camino Real, Menlo Park, CA 94025",
+   "website": "http://www.stressfree.com/shops/menlo-park",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-16:00",
+    "sun": "8:00-16:00"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "West Wind Automotive",
+  "domain": "westwindautomotive.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 5 on 458 Google reviews. Phone (415) 621-6218, 351 Valencia St, San Francisco, CA 94103. Hours: mon 7:30-18:00; tue 7:30-18:00; wed 7:30-18:00; thu 7:30-18:00; fri 7:30-18:00; sat closed; sun closed. Fit: independent shop with 458 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been locally owned for 47 years and offers a limited lifetime warranty on collision work.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "West Wind Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14156216218",
+   "address": "351 Valencia St, San Francisco, CA 94103",
+   "website": "https://westwindautomotive.com/",
+   "hours": {
+    "mon": "7:30-18:00",
+    "tue": "7:30-18:00",
+    "wed": "7:30-18:00",
+    "thu": "7:30-18:00",
+    "fri": "7:30-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "diagnostics",
+    "collision repair",
+    "body work",
+    "towing"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Broadway Automotive & Transmission",
+  "domain": "broadwayautotran.com",
+  "source": "outreach",
+  "note": "RESEARCH: Transmission shop rated 4.9 on 433 Google reviews. Phone (510) 834-4434, 2943 Broadway, Oakland, CA 94611. Hours: mon 8:30-17:00; tue 8:30-17:00; wed 8:30-17:00; thu 8:30-17:00; fri 8:30-16:00; sat closed; sun closed. Fit: independent shop with 433 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it specializes in automatic and manual transmissions.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Broadway Automotive & Transmission",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108344434",
+   "address": "2943 Broadway, Oakland, CA 94611",
+   "website": "http://www.broadwayautotran.com/",
+   "hours": {
+    "mon": "8:30-17:00",
+    "tue": "8:30-17:00",
+    "wed": "8:30-17:00",
+    "thu": "8:30-17:00",
+    "fri": "8:30-16:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "transmission service",
+    "diagnostics",
+    "body work",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "SF Mobile Tire Repair Service",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Tire shop rated 4.9 on 415 Google reviews. Phone (415) 980-9058, 1780 Folsom St, San Francisco, CA 94103. Hours: mon 6:00-0:00; tue 6:00-0:00; wed 6:00-0:00; thu 6:00-0:00; fri 6:00-0:00; sat 6:00-0:00; sun 6:00-0:00. Fit: independent shop with 415 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "SF Mobile Tire Repair Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14159809058",
+   "address": "1780 Folsom St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": "6:00-0:00",
+    "tue": "6:00-0:00",
+    "wed": "6:00-0:00",
+    "thu": "6:00-0:00",
+    "fri": "6:00-0:00",
+    "sat": "6:00-0:00",
+    "sun": "6:00-0:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Fix Auto Folsom",
+  "domain": "fixautousa.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.8 on 371 Google reviews. Phone (415) 565-3560, 1465 Folsom St, San Francisco, CA 94103. Hours: mon 7:30-17:00; tue 7:30-17:00; wed 7:30-17:00; thu 7:30-17:00; fri 7:30-17:00; sat closed; sun closed. Fit: franchise or chain location, weaker fit, but with 371 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site describes a locally owned collision repair center staffed by certified technicians.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Fix Auto Folsom",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14155653560",
+   "address": "1465 Folsom St, San Francisco, CA 94103",
+   "website": "https://fixautousa.com/locations/ca/san-francisco/fix-auto-folsom-24074/",
+   "hours": {
+    "mon": "7:30-17:00",
+    "tue": "7:30-17:00",
+    "wed": "7:30-17:00",
+    "thu": "7:30-17:00",
+    "fri": "7:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "tires",
+    "collision repair",
+    "body work",
+    "towing"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Fix Auto Palo Alto",
+  "domain": "fixautousa.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.8 on 352 Google reviews. Phone (650) 326-9800, 1880 W Bayshore Rd, Palo Alto, CA 94303. Hours: mon 7:30-17:00; tue 7:30-17:00; wed 7:30-17:00; thu 7:30-17:00; fri 7:30-17:00; sat closed; sun closed. Fit: franchise or chain location, weaker fit, but with 352 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site describes a locally owned collision repair center staffed by certified technicians.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Fix Auto Palo Alto",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503269800",
+   "address": "1880 W Bayshore Rd, Palo Alto, CA 94303",
+   "website": "https://fixautousa.com/locations/ca/palo-alto/fix-auto-palo-alto-24016/",
+   "hours": {
+    "mon": "7:30-17:00",
+    "tue": "7:30-17:00",
+    "wed": "7:30-17:00",
+    "thu": "7:30-17:00",
+    "fri": "7:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "collision repair",
+    "body work"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "FAST TRACK TIRE & AUTO SERVICE",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Tire shop rated 4.6 on 254 Google reviews. Phone (650) 995-2401, 503 Whipple Ave, Redwood City, CA 94063. Hours: mon 8:00-23:00; tue 8:00-23:00; wed 8:00-23:00; thu 8:00-23:00; fri 8:00-23:00; sat 8:00-23:00; sun 8:00-23:00. Fit: independent shop with 254 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "FAST TRACK TIRE & AUTO SERVICE",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509952401",
+   "address": "503 Whipple Ave, Redwood City, CA 94063",
+   "website": null,
+   "hours": {
+    "mon": "8:00-23:00",
+    "tue": "8:00-23:00",
+    "wed": "8:00-23:00",
+    "thu": "8:00-23:00",
+    "fri": "8:00-23:00",
+    "sat": "8:00-23:00",
+    "sun": "8:00-23:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Crash Champions Collision Repair Oakland 10th",
+  "domain": "crashchampions.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.8 on 174 Google reviews. Phone (510) 836-2535, 110 10th St, Oakland, CA 94607. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat 9:00-12:00; sun closed. Fit: franchise or chain location, weaker fit, but with 174 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says repairs carry a written lifetime guarantee and the shop is I-CAR Gold Class certified.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Crash Champions Collision Repair Oakland 10th",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108362535",
+   "address": "110 10th St, Oakland, CA 94607",
+   "website": "https://crashchampions.com/locations/oakland-10th",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "9:00-12:00",
+    "sun": "closed"
+   },
+   "services": [
+    "tires",
+    "diagnostics",
+    "collision repair",
+    "body work",
+    "towing",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Advanced Auto Repair Center",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.9 on 101 Google reviews. Phone (650) 965-3445, 83 Pioneer Way, Mountain View, CA 94041. Hours: mon 7:30-17:30; tue 7:30-17:30; wed 7:30-17:30; thu 7:30-17:30; fri 7:30-17:30; sat closed; sun closed. Fit: independent shop with 101 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Advanced Auto Repair Center",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509653445",
+   "address": "83 Pioneer Way, Mountain View, CA 94041",
+   "website": null,
+   "hours": {
+    "mon": "7:30-17:30",
+    "tue": "7:30-17:30",
+    "wed": "7:30-17:30",
+    "thu": "7:30-17:30",
+    "fri": "7:30-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Tucs Autobody Repair & Paint",
+  "domain": "tucsautobody.net",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 5 on 92 Google reviews. Phone (408) 298-7745, 183 Ryland St. Unit A, San Jose, CA 95110. Hours: mon 8:00-18:30; tue 8:00-18:30; wed 8:00-18:30; thu 8:00-18:30; fri 8:00-18:30; sat 8:00-18:30; sun 8:00-18:30. Fit: independent shop with 92 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Tucs Autobody Repair & Paint",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082987745",
+   "address": "183 Ryland St. Unit A, San Jose, CA 95110",
+   "website": "http://www.tucsautobody.net/",
+   "hours": {
+    "mon": "8:00-18:30",
+    "tue": "8:00-18:30",
+    "wed": "8:00-18:30",
+    "thu": "8:00-18:30",
+    "fri": "8:00-18:30",
+    "sat": "8:00-18:30",
+    "sun": "8:00-18:30"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Auto City Repair",
+  "domain": "autocityrepair.net",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.9 on 92 Google reviews. Phone (415) 440-5353, 1165 Folsom St, San Francisco, CA 94103. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 92 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is family owned and has been on Folsom Street since 1998.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Auto City Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14154405353",
+   "address": "1165 Folsom St, San Francisco, CA 94103",
+   "website": "https://www.autocityrepair.net/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "tires",
+    "wheel alignment",
+    "diagnostics",
+    "collision repair",
+    "body work",
+    "towing"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Kennedy Auto Body & Paint",
+  "domain": "kennedyautobody.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.7 on 64 Google reviews. Phone (650) 365-1565, 1026 El Camino Real, Redwood City, CA 94063. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat closed; sun closed. Fit: independent shop with 64 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has over 55 years in the industry with I-CAR certified technicians.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Kennedy Auto Body & Paint",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503651565",
+   "address": "1026 El Camino Real, Redwood City, CA 94063",
+   "website": "http://www.kennedyautobody.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "collision repair",
+    "body work"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Auto Headquarter",
+  "domain": "autoheadquarter.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 47 Google reviews. Phone (650) 368-3290, 230 Villa St, Mountain View, CA 94041. Hours: mon 11:00-18:00; tue 11:00-18:00; wed 11:00-18:00; thu 11:00-18:00; fri closed; sat closed; sun closed. Fit: independent shop with 47 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is a Subaru and Honda specialist and an EcuTek authorized tuner, in business since 2003.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Auto Headquarter",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503683290",
+   "address": "230 Villa St, Mountain View, CA 94041",
+   "website": "http://www.autoheadquarter.com/",
+   "hours": {
+    "mon": "11:00-18:00",
+    "tue": "11:00-18:00",
+    "wed": "11:00-18:00",
+    "thu": "11:00-18:00",
+    "fri": "closed",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "transmission service",
+    "diagnostics",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Lone Star Auto Repair",
+  "domain": "lone-star-auto-repair.lany.io",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.4 on 46 Google reviews. Phone (510) 251-1389, 2510 West St, Oakland, CA 94612. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-18:00; sun closed. Fit: independent shop with 46 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Lone Star Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15102511389",
+   "address": "2510 West St, Oakland, CA 94612",
+   "website": "http://lone-star-auto-repair.lany.io/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-18:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Ken's Auto Repair",
+  "domain": "kens-auto-repair-san-jose.jany.io",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 44 Google reviews. Phone (408) 293-5332, 432 W San Carlos St, San Jose, CA 95110. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-18:00; fri 9:00-18:00; sat 9:00-18:00; sun closed. Fit: independent shop with 44 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Ken's Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082935332",
+   "address": "432 W San Carlos St, San Jose, CA 95110",
+   "website": "http://kens-auto-repair-san-jose.jany.io/",
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-18:00",
+    "fri": "9:00-18:00",
+    "sat": "9:00-18:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "A&L Auto Connection",
+  "domain": "cmm46ghip01pas601n1zr6em5.web.wbj.dev",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 44 Google reviews. Phone (408) 660-7987, 288 E Virginia St, San Jose, CA 95112. Hours: mon closed; tue 9:30-17:00; wed 9:30-17:00; thu 9:30-17:00; fri 9:30-17:00; sat 9:30-17:00; sun closed. Fit: independent shop with 44 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "A&L Auto Connection",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14086607987",
+   "address": "288 E Virginia St, San Jose, CA 95112",
+   "website": "https://cmm46ghip01pas601n1zr6em5.web.wbj.dev/",
+   "hours": {
+    "mon": "closed",
+    "tue": "9:30-17:00",
+    "wed": "9:30-17:00",
+    "thu": "9:30-17:00",
+    "fri": "9:30-17:00",
+    "sat": "9:30-17:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Corporate Auto Works",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 42 Google reviews. Phone (650) 691-9477, 770 Yuba Dr, Mountain View, CA 94041. Hours: mon 8:00-17:30; tue 8:00-17:30; wed 8:00-17:30; thu 8:00-17:30; fri 8:00-17:30; sat closed; sun closed. Fit: independent shop with 42 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Corporate Auto Works",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16506919477",
+   "address": "770 Yuba Dr, Mountain View, CA 94041",
+   "website": null,
+   "hours": {
+    "mon": "8:00-17:30",
+    "tue": "8:00-17:30",
+    "wed": "8:00-17:30",
+    "thu": "8:00-17:30",
+    "fri": "8:00-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Muffler Express",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 41 Google reviews. Phone (650) 369-1076, 1414 El Camino Real, Redwood City, CA 94063. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat 8:00-15:00; sun closed. Fit: independent shop with 41 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Muffler Express",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503691076",
+   "address": "1414 El Camino Real, Redwood City, CA 94063",
+   "website": null,
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "8:00-15:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "A 4th Smog",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 3.6 on 37 Google reviews. Phone (408) 292-5311, 147 E Santa Clara St, San Jose, CA 95113. Hours: mon 8:30-19:00; tue 8:30-20:30; wed 8:30-21:00; thu 8:30-21:00; fri 8:30-20:30; sat 9:00-18:00; sun 9:30-17:00. Fit: independent shop with 37 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "A 4th Smog",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082925311",
+   "address": "147 E Santa Clara St, San Jose, CA 95113",
+   "website": null,
+   "hours": {
+    "mon": "8:30-19:00",
+    "tue": "8:30-20:30",
+    "wed": "8:30-21:00",
+    "thu": "8:30-21:00",
+    "fri": "8:30-20:30",
+    "sat": "9:00-18:00",
+    "sun": "9:30-17:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Legacy Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 34 Google reviews. Phone (650) 361-1136, 105 El Camino Real, Redwood City, CA 94062. Hours: mon 8:30-17:30; tue 8:30-17:30; wed 8:30-17:30; thu 8:30-17:30; fri 8:30-17:30; sat closed; sun closed. Fit: independent shop with 34 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Legacy Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503611136",
+   "address": "105 El Camino Real, Redwood City, CA 94062",
+   "website": null,
+   "hours": {
+    "mon": "8:30-17:30",
+    "tue": "8:30-17:30",
+    "wed": "8:30-17:30",
+    "thu": "8:30-17:30",
+    "fri": "8:30-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "IN N OUT Auto Service",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 3.9 on 31 Google reviews. Phone (510) 832-2889, 712 E 12th St, Oakland, CA 94606. Hours: mon 9:30-18:00; tue 9:30-18:00; wed 9:30-18:00; thu 9:30-18:00; fri 9:30-18:00; sat 9:30-18:00; sun closed. Fit: independent shop with 31 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "IN N OUT Auto Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108322889",
+   "address": "712 E 12th St, Oakland, CA 94606",
+   "website": null,
+   "hours": {
+    "mon": "9:30-18:00",
+    "tue": "9:30-18:00",
+    "wed": "9:30-18:00",
+    "thu": "9:30-18:00",
+    "fri": "9:30-18:00",
+    "sat": "9:30-18:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Castillo auto repair & electric",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.4 on 31 Google reviews. Phone (650) 485-2251, 495 El Camino Real, Menlo Park, CA 94025. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat 8:00-14:00; sun closed. Fit: independent shop with 31 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Castillo auto repair & electric",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504852251",
+   "address": "495 El Camino Real, Menlo Park, CA 94025",
+   "website": null,
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "8:00-14:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Alberto's Garage Redwood City Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 29 Google reviews. Phone (650) 784-3735, 1207 Shasta St, Redwood City, CA 94063. Hours: mon 10:30-18:00; tue 10:30-18:00; wed 10:30-18:00; thu 10:30-18:00; fri 10:30-18:00; sat 10:30-18:00; sun 10:30-18:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Alberto's Garage Redwood City Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16507843735",
+   "address": "1207 Shasta St, Redwood City, CA 94063",
+   "website": null,
+   "hours": {
+    "mon": "10:30-18:00",
+    "tue": "10:30-18:00",
+    "wed": "10:30-18:00",
+    "thu": "10:30-18:00",
+    "fri": "10:30-18:00",
+    "sat": "10:30-18:00",
+    "sun": "10:30-18:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Car Care Automotive",
+  "domain": "carcareauto.net",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.1 on 28 Google reviews. Phone (510) 444-1127, 320 23rd St, Oakland, CA 94612. Hours: mon 8:30-17:30; tue 8:30-17:30; wed 8:30-17:30; thu 8:30-17:30; fri 8:30-17:30; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it repairs foreign and domestic vehicles of any make.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Car Care Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15104441127",
+   "address": "320 23rd St, Oakland, CA 94612",
+   "website": "https://www.carcareauto.net/",
+   "hours": {
+    "mon": "8:30-17:30",
+    "tue": "8:30-17:30",
+    "wed": "8:30-17:30",
+    "thu": "8:30-17:30",
+    "fri": "8:30-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "K & K Auto Service",
+  "domain": "kkautoservice.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 28 Google reviews. Phone (650) 631-2888, garage entrance on, 1700 El Camino Real, St Francis Way Unit C, San Carlos, CA 94070. Hours: mon 9:00-17:00; tue 9:00-17:00; wed 9:00-17:00; thu 9:00-17:00; fri 9:00-17:00; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "K & K Auto Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16506312888",
+   "address": "garage entrance on, 1700 El Camino Real, St Francis Way Unit C, San Carlos, CA 94070",
+   "website": "http://www.kkautoservice.com/",
+   "hours": {
+    "mon": "9:00-17:00",
+    "tue": "9:00-17:00",
+    "wed": "9:00-17:00",
+    "thu": "9:00-17:00",
+    "fri": "9:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Ed's Scientific Auto Body Inc.",
+  "domain": "edsscientificautobody.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto body shop rated 4.7 on 27 Google reviews. Phone (408) 287-8087, 80 Barack Obama Blvd, San Jose, CA 95110. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site describes a certified auto body team serving San Jose, Campbell and Los Gatos.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Ed's Scientific Auto Body Inc.",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082878087",
+   "address": "80 Barack Obama Blvd, San Jose, CA 95110",
+   "website": "https://edsscientificautobody.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "tires",
+    "wheel alignment",
+    "collision repair",
+    "body work",
+    "towing",
+    "suspension repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Epic Automotive",
+  "domain": "epicautosf.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 27 Google reviews. Phone (415) 255-5902, 341 10th St, San Francisco, CA 94103. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it specializes in German cars with ASE Master Technicians and over 15 years of experience.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Epic Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14152555902",
+   "address": "341 10th St, San Francisco, CA 94103",
+   "website": "http://www.epicautosf.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "transmission service",
+    "tires",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Ramos Mobile Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto electrical service rated 4.5 on 26 Google reviews. Phone (650) 248-6471, 170 E El Camino Real, Mountain View, CA 94040. Hours: mon 8:00-0:00; tue 0:00-6:00; wed 0:00-6:00; thu 0:00-6:00; fri 0:00-6:00; sat 0:00-6:00; sun 0:00-6:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Ramos Mobile Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16502486471",
+   "address": "170 E El Camino Real, Mountain View, CA 94040",
+   "website": null,
+   "hours": {
+    "mon": "8:00-0:00",
+    "tue": "0:00-6:00",
+    "wed": "0:00-6:00",
+    "thu": "0:00-6:00",
+    "fri": "0:00-6:00",
+    "sat": "0:00-6:00",
+    "sun": "0:00-6:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "SF European",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 26 Google reviews. Phone (415) 265-9434, 1634 Howard St, San Francisco, CA 94103. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-18:00; fri 9:00-18:00; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "SF European",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14152659434",
+   "address": "1634 Howard St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-18:00",
+    "fri": "9:00-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Belmount Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 24 Google reviews. Phone (650) 802-8027, 1383 Laurel St #5011, San Carlos, CA 94070. Hours: mon 9:00-19:00; tue 9:00-19:00; wed 9:00-19:00; thu 9:00-19:00; fri 9:00-19:00; sat 9:00-19:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Belmount Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16508028027",
+   "address": "1383 Laurel St #5011, San Carlos, CA 94070",
+   "website": null,
+   "hours": {
+    "mon": "9:00-19:00",
+    "tue": "9:00-19:00",
+    "wed": "9:00-19:00",
+    "thu": "9:00-19:00",
+    "fri": "9:00-19:00",
+    "sat": "9:00-19:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "City Auto Care",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Car repair and maintenance service rated 4.3 on 23 Google reviews. Phone (408) 279-2123, 510 E Santa Clara St, San Jose, CA 95112. Hours: mon 9:00-17:00; tue 9:00-17:00; wed 9:00-17:00; thu 9:00-17:00; fri 9:00-17:00; sat 9:00-14:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "City Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082792123",
+   "address": "510 E Santa Clara St, San Jose, CA 95112",
+   "website": null,
+   "hours": {
+    "mon": "9:00-17:00",
+    "tue": "9:00-17:00",
+    "wed": "9:00-17:00",
+    "thu": "9:00-17:00",
+    "fri": "9:00-17:00",
+    "sat": "9:00-14:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "CHINATOWN SMOG & REPAIR STATION",
+  "domain": "chinatownsmog.com",
+  "source": "outreach",
+  "note": "RESEARCH: Smog inspection station rated 4.7 on 20 Google reviews. Phone (510) 893-1200, 800 Harrison St, Oakland, CA 94607. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-18:00; fri 9:00-18:00; sat 9:00-17:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "CHINATOWN SMOG & REPAIR STATION",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108931200",
+   "address": "800 Harrison St, Oakland, CA 94607",
+   "website": "http://chinatownsmog.com/",
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-18:00",
+    "fri": "9:00-18:00",
+    "sat": "9:00-17:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Auto Master Care",
+  "domain": "automastercare.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 18 Google reviews. Phone (650) 368-8151, 67 El Camino Real, Redwood City, CA 94062. Hours: mon 9:00-17:30; tue 9:00-17:30; wed 9:00-17:30; thu 9:00-17:30; fri 9:00-17:30; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it is a family-owned repair and smog check shop.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Auto Master Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503688151",
+   "address": "67 El Camino Real, Redwood City, CA 94062",
+   "website": "http://www.automastercare.com/",
+   "hours": {
+    "mon": "9:00-17:30",
+    "tue": "9:00-17:30",
+    "wed": "9:00-17:30",
+    "thu": "9:00-17:30",
+    "fri": "9:00-17:30",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "smog check",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Mobile Tires & auto repair services",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 17 Google reviews. Phone (415) 275-4330, 311 Oak St, Oakland, CA 94607. Hours: mon 7:00-0:00; tue 2:00-0:00; wed 2:00-0:00; thu 2:00-0:00; fri 2:00-0:00; sat 0:00-24:00; sun 7:00-0:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Mobile Tires & auto repair services",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14152754330",
+   "address": "311 Oak St, Oakland, CA 94607",
+   "website": null,
+   "hours": {
+    "mon": "7:00-0:00",
+    "tue": "2:00-0:00",
+    "wed": "2:00-0:00",
+    "thu": "2:00-0:00",
+    "fri": "2:00-0:00",
+    "sat": "0:00-24:00",
+    "sun": "7:00-0:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "T & T AUTO REPAIR & BODY",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 15 Google reviews. Phone (510) 832-2110, 330 Webster St, Oakland, CA 94607. Hours: mon 9:00-17:00; tue 9:00-17:00; wed 9:00-17:00; thu 9:00-17:00; fri 9:00-17:00; sat 9:00-17:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": false,
+  "shop_input": {
+   "name": "T & T AUTO REPAIR & BODY",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108322110",
+   "address": "330 Webster St, Oakland, CA 94607",
+   "website": null,
+   "hours": {
+    "mon": "9:00-17:00",
+    "tue": "9:00-17:00",
+    "wed": "9:00-17:00",
+    "thu": "9:00-17:00",
+    "fri": "9:00-17:00",
+    "sat": "9:00-17:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "European Asian Small Car Shop",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 14 Google reviews. Phone (650) 329-0666, 111 Homer Ave, Palo Alto, CA 94301. Hours: mon 7:30-17:00; tue 7:30-17:00; wed 7:30-17:00; thu 7:30-17:00; fri 7:30-17:00; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "European Asian Small Car Shop",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503290666",
+   "address": "111 Homer Ave, Palo Alto, CA 94301",
+   "website": null,
+   "hours": {
+    "mon": "7:30-17:00",
+    "tue": "7:30-17:00",
+    "wed": "7:30-17:00",
+    "thu": "7:30-17:00",
+    "fri": "7:30-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "LEICA SOMA Tire & Auto Repair",
+  "domain": "somaautorepair.com",
+  "source": "outreach",
+  "note": "RESEARCH: Tire repair shop rated 5 on 12 Google reviews. Phone (415) 756-1826, 1398 Folsom St Suite B, San Francisco, CA 94103. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-16:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it is family owned, run by two immigrant brothers.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "LEICA SOMA Tire & Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14157561826",
+   "address": "1398 Folsom St Suite B, San Francisco, CA 94103",
+   "website": "https://somaautorepair.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "tires",
+    "wheel alignment",
+    "diagnostics",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "My Mobile Mechanic of Oakland",
+  "domain": "mymobilemechanic.net",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated  on 11 Google reviews. Phone (510) 851-9705, 824 15th St, Oakland, CA 94607. Hours: mon 8:00-20:00; tue 8:00-20:00; wed 8:00-20:00; thu 8:00-20:00; fri 8:00-20:00; sat 8:00-20:00; sun 8:00-20:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it is a mobile mechanic and also works on motorcycles.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "My Mobile Mechanic of Oakland",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108519705",
+   "address": "824 15th St, Oakland, CA 94607",
+   "website": "https://mymobilemechanic.net/mobile-mechanic-oakland-ca/",
+   "hours": {
+    "mon": "8:00-20:00",
+    "tue": "8:00-20:00",
+    "wed": "8:00-20:00",
+    "thu": "8:00-20:00",
+    "fri": "8:00-20:00",
+    "sat": "8:00-20:00",
+    "sun": "8:00-20:00"
+   },
+   "services": [
+    "tires",
+    "diagnostics",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "P G Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.4 on 11 Google reviews. Phone (510) 834-3242, 450 International Blvd, Oakland, CA 94606. Hours: mon 10:00-17:30; tue 10:00-17:30; wed 10:00-17:30; thu 10:00-17:30; fri 10:00-17:30; sat 10:00-17:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "P G Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108343242",
+   "address": "450 International Blvd, Oakland, CA 94606",
+   "website": null,
+   "hours": {
+    "mon": "10:00-17:30",
+    "tue": "10:00-17:30",
+    "wed": "10:00-17:30",
+    "thu": "10:00-17:30",
+    "fri": "10:00-17:30",
+    "sat": "10:00-17:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Pete's Stop",
+  "domain": "petesstop.com",
+  "source": "outreach",
+  "note": "RESEARCH: Tire service rated 4.4 on 10 Google reviews. Phone (408) 550-0297, 447 E William St, San Jose, CA 95112. Hours: mon 9:00-17:30; tue 12:00-19:00; wed 12:00-19:00; thu 9:00-17:30; fri 9:00-17:30; sat 9:00-17:30; sun 9:00-12:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it is family owned and is also an authorized U-Haul dealer and gas station.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Pete's Stop",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14085500297",
+   "address": "447 E William St, San Jose, CA 95112",
+   "website": "https://www.petesstop.com/",
+   "hours": {
+    "mon": "9:00-17:30",
+    "tue": "12:00-19:00",
+    "wed": "12:00-19:00",
+    "thu": "9:00-17:30",
+    "fri": "9:00-17:30",
+    "sat": "9:00-17:30",
+    "sun": "9:00-12:00"
+   },
+   "services": [
+    "tires",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Washington Auto Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4 on 7 Google reviews. Phone (408) 292-1063, 412 N 4th St, San Jose, CA 95112. Hours: mon None; tue None; wed None; thu None; fri None; sat None; sun None. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Washington Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082921063",
+   "address": "412 N 4th St, San Jose, CA 95112",
+   "website": null,
+   "hours": {
+    "mon": null,
+    "tue": null,
+    "wed": null,
+    "thu": null,
+    "fri": null,
+    "sat": null,
+    "sun": null
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Precision Automotive Care",
+  "domain": "precisionautomotivecare.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.3 on 6 Google reviews. Phone (408) 849-0663, 34 S Almaden Ave, San Jose, CA 95113. Hours: mon 8:00-16:00; tue 8:00-16:00; wed 8:00-16:00; thu 8:00-16:00; fri 8:00-16:00; sat 8:00-16:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site offers fleet service programs and a transparency guarantee with parts and labor quoted separately.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Precision Automotive Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14088490663",
+   "address": "34 S Almaden Ave, San Jose, CA 95113",
+   "website": "https://precisionautomotivecare.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp",
+   "hours": {
+    "mon": "8:00-16:00",
+    "tue": "8:00-16:00",
+    "wed": "8:00-16:00",
+    "thu": "8:00-16:00",
+    "fri": "8:00-16:00",
+    "sat": "8:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "transmission service",
+    "tires",
+    "diagnostics",
+    "body work",
+    "towing",
+    "suspension repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Discount Auto Repair (Mobile Mechanic Service)",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 6 Google reviews. Phone (628) 230-3508, 214 Haight St, San Francisco, CA 94102. Hours: mon 7:00-19:00; tue 7:00-19:00; wed 7:00-19:00; thu 7:00-19:00; fri 7:00-19:00; sat 7:00-17:00; sun 7:00-17:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Discount Auto Repair (Mobile Mechanic Service)",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16282303508",
+   "address": "214 Haight St, San Francisco, CA 94102",
+   "website": null,
+   "hours": {
+    "mon": "7:00-19:00",
+    "tue": "7:00-19:00",
+    "wed": "7:00-19:00",
+    "thu": "7:00-19:00",
+    "fri": "7:00-19:00",
+    "sat": "7:00-17:00",
+    "sun": "7:00-17:00"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Mikes Repair Service",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 4 Google reviews. Phone (408) 288-7899, 457 Park Ave, San Jose, CA 95110. Hours: mon 10:00-18:00; tue 10:00-18:00; wed 10:00-18:00; thu 10:00-18:00; fri 10:00-18:00; sat closed; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Mikes Repair Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082887899",
+   "address": "457 Park Ave, San Jose, CA 95110",
+   "website": null,
+   "hours": {
+    "mon": "10:00-18:00",
+    "tue": "10:00-18:00",
+    "wed": "10:00-18:00",
+    "thu": "10:00-18:00",
+    "fri": "10:00-18:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Pro Auto Tech",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Car repair and maintenance service rated 5 on 3 Google reviews. Phone (510) 817-4700, 425 Harrison St, Oakland, CA 94607. Hours: mon 8:30-17:00; tue 8:30-17:00; wed 8:30-17:00; thu 8:30-17:00; fri 8:30-17:00; sat 9:00-16:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Pro Auto Tech",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15108174700",
+   "address": "425 Harrison St, Oakland, CA 94607",
+   "website": null,
+   "hours": {
+    "mon": "8:30-17:00",
+    "tue": "8:30-17:00",
+    "wed": "8:30-17:00",
+    "thu": "8:30-17:00",
+    "fri": "8:30-17:00",
+    "sat": "9:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Auto Repair Master LLC.",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 3 Google reviews. Phone (669) 210-2955, 155 El Camino Real, Redwood City, CA 94062. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-18:00; fri 9:00-18:00; sat 10:00-16:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Auto Repair Master LLC.",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16692102955",
+   "address": "155 El Camino Real, Redwood City, CA 94062",
+   "website": null,
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-18:00",
+    "fri": "9:00-18:00",
+    "sat": "10:00-16:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Auto Repair Center",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 2 Google reviews. Phone (415) 863-0667, 1379 Folsom St, San Francisco, CA 94103. Hours: mon None; tue None; wed None; thu None; fri None; sat None; sun None. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Auto Repair Center",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14158630667",
+   "address": "1379 Folsom St, San Francisco, CA 94103",
+   "website": null,
+   "hours": {
+    "mon": null,
+    "tue": null,
+    "wed": null,
+    "thu": null,
+    "fri": null,
+    "sat": null,
+    "sun": null
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Corcis Automotive",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 5 on 1 Google reviews. Phone (650) 576-5387, 540 El Camino Real, Redwood City, CA 94063. Hours: mon 9:00-18:00; tue 9:00-18:00; wed 9:00-18:00; thu 9:00-18:00; fri 9:00-18:00; sat 9:00-18:00; sun closed. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Corcis Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16505765387",
+   "address": "540 El Camino Real, Redwood City, CA 94063",
+   "website": null,
+   "hours": {
+    "mon": "9:00-18:00",
+    "tue": "9:00-18:00",
+    "wed": "9:00-18:00",
+    "thu": "9:00-18:00",
+    "fri": "9:00-18:00",
+    "sat": "9:00-18:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Jone Auto Group",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated  on 1 Google reviews. Phone (223) 219-1372, 472 S 10th St, San Jose, CA 95112. Hours: mon None; tue None; wed None; thu None; fri None; sat None; sun None. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: no site detail.",
+  "priority": "C",
+  "operator_called": false,
+  "shop_input": {
+   "name": "Jone Auto Group",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+12232191372",
+   "address": "472 S 10th St, San Jose, CA 95112",
+   "website": null,
+   "hours": {
+    "mon": null,
+    "tue": null,
+    "wed": null,
+    "thu": null,
+    "fri": null,
+    "sat": null,
+    "sun": null
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Meissner Automotive",
+  "domain": "meissnerautomotive.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 391 Google reviews. Phone (650) 494-3804, 811 E Charleston Rd, Palo Alto, CA 94303. Hours: mon 8:00-17:00; tue 8:00-17:00; wed 8:00-17:00; thu 8:00-17:00; fri 8:00-17:00; sat closed; sun closed. Fit: independent shop with 391 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been family owned since 1962 and offers a 2 year/24,000 mile warranty.",
+  "priority": "A",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Meissner Automotive",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16504943804",
+   "address": "811 E Charleston Rd, Palo Alto, CA 94303",
+   "website": "http://www.meissnerautomotive.com/",
+   "hours": {
+    "mon": "8:00-17:00",
+    "tue": "8:00-17:00",
+    "wed": "8:00-17:00",
+    "thu": "8:00-17:00",
+    "fri": "8:00-17:00",
+    "sat": "closed",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "diagnostics",
+    "hybrid and EV repair",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "SpeeDee Oil Change & Auto Service",
+  "domain": "speedeeoil.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 316 Google reviews. Phone (650) 365-6090, 550 Veterans Blvd, Redwood City, CA 94063. Hours: mon 8:45-17:00; tue 8:45-17:00; wed 8:45-17:00; thu 8:45-17:00; fri 8:45-17:00; sat 8:45-16:30; sun closed. Fit: franchise or chain location, weaker fit, but with 316 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says its SpeeDee Performance Certified technicians handle oil changes, brakes and scheduled maintenance.",
+  "priority": "A",
+  "operator_called": true,
+  "shop_input": {
+   "name": "SpeeDee Oil Change & Auto Service",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503656090",
+   "address": "550 Veterans Blvd, Redwood City, CA 94063",
+   "website": "https://www.speedeeoil.com/locations/us/ca/redwood-city/550-veterans-blvd",
+   "hours": {
+    "mon": "8:45-17:00",
+    "tue": "8:45-17:00",
+    "wed": "8:45-17:00",
+    "thu": "8:45-17:00",
+    "fri": "8:45-17:00",
+    "sat": "8:45-16:30",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Chestnut Auto Repairs & Towing",
+  "domain": "autorepairsredwoodcity.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.3 on 303 Google reviews. Phone (650) 366-1900, 160 Chestnut St Unit b, Redwood City, CA 94063. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-18:00; sun 8:00-18:00. Fit: independent shop with 303 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has been family owned in Redwood City since 1989 and repairs EVs and hybrids.",
+  "priority": "A",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Chestnut Auto Repairs & Towing",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503661900",
+   "address": "160 Chestnut St Unit b, Redwood City, CA 94063",
+   "website": "https://autorepairsredwoodcity.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-18:00",
+    "sun": "8:00-18:00"
+   },
+   "services": [
+    "tires",
+    "body work",
+    "towing",
+    "hybrid and EV repair",
+    "scheduled maintenance",
+    "lockouts"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Auto Row Smog & Repair",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 186 Google reviews. Phone (510) 451-7664, 3060 Broadway, Oakland, CA 94611. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-15:00; sun closed. Fit: independent shop with 186 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Auto Row Smog & Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15104517664",
+   "address": "3060 Broadway, Oakland, CA 94611",
+   "website": null,
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-15:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "MJ Automotive Repair and Electric",
+  "domain": null,
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.8 on 132 Google reviews. Phone (510) 460-5500, 851 E 12th St, Oakland, CA 94606. Hours: mon 7:30-18:00; tue 7:30-18:00; wed 7:30-18:00; thu 7:30-18:00; fri 7:30-18:00; sat 7:30-18:00; sun closed. Fit: independent shop with 132 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "A",
+  "operator_called": true,
+  "shop_input": {
+   "name": "MJ Automotive Repair and Electric",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+15104605500",
+   "address": "851 E 12th St, Oakland, CA 94606",
+   "website": null,
+   "hours": {
+    "mon": "7:30-18:00",
+    "tue": "7:30-18:00",
+    "wed": "7:30-18:00",
+    "thu": "7:30-18:00",
+    "fri": "7:30-18:00",
+    "sat": "7:30-18:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Menlo Atherton Auto Repair",
+  "domain": "menloathertonautorepair.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.9 on 992 Google reviews. Phone (650) 325-1280, 1279 El Camino Real, Menlo Park, CA 94025. Hours: mon 6:00-18:00; tue 6:00-18:00; wed 6:00-18:00; thu 6:00-18:00; fri 6:00-18:00; sat 8:00-15:00; sun closed. Fit: independent shop with 992 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it is family owned over three generations and has been in Menlo Park for over 50 years.",
+  "priority": "B",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Menlo Atherton Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503251280",
+   "address": "1279 El Camino Real, Menlo Park, CA 94025",
+   "website": "http://www.menloathertonautorepair.com/",
+   "hours": {
+    "mon": "6:00-18:00",
+    "tue": "6:00-18:00",
+    "wed": "6:00-18:00",
+    "thu": "6:00-18:00",
+    "fri": "6:00-18:00",
+    "sat": "8:00-15:00",
+    "sun": "closed"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "wheel alignment",
+    "diagnostics",
+    "hybrid and EV repair",
+    "suspension repair",
+    "scheduled maintenance"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Stress-Free Auto Care",
+  "domain": "stressfree.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 766 Google reviews. Phone (650) 963-9212, 2554 W Middlefield Rd, Mountain View, CA 94043. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-16:00; sun 8:00-16:00. Fit: franchise or chain location, weaker fit, but with 766 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site offers a 24-month/24,000-mile nationwide warranty on qualifying repairs.",
+  "priority": "B",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Stress-Free Auto Care",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16509639212",
+   "address": "2554 W Middlefield Rd, Mountain View, CA 94043",
+   "website": "https://www.stressfree.com/shops/mountain-view",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-16:00",
+    "sun": "8:00-16:00"
+   },
+   "services": [
+    "brake repair",
+    "oil change",
+    "smog check",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "De Anza Auto Repair",
+  "domain": "deanzaauto.com",
+  "source": "outreach",
+  "note": "RESEARCH: Auto repair shop rated 4.7 on 619 Google reviews. Phone (408) 245-3732, 1190 W Evelyn Ave, Sunnyvale, CA 94086. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-17:00; sun 9:00-16:00. Fit: independent shop with 619 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: Site says it has served Sunnyvale since 2008 and services electric vehicles.",
+  "priority": "B",
+  "operator_called": true,
+  "shop_input": {
+   "name": "De Anza Auto Repair",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+14082453732",
+   "address": "1190 W Evelyn Ave, Sunnyvale, CA 94086",
+   "website": "https://www.deanzaauto.com/",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-17:00",
+    "sun": "9:00-16:00"
+   },
+   "services": [
+    "brake repair",
+    "transmission service",
+    "tires",
+    "wheel alignment",
+    "AC service",
+    "diagnostics",
+    "collision repair",
+    "body work"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Beltran Tires",
+  "domain": "beltrantires.com",
+  "source": "outreach",
+  "note": "RESEARCH: Tire shop rated 4.8 on 421 Google reviews. Phone (650) 368-3762, 249 El Camino Real, Redwood City, CA 94062. Hours: mon 8:00-18:00; tue 8:00-18:00; wed 8:00-18:00; thu 8:00-18:00; fri 8:00-18:00; sat 8:00-18:00; sun closed. Fit: independent shop with 421 reviews, busy enough that calls likely go unanswered while techs are in the bays. Detail: no site detail.",
+  "priority": "B",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Beltran Tires",
+   "kind": "repair",
+   "demo": true,
+   "phone": "+16503683762",
+   "address": "249 El Camino Real, Redwood City, CA 94062",
+   "website": "https://www.beltrantires.com/Shop-For-Tires#!search?width=195&height=60&rim=15&season_id=all&location_id=28565&search_by=size",
+   "hours": {
+    "mon": "8:00-18:00",
+    "tue": "8:00-18:00",
+    "wed": "8:00-18:00",
+    "thu": "8:00-18:00",
+    "fri": "8:00-18:00",
+    "sat": "8:00-18:00",
+    "sun": "closed"
+   },
+   "services": [
+    "general auto repair"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ },
+ {
+  "name": "Axl Roadside",
+  "domain": "axlroadside.com",
+  "source": "outreach",
+  "note": "RESEARCH: Tire service rated 5 on 4 Google reviews. Phone (415) 712-4161, 101 E El Camino Real, Mountain View, CA 94040. Hours: mon 7:00-20:00; tue 7:00-20:00; wed 7:00-20:00; thu 7:00-20:00; fri 7:00-20:00; sat 7:00-20:00; sun 7:00-20:00. Fit: small independent shop; likely the owner answers between jobs, so missed calls during work are plausible but unproven. Detail: Site says it is a mobile roadside service doing jump starts, battery replacement, flat tires, lockouts and fuel delivery.",
+  "priority": "C",
+  "operator_called": true,
+  "shop_input": {
+   "name": "Axl Roadside",
+   "kind": "towing",
+   "demo": true,
+   "phone": "+14157124161",
+   "address": "101 E El Camino Real, Mountain View, CA 94040",
+   "website": "https://axlroadside.com/?utm_source=gbp&utm_medium=organic&utm_campaign=profile",
+   "hours": {
+    "mon": "7:00-20:00",
+    "tue": "7:00-20:00",
+    "wed": "7:00-20:00",
+    "thu": "7:00-20:00",
+    "fri": "7:00-20:00",
+    "sat": "7:00-20:00",
+    "sun": "7:00-20:00"
+   },
+   "services": [
+    "tires",
+    "diagnostics",
+    "towing",
+    "jump starts",
+    "lockouts"
+   ],
+   "policies": [
+    "Do not quote prices."
+   ]
+  }
+ }
+]
