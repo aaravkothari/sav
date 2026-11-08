@@ -6,6 +6,7 @@ import { PageHeader } from "../components/kit";
 import type { Client } from "../data";
 import { agentLabel, scrub, shopName } from "../leads";
 import { stopLabel, waitingOn, type PlatformSession } from "../platform";
+import { CompanyLive } from "./CompanyLive";
 
 /** `GET /api/company`: the company's on/off switch (`server/runs.ts`). */
 export interface CompanyState {
@@ -207,41 +208,26 @@ export function Runs() {
     );
   };
 
+  const control = paused ? (
+    <button type="button" className="btn btn-primary" disabled={busy !== null} onClick={() => void act("resume")}>
+      <Play size={15} strokeWidth={1.75} /> {busy === "resume" ? "Resuming…" : "Resume company"}
+    </button>
+  ) : (
+    <button type="button" className="btn btn-danger" disabled={busy !== null || company === null} onClick={() => void act("pause")}>
+      <Pause size={15} strokeWidth={1.75} /> {busy === "pause" ? "Pausing…" : "Pause company"}
+    </button>
+  );
+
   return (
     <div className="pane-in">
       <PageHeader
-        title="Runs"
-        subtitle="Switch the company on and off, start a run, and watch the agents work it. Agents need no approval; a question one asks you shows on Approvals."
-        actions={
-          <div className="flex items-center gap-3">
-            {error ? <span className="text-xs text-fail">{error}</span> : null}
-            <button type="button" className="btn btn-quiet btn-sm" disabled={busy !== null} onClick={() => void act("cleanup")}
-              title="Close every open card on the CEO's board: old runs and leftover setup tasks">
-              <Brush size={14} strokeWidth={1.75} /> {busy === "cleanup" ? "Cleaning…" : "Clean up board"}
-            </button>
-          </div>
-        }
+        title="The company, live"
+        subtitle="Every team, what wakes it, and what it has done, from the first Google Maps search to a paying shop."
+        actions={error ? <span className="text-xs text-fail">{error}</span> : null}
       />
 
       {notice ? <p className="mb-4 text-sm text-ink-2">{notice}</p> : null}
-
-      <section className="panel mb-4 flex flex-wrap items-center gap-3 p-4">
-        <span className={`chip ${badge.cls}`}>{badge.label}</span>
-        <p className="min-w-0 flex-1 text-sm text-ink-2">
-          {paused
-            ? `Paused ${company.changed_at ? new Date(company.changed_at).toLocaleString() : ""}. ${company.interrupted.length} agent session(s) stopped. While this page is open, anything that starts is stopped too.`
-            : "Agents work their cards on their own. Pausing stops every running agent; resuming tells each one to carry on where it left off."}
-        </p>
-        {paused ? (
-          <button type="button" className="btn btn-primary" disabled={busy !== null} onClick={() => void act("resume")}>
-            <Play size={15} strokeWidth={1.75} /> {busy === "resume" ? "Resuming…" : "Resume company"}
-          </button>
-        ) : (
-          <button type="button" className="btn btn-danger" disabled={busy !== null || company === null} onClick={() => void act("pause")}>
-            <Pause size={15} strokeWidth={1.75} /> {busy === "pause" ? "Pausing…" : "Pause company"}
-          </button>
-        )}
-      </section>
+      {paused ? <p className="mb-4 text-sm text-ink-2">Paused {company.changed_at ? new Date(company.changed_at).toLocaleString() : ""}. {company.interrupted.length} agent session(s) stopped.</p> : null}
 
       {waiting > 0 ? (
         <Link to="/approvals" className="panel mb-4 flex items-center gap-2 p-3 text-sm">
@@ -251,6 +237,16 @@ export function Runs() {
         </Link>
       ) : null}
 
+      <CompanyLive sessions={sessions} paused={paused} control={control} />
+
+      <details className="live-manual">
+        <summary className="eyebrow mb-3 cursor-pointer">Start a run by hand ({badge.label.toLowerCase()})</summary>
+        <div className="mb-3 flex justify-end">
+          <button type="button" className="btn btn-quiet btn-sm" disabled={busy !== null} onClick={() => void act("cleanup")}
+            title="Close every open card on the CEO's board: old runs and leftover setup tasks">
+            <Brush size={14} strokeWidth={1.75} /> {busy === "cleanup" ? "Cleaning…" : "Clean up board"}
+          </button>
+        </div>
       <section className="panel mb-6 space-y-3 p-4">
         <label className="field-label" htmlFor="run-goal">Start a run</label>
         <input id="run-goal" className="input w-full" value={goal} maxLength={500} onChange={(e) => setGoal(e.target.value)} />
@@ -289,6 +285,7 @@ export function Runs() {
           ) : null}
         </>
       )}
+      </details>
     </div>
   );
 }
