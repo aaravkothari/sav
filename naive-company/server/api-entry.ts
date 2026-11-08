@@ -42,7 +42,11 @@ const ROW = "singleton";
  */
 const LOCKED_GETS = new Set(["/api/company"]);
 
-/** True when the request can only read: it is served from a plain `select`, with no row lock. */
+/**
+ * True when the request can only read: it is served from a plain `select`, with no row lock. A
+ * handler that writes on such a request has its change dropped (and logged), never written from the
+ * unlocked read; see the write-back in `handler`.
+ */
 export function readOnlyRequest(req: Pick<ApiRequest, "method" | "path">): boolean {
   return req.method === "GET" && !LOCKED_GETS.has(req.path);
 }
@@ -217,14 +221,11 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
     // `for update` unblocks only here, and unblocks onto what this request actually wrote.
     if (open.client !== null) {
       if (open.dirty && readOnly) {
-        // A GET that wrote: not expected (see LOCKED_GETS). Keep the write, but take the lock for it in
-        // its own transaction so it cannot tear another request's, and say so in the logs.
-        console.error(`read-only request ${request.method} ${request.path} changed the store; add it to LOCKED_GETS`);
-        await open.client.query("commit");
-        await open.client.query("begin");
-        await open.client.query(`select state from ${TABLE} where id = $1 for update`, [ROW]);
-      }
-      if (open.dirty) {
+        // A GET that wrote: not expected (see LOCKED_GETS). Its document came from an unlocked read, so
+        // writing it back would overwrite whatever a concurrent writer committed in between. The change
+        // is dropped and named in the logs; the fix is to add the path to LOCKED_GETS.
+        console.error(`read-only request ${request.method} ${request.path} changed the store; the change was NOT saved. Add the path to LOCKED_GETS.`);
+      } else if (open.dirty) {
         await open.client.query(`update ${TABLE} set state = $2 where id = $1`, [ROW, JSON.stringify(open.state)]);
       }
       await open.client.query("commit");
