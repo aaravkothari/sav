@@ -3,7 +3,7 @@
  *
  *   pnpm engine                     # dry run (the default): reads everything, prints what it would do, sends nothing
  *   pnpm engine --once              # one tick of each job, then exit (dry run unless --execute)
- *   pnpm engine --execute           # really send, file notes, wake client-manager, sweep approvals
+ *   pnpm engine --execute           # really send, file notes, wake sales, sweep approvals
  *
  * 1. Outbound sender, every 30 min. Leads in the CRM at stage `lead` with a contact email, a
  *    `RESEARCH:` note with a usable opener detail, and no `OUTREACH SENT` / `OUTREACH DRAFTED` /
@@ -15,7 +15,7 @@
  *    the inbox's own sent mail, and the CRM note all count, and each send carries an idempotency key.
  *    After each send: note `OUTREACH SENT: <message id> to <email>` plus the full email.
  * 2. Inbox watcher, every 2 min. New inbound mail is matched to the CRM by sender email, then
- *    domain, filed verbatim (`REPLY RECEIVED: <thread id>`), and wakes `client-manager` once per
+ *    domain, filed verbatim (`REPLY RECEIVED: <thread id>`), and wakes `sales` once per
  *    message (`SHOP REPLIED: …`). Bounces (`BOUNCED:`) and auto-replies (`AUTO-REPLY:`) are noted
  *    and wake nobody; bounces feed the ramp.
  * 3. Approval sweep, every 15 s: `POST /api/approvals/auto` on the dashboard, only when the
@@ -25,7 +25,7 @@
  * State: `data/engine-state.json` (start time, message ids handled, last tick) and the ledger, both
  * git-ignored. A dry run writes neither. One line per action to stdout and `data/engine.log`.
  *
- * Env: AGENTMAIL_API_KEY, NAIVE_API_KEY (waking client-manager), DASHBOARD_URL, DASHBOARD_TOKEN
+ * Env: AGENTMAIL_API_KEY, NAIVE_API_KEY (waking sales), DASHBOARD_URL, DASHBOARD_TOKEN
  * (operator bearer; also used for `/mcp` unless DASHBOARD_MCP_TOKEN is set), optional
  * DASHBOARD_MCP_URL (default `$DASHBOARD_URL/mcp`), NAIVE_API_URL (default https://api.vetta.sh).
  */
@@ -39,7 +39,10 @@ import { parseRpcBody, registrableDomain } from "./worker.ts";
 // ---------------------------------------------------------------------------------------------
 // Pure parts (tested in engine.test.ts)
 
-export const CLIENT_MANAGER_AGENT = "agt_wnnf7kyvhcj6v9nbsbnw9pt4dp";
+/** The reply seat: `sales` answers shops that write back (crew expansion, #54). Its id survives re-applies. */
+export const REPLY_AGENT = "agt_e0pw49n4rqfysg4m1pjv4122wx";
+/** @deprecated kept for imports; replies now go to `sales` (REPLY_AGENT). */
+export const CLIENT_MANAGER_AGENT = REPLY_AGENT;
 export const DAILY_SEND_CAP = 2500;
 export const RAMP = [25, 50, 100] as const;
 export const SEND_EVERY_MS = 30 * 60_000;
@@ -145,7 +148,7 @@ const noteStarts = (client: CrmClient, ...prefixes: string[]) =>
   client.notes.some((n) => prefixes.some((p) => n.trimStart().startsWith(p)));
 
 /** Prefixes that mean a shop is already in conversation, or must not be mailed cold. */
-export const DONE_PREFIXES = ["OUTREACH SENT", "OUTREACH DRAFTED", "REPLY RECEIVED", "REPLY SENT", "BOUNCED:", "AUTO-REPLY:"];
+export const DONE_PREFIXES = ["OUTREACH SENT", "OUTREACH DRAFTED", "REPLY RECEIVED", "REPLY SENT", "BOUNCED:", "AUTO-REPLY:", "UNSUBSCRIBED:"];
 
 export interface Candidate {
   client: CrmClient;
@@ -236,7 +239,7 @@ export function replyNote(msg: InboundMessage): string {
   return `REPLY RECEIVED: ${msg.thread_id}\nFrom: ${msg.from}\nSubject: ${msg.subject}\nMessage: ${msg.message_id}\n\n${msg.text}`;
 }
 
-/** The message that wakes client-manager: first line `SHOP REPLIED: <shop>`, then one field per line. */
+/** The message that wakes sales: first line `SHOP REPLIED: <shop>`, then one field per line. */
 export function wakeMessage(client: CrmClient, msg: InboundMessage): string {
   return [
     `SHOP REPLIED: ${client.name}`,
@@ -622,13 +625,13 @@ class Engine {
     if (kind === "auto-reply") {
       return act(`note    ${client.id} AUTO-REPLY ${msg.thread_id}`, () => this.crm.addNote(client.id, `AUTO-REPLY: ${msg.thread_id}\nFrom: ${msg.from}\nSubject: ${msg.subject}\n\n${msg.text}`));
     }
-    await act(`note    ${client.id} REPLY RECEIVED ${msg.thread_id} from ${parseAddress(msg.from)}`, () => this.crm.addNote(client.id, replyNote(msg), "Shop replied: client-manager is answering"));
-    await act(`wake    client-manager for ${client.id} "${client.name}" (${msg.message_id})`, () => this.wake(wakeMessage(client, msg)));
+    await act(`note    ${client.id} REPLY RECEIVED ${msg.thread_id} from ${parseAddress(msg.from)}`, () => this.crm.addNote(client.id, replyNote(msg), "Shop replied: sales is answering"));
+    await act(`wake    sales for ${client.id} "${client.name}" (${msg.message_id})`, () => this.wake(wakeMessage(client, msg)));
   }
 
   async wake(message: string) {
-    if (!this.env.naiveKey) throw new Error("NAIVE_API_KEY is not set; cannot wake client-manager");
-    await http(`${this.env.naiveUrl}/v1/sessions`, { method: "POST", token: this.env.naiveKey, body: JSON.stringify({ agent_id: CLIENT_MANAGER_AGENT, message }) });
+    if (!this.env.naiveKey) throw new Error("NAIVE_API_KEY is not set; cannot wake sales");
+    await http(`${this.env.naiveUrl}/v1/sessions`, { method: "POST", token: this.env.naiveKey, body: JSON.stringify({ agent_id: REPLY_AGENT, message }) });
   }
 
   /** Job 3: the approval sweep. */
