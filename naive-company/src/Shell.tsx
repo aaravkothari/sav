@@ -1,4 +1,4 @@
-import { Bot, Box, Building2, ClipboardCheck, House, KanbanSquare, ListChecks, ShieldAlert, Settings2 } from "lucide-react";
+import { Bot, Box, Building2, ClipboardCheck, House, KanbanSquare, ListChecks, Rocket, ShieldAlert, Settings2 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { useApi } from "./api";
 import { TEMPLATE, TEMPLATE_NAME, type Client } from "./data";
@@ -18,8 +18,13 @@ export function Shell() {
   const prospects = (clients ?? []).filter((c) => c.stage === "lead" || c.stage === "proposal");
   const nav = [
     { to: "/", label: "Home", Icon: House, count: undefined as number | undefined },
-    { to: "/launch-review", label: "Launch review", Icon: ListChecks, count: undefined as number | undefined },
-    { to: "/product-audit", label: "Product audit", Icon: ClipboardCheck, count: undefined as number | undefined },
+    // Where the company is started, paused and watched (`src/screens/Runs.tsx`).
+    { to: "/runs", label: "Runs", Icon: Rocket, count: undefined as number | undefined },
+    // The agency blueprint's launch checks are about an agency's own site; the receptionist company (blank) has no use for them.
+    ...(TEMPLATE_NAME === "blank" ? [] : [
+      { to: "/launch-review", label: "Launch review", Icon: ListChecks, count: undefined as number | undefined },
+      { to: "/product-audit", label: "Product audit", Icon: ClipboardCheck, count: undefined as number | undefined },
+    ]),
     { to: "/crm", label: "CRM", Icon: KanbanSquare, count: prospects.length },
     { to: "/approvals", label: "Approvals", Icon: ShieldAlert, count: waitingOn(sessions?.data ?? [], new Map()).length },
     // Only a product-design studio files deliverables that are files; no other template has a Studio.

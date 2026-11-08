@@ -10,6 +10,7 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { companyStats } from "./stats.ts";
+import { findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused } from "./runs.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
 import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
@@ -600,7 +601,7 @@ async function chatAgentId(config: ProxyConfig): Promise<string | null> {
  * behind the approval queue and the agent history, the client's social accounts, the timers, and
  * this project's context (the setup answers) from its latest applied install.
  */
-const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context|product-audit)(\/|$)/;
+const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context|product-audit|runs|company)(\/|$)/;
 
 async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (!PLATFORM_ROUTE.test(req.path)) return NO_ROUTE;
@@ -614,6 +615,33 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
       const created = await proxyFetch(config, { method: "POST", path: "/v1/sessions" },
         JSON.stringify({ agent_id: agent, message: typeof message === "string" ? message : "" }));
       return { status: created.status, body: await created.json() };
+    }
+    // Running the company from the dashboard (`server/runs.ts`): its on/off switch, and its runs.
+    if (req.path === "/api/company" || req.path.startsWith("/api/company/")) {
+      const store = await ctx.store();
+      if (req.method === "GET" && req.path === "/api/company") return { status: 200, body: await sweepPaused(config, store) };
+      if (req.method === "POST" && req.path === "/api/company/pause") return { status: 200, body: await pauseCompany(config, store, new Date()) };
+      if (req.method === "POST" && req.path === "/api/company/resume") return { status: 200, body: await resumeCompany(config, store, new Date()) };
+      return NO_ROUTE;
+    }
+    if (req.path === "/api/runs") {
+      const ceo = await findCeo(config);
+      if (ceo === "unavailable") return { status: 502, body: { error: "upstream unavailable" } };
+      if (ceo === null) return { status: 503, body: { error: "no CEO in this organization yet: the company has not been applied (naive up)" } };
+      if (req.method === "GET") {
+        const runs = await listRuns(config, ceo.id);
+        return runs === null ? { status: 502, body: { error: "upstream unavailable" } } : { status: 200, body: { ceo_id: ceo.id, runs } };
+      }
+      if (req.method === "POST") {
+        const body = parse(req.body);
+        if (body.confirm_spend !== true) return { status: 400, body: { error: "a run spends Naïve credits and Monid balance: confirm_spend must be true" } };
+        const goal = typeof body.goal === "string" ? body.goal.trim() : "";
+        if (goal === "") return { status: 400, body: { error: "a run needs a goal" } };
+        if (goal.length > 500) return { status: 400, body: { error: "the goal is longer than 500 characters" } };
+        if ((await ctx.store()).company().paused) return { status: 409, body: { error: "the company is paused: resume it before starting a run" } };
+        return { status: 201, body: await startRun(config, ceo.id, goal, new Date()) };
+      }
+      return NOT_ALLOWED;
     }
     if (req.method === "GET" && (req.path === "/api/agents" || req.path === "/api/deployments")) {
       // Assembled here rather than relayed: the upstream pages at 20, so the screen that lists the

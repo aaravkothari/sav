@@ -27,6 +27,19 @@ export interface StoreState {
   site_profile?: SiteProfile;
   /** The public lead form's fixed window. Absent until the first lead of the first window lands. */
   lead_window?: { startedAt: number; count: number };
+  /** Whether the operator has paused the whole company from the Runs screen (`server/runs.ts`). Absent = running. */
+  company?: CompanyState;
+}
+
+/** The company's on/off switch, and what pausing it stopped, so resuming can wake exactly those. */
+export interface CompanyState {
+  paused: boolean;
+  /** ISO time of the last pause or resume. */
+  changed_at: string;
+  /** Sessions this pause interrupted (`ses_` ids); resuming sends each one a message to carry on. */
+  interrupted: string[];
+  /** Timers this pause paused (`dep_` ids); resuming resumes them. */
+  deployments: string[];
 }
 
 /**
@@ -136,6 +149,9 @@ export interface Store {
   site(): SiteProfile;
   /** Replaces the named sections; null when a key is not a section or a section is not the right shape. */
   updateSite(patch: Record<string, unknown>): SiteProfile | null;
+  /** The company's on/off switch; running when nothing was ever paused. */
+  company(): CompanyState;
+  setCompany(next: CompanyState): CompanyState;
 }
 
 /**
@@ -345,6 +361,12 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       return true;
     },
     site: () => state.site_profile ?? site,
+    company: () => state.company ?? { paused: false, changed_at: "", interrupted: [], deployments: [] },
+    setCompany(next) {
+      state.company = structuredClone(next);
+      save();
+      return state.company;
+    },
     updateSite(patch) {
       const keys = Object.keys(patch);
       if (keys.length === 0) return null;

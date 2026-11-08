@@ -1041,3 +1041,30 @@ describe("the studio's file proxy", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 });
+
+describe("the runs and company routes", () => {
+  const config = { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" };
+
+  it("are behind the operator gate", async () => {
+    const { call } = fixture({ dashboardToken: "dash-secret", local: false, config });
+    expect((await call("GET", "/api/runs")).status).toBe(401);
+    expect((await call("POST", "/api/company/pause")).status).toBe(401);
+  });
+
+  it("refuses a run without confirm_spend or a goal, and while the company is paused", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      data: [{ id: "agt_ceo", name: "ceo", metadata: { role: "orchestrator" } }], has_more: false,
+    }), { status: 200 })));
+    const { call, store } = fixture({ config });
+    expect((await call("POST", "/api/runs", { goal: "Palo Alto" })).status).toBe(400);
+    expect((await call("POST", "/api/runs", { goal: " ", confirm_spend: true })).status).toBe(400);
+    store.setCompany({ paused: true, changed_at: "x", interrupted: [], deployments: [] });
+    expect((await call("POST", "/api/runs", { goal: "Palo Alto", confirm_spend: true })).status).toBe(409);
+  });
+
+  it("says plainly when the company has not been applied yet", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ data: [], has_more: false }), { status: 200 })));
+    const { call } = fixture({ config });
+    expect((await call("GET", "/api/runs")).status).toBe(503);
+  });
+});
