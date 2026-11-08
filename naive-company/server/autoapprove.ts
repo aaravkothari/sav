@@ -69,6 +69,9 @@ export interface AutoApproval {
   rule: string;
 }
 
+/** The sales seat's agent id: its id survives re-applies (the engine wakes it by id too). */
+export const SALES_AGENT_ID = "agt_e0pw49n4rqfysg4m1pjv4122wx";
+
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
 const EMAIL_SENDS = new Set(["email.send", "agentmail.send_message", "agentmail.reply_to_message", "agentmail.reply_all_message", "agentmail.forward_message", "agentmail.send_draft"]);
@@ -109,7 +112,11 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
   // Spends nothing: a Stripe TEST checkout link, an extra caller ID on the shared demo line, a prompt or fact change (frozen shops are a hard limit).
   if (name === "autoops.create_trial_checkout") return "test-mode checkout link";
   if (name === "autoops.add_caller") return "caller ID for the shared demo line";
-  if (name === "autoops.update_receptionist") return "receptionist update";
+  if (name === "autoops.update_receptionist") {
+    // sales may only set an owner's notify_phone (BeigeElk, Nov 8); anything more waits for a person.
+    if (session.agent_id === SALES_AGENT_ID && Object.keys(args).some((k) => k !== "shop_id" && k !== "notify_phone")) return null;
+    return "receptionist update";
+  }
   // Going live: a number purchase without a PAID: note is a hard limit, so what reaches here is safe.
   if (name === "autoops.activate_shop" || name === "autoops.provision_receptionist") return "go live after checkout";
   if (name === "autoops.provision_demo") {

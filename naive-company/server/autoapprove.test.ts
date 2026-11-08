@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { autoApprove, DAILY_SEND_CAP, hardLimit, isCrewAgent, ruleFor, type LimitContext, type ParkedSession, type PendingAction } from "./autoapprove.ts";
+import { autoApprove, DAILY_SEND_CAP, SALES_AGENT_ID, hardLimit, isCrewAgent, ruleFor, type LimitContext, type ParkedSession, type PendingAction } from "./autoapprove.ts";
 import { emptyState, openStoreOver, pacificDay } from "./store.ts";
 import type { Client } from "../seed/clients.ts";
 
@@ -51,6 +51,13 @@ describe("review of #52: allowlist, not approve-everything", () => {
     expect(ruleFor(tool("board_write", { op: "update", status: "done" }), session, crm)).toBe("note on its own card");
     expect(ruleFor(tool("board_write", { op: "update", status: "done" }), { ...session, metadata: null }, crm)).toBeNull();
     expect(ruleFor(tool("board_write", { op: "assign" }), session, crm)).toBeNull();
+  });
+
+  it("lets sales set only an owner's notify_phone on a receptionist", () => {
+    const sales = { ...session, agent_id: SALES_AGENT_ID };
+    expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", notify_phone: "+14155550100" }), sales, crm)).not.toBeNull();
+    expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", system_prompt: "…" }), sales, crm)).toBeNull();
+    expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", policies: ["a"] }), session, crm)).not.toBeNull();
   });
 
   it("approves what the crew needs", () => {
