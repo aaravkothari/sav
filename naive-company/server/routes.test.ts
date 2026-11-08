@@ -480,14 +480,25 @@ describe("the /api/* gate", () => {
     expect((await fixture({ local: false, dashboardToken: "" }).call("GET", "/api/posts")).status).toBe(503);
   });
 
-  it("hides which routes exist, and leaves /mcp on its own separate bearer", async () => {
+  it("hides which routes exist, and the agents' bearer never opens /api/*", async () => {
     const { call } = fixture(deployed);
     // 401 before the route table: an anonymous caller cannot even map the surface.
     expect(await call("GET", "/api/nothing")).toMatchObject({ status: 401 });
-    // The agents' credential is not the operator's, and neither opens the other's door.
+    // The agents' credential is not the operator's: it opens /mcp and nothing else.
     expect(await call("GET", "/api/clients", "", { authorization: "Bearer platform-token" })).toMatchObject({ status: 401 });
     expect(await call("POST", "/mcp", rpc("tools/list"), { authorization: "Bearer platform-token" })).toMatchObject({ status: 200 });
-    expect(await call("POST", "/mcp", rpc("tools/list"), bearer)).toMatchObject({ status: 401 });
+  });
+
+  it("lets the operator's DASHBOARD_TOKEN call /mcp too, and nothing close to it", async () => {
+    const { call, store } = fixture(deployed);
+    expect(await call("POST", "/mcp", rpc("tools/list"), bearer)).toMatchObject({ status: 200 });
+    const filed = await call("POST", "/mcp", rpc("tools/call", { name: "create_lead", arguments: { name: "Meissner Auto", domain: "meissner.example" } }), bearer);
+    expect(filed).toMatchObject({ status: 200 });
+    expect(store.read().clients.map((c) => c.domain)).toEqual(["meissner.example"]);
+    expect(await call("POST", "/mcp", rpc("tools/list"), { authorization: "Bearer dash-not" })).toMatchObject({ status: 401 });
+    expect(await call("POST", "/mcp", rpc("tools/list"), { authorization: "dash" })).toMatchObject({ status: 401 });
+    // An unset or empty operator token is no credential at all.
+    expect(await fixture({ local: false, dashboardToken: "" }).call("POST", "/mcp", rpc("tools/list"), { authorization: "Bearer " })).toMatchObject({ status: 401 });
   });
 
   it("lets a genuinely local pnpm serve through with nothing set, and never a deployment", async () => {
