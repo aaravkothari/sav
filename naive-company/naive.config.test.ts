@@ -82,12 +82,12 @@ describe("naive.config.ts", () => {
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("social."))).toEqual([]);
       // The agency mailbox is the persona's own inbox (`email.*`), not a connected Gmail account:
       // the platform offers these only to a turn whose identity owns an inbox, and deny-by-default
-      // means they must still be named here. Reads run; the one outward act — sending — is `ask`,
-      // so the call parks the session and waits for the operator on the dashboard's Approvals screen.
+      // means they must still be named here. Reads run. Sending is `ask` in the SEO crew; in the
+      // receptionist crew (blank) nothing asks permission, sending included (the operator's call).
       if (agent.name === "sales" || agent.name === "client-manager") {
         expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
         expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
-        expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
+        expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: SEO ? "ask" : "allow" });
         expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
       } else if (agent.name !== "paid-media-planner") {
         const measurement: Record<string, string[]> = {
@@ -112,8 +112,9 @@ describe("naive.config.ts", () => {
       // the pause), so it is `ask`; a prompt that says "ask the operator" without it is a dead letter.
       expect(agent.tools?.configs["ask_operator"]).toEqual({ enabled: true, permission: "ask" });
       // And the sanctioned way to be GRANTED one: `request_tools` parks a toolset change on the same
-      // screen, and approving it changes what this agent holds (canonical-spec §7.4). Also `ask`.
-      expect(agent.tools?.configs["request_tools"]).toEqual({ enabled: true, permission: "ask" });
+      // screen, and approving it changes what this agent holds (canonical-spec §7.4). `ask` in the SEO
+      // crew; the receptionist crew asks no permission, so there it is `allow`.
+      expect(agent.tools?.configs["request_tools"]).toEqual({ enabled: true, permission: SEO ? "ask" : "allow" });
       expect(agent.system).toMatch(/complete list of what you can do right now/);
       expect(agent.system).toMatch(/request it once with request_tools/);
     }
