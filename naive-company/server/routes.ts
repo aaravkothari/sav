@@ -19,6 +19,7 @@ import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 import { FILE_ID } from "../seed/posts.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
 import { articlePath, publishedArticle, renderArticle, renderHome } from "./public-site.ts";
+import { shopRoutes } from "./shop-routes.ts";
 
 export interface ApiRequest {
   /** Upper-case. */
@@ -78,6 +79,8 @@ export interface ApiContext {
   local: boolean;
   /** The built public shell, used to serve crawlable metadata and permanent article pages. */
   publicShell?: () => Promise<string>;
+  /** SAV's own public page (`landing/index.html`). When set, `/` serves it instead of the blueprint's site. */
+  landingPage?: () => Promise<string>;
 }
 
 /**
@@ -323,6 +326,9 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   const articles = store === null ? [] : store.read().posts.filter((post) => publishedArticle(post));
   if (path === "/") {
     if (method !== "GET") return NOT_ALLOWED;
+    if (ctx.landingPage !== undefined) {
+      return { status: 200, text: await ctx.landingPage(), headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } };
+    }
     if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
     return {
       status: 200,
@@ -832,5 +838,5 @@ export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<A
   // Before the route table, so an unauthenticated caller cannot even map which routes exist.
   const denied = apiGate(req, ctx);
   if (denied !== null) return denied;
-  return (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
+  return (await shopRoutes(req, ctx)) ?? (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
 }

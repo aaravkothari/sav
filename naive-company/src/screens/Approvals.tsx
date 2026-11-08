@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiGet, apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
 import type { Agent } from "../data";
+import { agentLabel, ago } from "../leads";
 import { argRows, sendable, usd, waitingOn, type Answers, type PlatformSession, type QuestionField, type Waiting } from "../platform";
 
 /**
@@ -131,10 +132,10 @@ function ApprovalQueue() {
               return (
                 <article key={id} className="panel p-4">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="font-mono font-medium">{row.agent}</span>
+                    <span className="font-bold">{agentLabel(row.agent)}</span>
                     <span className="text-sm text-ink-2">asks you</span>
                   </div>
-                  <div className="mt-1 font-mono text-xs text-ink-3">{row.session.id}</div>
+                  <div className="mt-1 text-xs text-ink-3">{row.session.created_at ? `started ${ago(row.session.created_at)}` : null}</div>
                   <p className="mt-4 whitespace-pre-wrap break-words text-sm">{question.prompt}</p>
                   {outcome ? (
                     <p className="mt-4 text-sm text-ink-2">{outcome}</p>
@@ -170,12 +171,12 @@ function ApprovalQueue() {
             return (
               <article key={id} className="panel p-4">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="font-mono font-medium">{row.agent}</span>
+                  <span className="font-bold">{agentLabel(row.agent)}</span>
                   <span className="text-sm text-ink-2">{row.action.name === "request_tools" ? "asks to be granted tools via" : "wants to call"}</span>
                   <span className="chip chip-plain font-mono">{row.action.name}</span>
                 </div>
-                <div className="mt-1 font-mono text-xs text-ink-3">
-                  {row.session.id}
+                <div className="mt-1 text-xs text-ink-3">
+                  {row.session.created_at ? `Started ${ago(row.session.created_at)}` : "Waiting"}
                   {typeof row.session.consumed_micro_usd === "number"
                     ? ` · ${usd(row.session.consumed_micro_usd)} spent so far`
                     : null}

@@ -55,6 +55,8 @@ describe("naive.config.ts", () => {
       NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
       DASHBOARD_TOKEN: { generate: true },
       DASHBOARD_PASSWORD: { generate: true },
+      AUTOOPS_VOICE_TOKEN: { from_env: "AUTOOPS_VOICE_TOKEN" },
+      AGENTMAIL_API_KEY: { from_env: "AGENTMAIL_API_KEY" },
     });
     // And the platform's own two values are the platform's to write. As `process.env` reads they
     // baked the PUBLISHER'S shell into the declaration every customer installs, and vanished

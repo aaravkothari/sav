@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
 import { TEMPLATE, type Agent } from "../data";
+import { agentLabel, ago } from "../leads";
 import { parked, stopLabel, usd, type AgentSpend, type PlatformSession } from "../platform";
 
 /** Every agent in the organization, as the platform holds it — the pair this
@@ -78,7 +79,7 @@ export function AgencyAgents() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono font-medium">{a.name}</span>
+                      <span className="font-bold">{agentLabel(a.name)}</span>
                       {a.model ? <span className="chip chip-plain font-mono">{a.model}</span> : null}
                       {/* The cap the agent carries, straight off the agent row — no call of its own. */}
                       {a.budget ? (
@@ -101,7 +102,7 @@ export function AgencyAgents() {
                       Waiting on you
                     </Link>
                   ) : null}
-                  <span className="shrink-0 font-mono text-xs text-ink-3">{a.id}</span>
+
                 </button>
 
                 {showing ? <AgentDetail agent={a} sessions={runs} loading={sessionPage === null && sessionError === null} /> : null}
@@ -193,8 +194,8 @@ function AgentDetail({ agent, sessions, loading }: { agent: Agent; sessions: Pla
               <span className="shrink-0 font-mono text-xs text-ink-3">
                 {typeof s.consumed_micro_usd === "number" ? usd(s.consumed_micro_usd) : "—"}
               </span>
-              <span className="shrink-0 font-mono text-xs text-ink-3">{(s.created_at ?? "").slice(0, 10)}</span>
-              <span className="shrink-0 font-mono text-xs text-ink-3">{s.id}</span>
+              <span className="shrink-0 font-mono text-xs text-ink-3">{ago(s.created_at)}</span>
+
             </div>
           ))}
         </div>

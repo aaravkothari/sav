@@ -7,6 +7,7 @@
  * Run: `pnpm build && pnpm serve` (node's own type stripping; zero deps).
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,6 +18,7 @@ import { openStore } from "./store.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const store = openStore(join(root, "data", "store.json"));
+const landing = join(root, "..", "landing", "index.html");
 /** Local runs mint their own tokens from Settings; the platform's bearer is injected on the deploy. */
 const base = {
   store: () => Promise.resolve(store),
@@ -29,6 +31,8 @@ const base = {
   studioUrl: process.env.NAIVE_STUDIO_URL,
   appId: process.env.NAIVE_APP_ID,
   publicShell: () => readFile(join(root, "dist", "site-shell.html"), "utf8"),
+  // SAV's public page at `/`, read fresh so an edit to it shows on reload. Absent, `/` is the blueprint's site.
+  ...(existsSync(landing) ? { landingPage: () => readFile(landing, "utf8") } : {}),
 };
 
 /**
