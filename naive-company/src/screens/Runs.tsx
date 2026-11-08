@@ -1,4 +1,4 @@
-import { Pause, Play, Rocket, ShieldAlert } from "lucide-react";
+import { Brush, Pause, Play, Rocket, ShieldAlert, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { apiGet, apiMessage, apiSend } from "../api";
@@ -30,12 +30,25 @@ export interface RunStep {
   card: RunCard | null;
 }
 
+export type RunState = "active" | "stopped" | "done" | "cancelled";
+
 export interface Run {
   run: string;
   goal: string;
   created_at: string;
   steps: RunStep[];
+  state: RunState;
 }
+
+export const RUN_STATE: Record<RunState, { label: string; cls: string }> = {
+  active: { label: "Running", cls: "chip-plain" },
+  stopped: { label: "Stopped", cls: "chip-absent" },
+  done: { label: "Done", cls: "chip-credit" },
+  cancelled: { label: "Cancelled", cls: "chip-fail" },
+};
+
+/** Where a run that is not moving stopped: its first step not done. */
+export const stoppedAt = (run: Run): RunStep | undefined => run.steps.find((s) => s.card?.status !== "done");
 
 const POLL_MS = 10_000;
 
@@ -64,7 +77,8 @@ export function Runs() {
   const [runs, setRuns] = useState<Run[] | null>(null);
   const [sessions, setSessions] = useState<PlatformSession[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"start" | "pause" | "resume" | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [goal, setGoal] = useState("Find and sign up busy independent auto repair shops in Palo Alto, California");
   const [confirmed, setConfirmed] = useState(false);
 
@@ -90,12 +104,21 @@ export function Runs() {
     return () => clearInterval(timer);
   }, [refresh]);
 
-  const act = async (kind: "start" | "pause" | "resume") => {
+  const act = async (kind: "start" | "pause" | "resume" | "cleanup" | `cancel:${string}`) => {
     setBusy(kind);
+    setNotice(null);
     try {
       if (kind === "start") {
-        await apiSend("POST", "/runs", { goal, confirm_spend: true });
+        const started = await apiSend<{ run: string; closed_before: number }>("POST", "/runs", { goal, confirm_spend: true });
         setConfirmed(false);
+        setNotice(`Started ${runWhen(started.run)}.${started.closed_before ? ` Closed ${started.closed_before} old open card(s) first.` : ""}`);
+      } else if (kind === "cleanup") {
+        const done = await apiSend<{ closed: number }>("POST", "/runs/cleanup");
+        setNotice(done.closed ? `Closed ${done.closed} old open card(s). The board is clean.` : "The board was already clean.");
+      } else if (kind.startsWith("cancel:")) {
+        const run = kind.slice("cancel:".length);
+        const done = await apiSend<{ closed: number }>("POST", `/runs/${run}/cancel`);
+        setNotice(`Cancelled ${runWhen(run)}: ${done.closed} card(s) closed and their agents stopped.`);
       } else {
         setCompany(await apiSend<CompanyState>("POST", `/company/${kind}`));
       }
@@ -110,14 +133,62 @@ export function Runs() {
   const byId = new Map(sessions.map((s) => [s.id, s]));
   const waiting = waitingOn(sessions, new Map()).length;
   const paused = company?.paused === true;
+  const current = (runs ?? []).filter((r) => r.state === "active" || r.state === "stopped");
+  const history = (runs ?? []).filter((r) => r.state === "done" || r.state === "cancelled");
+
+  const runCard = (run: Run, live: boolean) => {
+    const state = RUN_STATE[run.state];
+    const at = run.state === "stopped" ? stoppedAt(run) : undefined;
+    return (
+      <article key={run.run} className="panel p-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className={`chip ${state.cls}`}>{state.label}</span>
+          <span className="min-w-0 flex-1 font-medium">{run.goal || run.run}</span>
+          <span className="font-mono text-xs text-ink-3">{runWhen(run.run)}</span>
+          {live ? (
+            <button type="button" className="btn btn-quiet btn-sm" disabled={busy !== null} onClick={() => void act(`cancel:${run.run}`)}>
+              <X size={14} strokeWidth={1.75} /> {busy === `cancel:${run.run}` ? "Cancelling…" : "Cancel run"}
+            </button>
+          ) : null}
+        </div>
+        {at ? <p className="mt-2 text-xs text-ink-2">Stopped at step {run.steps.indexOf(at) + 1}, {at.title.toLowerCase()}: nothing is assigned to it.{at.key === "test-call" ? " It waits for a shop to be moved to Active in the CRM." : ""}</p> : null}
+        <ol className="mt-4 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+          {run.steps.map((step, i) => {
+            const cancelled = step.card?.note?.startsWith("CANCELLED") === true;
+            const status = cancelled ? { label: "Cancelled", cls: "chip-fail" } : STEP_STATUS[step.card?.status ?? "missing"];
+            const session = step.card?.woken_session_id ? byId.get(step.card.woken_session_id) : undefined;
+            return (
+              <li key={step.key} className="rounded-md border border-line p-3">
+                <div className="font-mono text-[0.6875rem] text-ink-3">{i + 1}. {step.owner}</div>
+                <div className="mt-1 text-sm font-medium">{step.title}</div>
+                <span className={`chip ${status.cls} mt-2`}>{status.label}</span>
+                {session && live ? <div className="mt-2 text-xs text-ink-2">Agent: {session.status === "running" ? "working now" : stopLabel(session)}</div> : null}
+                {step.card?.note && !cancelled ? <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-xs text-ink-2">{step.card.note}</p> : null}
+              </li>
+            );
+          })}
+        </ol>
+      </article>
+    );
+  };
 
   return (
     <div className="pane-in">
       <PageHeader
         title="Runs"
-        subtitle="Switch the company on and off, start a run, and watch the agents work it. Emails still wait for you on Approvals."
-        actions={error ? <span className="text-xs text-fail">{error}</span> : null}
+        subtitle="Switch the company on and off, start a run, and watch the agents work it. Agents need no approval; a question one asks you shows on Approvals."
+        actions={
+          <div className="flex items-center gap-3">
+            {error ? <span className="text-xs text-fail">{error}</span> : null}
+            <button type="button" className="btn btn-quiet btn-sm" disabled={busy !== null} onClick={() => void act("cleanup")}
+              title="Close every open card on the CEO's board: old runs and leftover setup tasks">
+              <Brush size={14} strokeWidth={1.75} /> {busy === "cleanup" ? "Cleaning…" : "Clean up board"}
+            </button>
+          </div>
+        }
       />
+
+      {notice ? <p className="mb-4 text-sm text-ink-2">{notice}</p> : null}
 
       <section className="panel mb-4 flex flex-wrap items-center gap-3 p-4">
         <span className={`chip ${company === null ? "chip-absent" : paused ? "chip-fail" : "chip-credit"}`}>
@@ -163,40 +234,27 @@ export function Runs() {
           >
             <Rocket size={15} strokeWidth={1.75} /> {busy === "start" ? "Starting…" : "Start run"}
           </button>
-          {paused ? <span className="text-xs text-ink-3">Resume the company to start a run.</span> : null}
+          <span className="text-xs text-ink-3">{paused ? "Resume the company to start a run." : "Starting closes any run still open, so only the new one runs."}</span>
         </div>
       </section>
 
       {runs === null ? (
         <div className="absence">{error ? "The runs could not be read." : "Reading the CEO's board…"}</div>
-      ) : runs.length === 0 ? (
-        <div className="absence">No runs yet. Start one above.</div>
       ) : (
-        <div className="space-y-4">
-          {runs.map((run) => (
-            <article key={run.run} className="panel p-4">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-medium">{run.goal || run.run}</span>
-                <span className="font-mono text-xs text-ink-3">{runWhen(run.run)}</span>
-              </div>
-              <ol className="mt-4 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
-                {run.steps.map((step, i) => {
-                  const status = STEP_STATUS[step.card?.status ?? "missing"];
-                  const session = step.card?.woken_session_id ? byId.get(step.card.woken_session_id) : undefined;
-                  return (
-                    <li key={step.key} className="rounded-md border border-line p-3">
-                      <div className="font-mono text-[0.6875rem] text-ink-3">{i + 1}. {step.owner}</div>
-                      <div className="mt-1 text-sm font-medium">{step.title}</div>
-                      <span className={`chip ${status.cls} mt-2`}>{status.label}</span>
-                      {session ? <div className="mt-2 text-xs text-ink-2">Agent: {session.status === "running" ? "working now" : stopLabel(session)}</div> : null}
-                      {step.card?.note ? <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-xs text-ink-2">{step.card.note}</p> : null}
-                    </li>
-                  );
-                })}
-              </ol>
-            </article>
-          ))}
-        </div>
+        <>
+          <h2 className="eyebrow mb-2">Current</h2>
+          {current.length === 0 ? (
+            <div className="absence mb-6">No run is going. Start one above.</div>
+          ) : (
+            <div className="mb-6 space-y-4">{current.map((run) => runCard(run, true))}</div>
+          )}
+          {history.length > 0 ? (
+            <details>
+              <summary className="eyebrow mb-2 cursor-pointer">History ({history.length})</summary>
+              <div className="space-y-4">{history.map((run) => runCard(run, false))}</div>
+            </details>
+          ) : null}
+        </>
       )}
     </div>
   );
