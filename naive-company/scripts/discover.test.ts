@@ -140,17 +140,27 @@ describe("hunterCandidates", () => {
 
 describe("personalizedDetail", () => {
   it("names a specialty when the shop's name states one", () => {
-    expect(personalizedDetail(listing({ name: "Ma's European Auto Service" }), "San Mateo")).toBe("you specialize in European cars");
-    expect(personalizedDetail(listing({ name: "EV Auto Service" }), "San Mateo")).toBe("you work on EVs");
+    expect(personalizedDetail(listing({ name: "Ma's European Auto Service" }), "San Mateo", "auto")).toBe("you specialize in European cars");
+    expect(personalizedDetail(listing({ name: "EV Auto Service" }), "San Mateo", "auto")).toBe("you work on EVs");
   });
   it("uses the rating when it is good and backed by reviews", () => {
-    expect(personalizedDetail(listing({ rating: 4.9, reviewCount: 370 }), "San Mateo")).toBe("you've kept a 4.9 rating across 370 Google reviews");
-    expect(personalizedDetail(listing({ rating: 5, reviewCount: 24 }), "San Mateo")).toBe("you have a perfect 5-star rating from 24 Google reviews");
+    expect(personalizedDetail(listing({ rating: 4.9, reviewCount: 370 }), "San Mateo", "auto")).toBe("you've kept a 4.9 rating across 370 Google reviews");
+    expect(personalizedDetail(listing({ rating: 5, reviewCount: 24 }), "San Mateo", "auto")).toBe("you have a perfect 5-star rating from 24 Google reviews");
   });
   it("falls back to the street rather than praising a thin or weak rating", () => {
-    expect(personalizedDetail(listing({ rating: 4.2, reviewCount: 300 }), "San Mateo")).toBe("you're on El Camino Real in San Mateo");
-    expect(personalizedDetail(listing({ rating: 5, reviewCount: 3 }), "San Mateo")).toBe("you're on El Camino Real in San Mateo");
-    expect(personalizedDetail(listing({ rating: null, reviewCount: null, address: null }), "Oakland")).toBe("you're based in Oakland");
+    expect(personalizedDetail(listing({ rating: 4.2, reviewCount: 300 }), "San Mateo", "auto")).toBe("you're on El Camino Real in San Mateo");
+    expect(personalizedDetail(listing({ rating: 5, reviewCount: 3 }), "San Mateo", "auto")).toBe("you're on El Camino Real in San Mateo");
+    expect(personalizedDetail(listing({ rating: null, reviewCount: null, address: null }), "Oakland", "auto")).toBe("you're based in Oakland");
+  });
+
+  it("uses car wording only for auto shops", () => {
+    const plain = { rating: null, reviewCount: null, address: null };
+    expect(personalizedDetail(listing({ name: "Asian Beauty Salon", ...plain }), "Oakland", "salon")).toBe("you're based in Oakland");
+    expect(personalizedDetail(listing({ name: "Mercedes Hair Studio", ...plain }), "Oakland", "salon")).toBe("you're based in Oakland");
+    expect(personalizedDetail(listing({ name: "Hybrid Salon", ...plain }), "Oakland", "salon")).toBe("you're based in Oakland");
+    expect(personalizedDetail(listing({ name: "Acura Auto", ...plain }), "Oakland", "auto")).toBe("you specialize in Honda and Acura");
+    expect(personalizedDetail(listing({ name: "Bridal Beauty", ...plain }), "Oakland", "salon")).toBe("you do bridal work");
+    expect(personalizedDetail(listing({ name: "Bridal Motors", ...plain }), "Oakland", "auto")).toBe("you're based in Oakland");
   });
 });
 

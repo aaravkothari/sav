@@ -320,7 +320,7 @@ export function hunterCandidates(output: unknown): EmailCandidate[] {
     const row = raw as { value?: string; first_name?: string | null; position?: string | null; confidence?: number; sources?: unknown[]; verification?: { status?: string | null } };
     if (!row.value) continue;
     const status = row.verification?.status ?? null;
-    const verified = status === "valid" || status === "accept_all";
+    const verified = status === "valid";
     const seenOnWeb = Array.isArray(row.sources) && row.sources.length > 0 && (row.confidence ?? 0) >= 70;
     if (status === "invalid" || !(verified || seenOnWeb)) continue;
     out.push({ email: row.value, source: "hunter", first_name: row.first_name ?? null, position: row.position ?? null });
@@ -328,24 +328,25 @@ export function hunterCandidates(output: unknown): EmailCandidate[] {
   return out;
 }
 
-const SPECIALTIES: Array<[RegExp, string]> = [
-  [/\b(european|euro)\b/i, "you specialize in European cars"],
-  [/\b(bmw|bimmer)\b/i, "you specialize in BMWs"],
-  [/\b(mercedes|benz)\b/i, "you specialize in Mercedes"],
-  [/\bporsche\b/i, "you specialize in Porsches"],
-  [/\b(audi|vw|volkswagen)\b/i, "you specialize in Audi and VW"],
-  [/\b(volvo)\b/i, "you specialize in Volvos"],
-  [/\bsubaru\b/i, "you specialize in Subarus"],
-  [/\b(toyota|lexus)\b/i, "you specialize in Toyota and Lexus"],
-  [/\bhonda|acura\b/i, "you specialize in Honda and Acura"],
-  [/\b(japanese|asian)\b/i, "you specialize in Japanese cars"],
-  [/\b(ev|tesla|electric vehicle)\b/i, "you work on EVs"],
-  [/\bhybrid\b/i, "you work on hybrids"],
-  [/\bdiesel\b/i, "you work on diesels"],
-  [/\btransmission\b/i, "you focus on transmission work"],
-  [/\bpediatric\b/i, "you focus on kids"],
-  [/\bsports? (physical therapy|medicine|rehab)\b/i, "you focus on sports injuries"],
-  [/\bbridal\b/i, "you do bridal work"],
+/** Name patterns that say what a business focuses on, each only for the sectors where the words mean that. */
+const SPECIALTIES: Array<[RegExp, string, readonly string[]]> = [
+  [/\b(european|euro)\b/i, "you specialize in European cars", ["auto"]],
+  [/\b(bmw|bimmer)\b/i, "you specialize in BMWs", ["auto"]],
+  [/\b(mercedes|benz)\b/i, "you specialize in Mercedes", ["auto"]],
+  [/\bporsche\b/i, "you specialize in Porsches", ["auto"]],
+  [/\b(audi|vw|volkswagen)\b/i, "you specialize in Audi and VW", ["auto"]],
+  [/\b(volvo)\b/i, "you specialize in Volvos", ["auto"]],
+  [/\bsubaru\b/i, "you specialize in Subarus", ["auto"]],
+  [/\b(toyota|lexus)\b/i, "you specialize in Toyota and Lexus", ["auto"]],
+  [/\b(honda|acura)\b/i, "you specialize in Honda and Acura", ["auto"]],
+  [/\b(japanese|asian)\b/i, "you specialize in Japanese cars", ["auto"]],
+  [/\b(ev|tesla|electric vehicle)\b/i, "you work on EVs", ["auto"]],
+  [/\bhybrid\b/i, "you work on hybrids", ["auto"]],
+  [/\bdiesel\b/i, "you work on diesels", ["auto"]],
+  [/\btransmission\b/i, "you focus on transmission work", ["auto"]],
+  [/\bpediatric\b/i, "you focus on kids", ["physical-therapy", "dental"]],
+  [/\bsports? (physical therapy|medicine|rehab)\b/i, "you focus on sports injuries", ["physical-therapy"]],
+  [/\bbridal\b/i, "you do bridal work", ["salon"]],
 ];
 
 function formatRating(rating: number): string {
@@ -369,15 +370,15 @@ export function listingCity(address: string | null | undefined): string | null {
 }
 
 /** One true clause that completes "I came across {shop} and noticed ...". From listing fields only. */
-export function personalizedDetail(listing: Pick<Listing, "name" | "rating" | "reviewCount" | "address">, city: string | null): string {
-  for (const [pattern, clause] of SPECIALTIES) if (pattern.test(listing.name)) return clause;
+export function personalizedDetail(listing: Pick<Listing, "name" | "rating" | "reviewCount" | "address">, city: string | null, sector: string): string {
+  for (const [pattern, clause, sectors] of SPECIALTIES) if (sectors.includes(sector) && pattern.test(listing.name)) return clause;
   const { rating, reviewCount: reviews } = listing;
   if (rating !== null && reviews !== null && rating >= 4.5 && reviews >= 15) {
     return reviews >= 100 ? `you've kept ${formatRating(rating)} rating across ${reviews} Google reviews` : `you have ${formatRating(rating)} rating from ${reviews} Google reviews`;
   }
   const street = streetName(listing.address);
   if (street && city) return `you're on ${street} in ${city}`;
-  return city ? `you're based in ${city}` : "you're still independently run";
+  return city ? `you're based in ${city}` : "you're listed on Google Maps";
 }
 
 function displayPhone(phone: string | null): string | null {
@@ -403,7 +404,7 @@ export function priorityFor(listing: Pick<Listing, "rating" | "reviewCount">): P
 export function buildLead(listing: Listing & { sector: string; searchCity: string }, contact: Contact): DiscoveredLead {
   const city = listingCity(listing.address) ?? listing.searchCity.split(",")[0]?.trim() ?? null;
   const kind = listing.sector === "auto" ? "repair" : "service";
-  const detail = personalizedDetail(listing, city);
+  const detail = personalizedDetail(listing, city, listing.sector);
   const services = [...new Set(listing.categories.map((c) => c.toLowerCase()))].slice(0, 8);
   return {
     name: listing.name,
