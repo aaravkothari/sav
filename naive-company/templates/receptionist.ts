@@ -118,8 +118,11 @@ export const AUTOOPS_WRITE = via(AUTOOPS, "provision_receptionist", "update_rece
 export const AUTOOPS_BILLING = via(AUTOOPS, "create_trial_checkout", "activate_shop");
 /** The shared demo line: an owner's phone added with `add_caller` reaches their shop's demo on it. It never changes. */
 export const DEMO_LINE = "+1 208 675 9241";
-/** Sales: an owner's own cell, so their call to the shared line reaches their demo, and the receptionist's notify_phone. */
-export const AUTOOPS_OWNER_PHONE = via(AUTOOPS, "add_caller", "update_receptionist");
+/**
+ * Sales: an owner's own cell, so their call to the shared line reaches their demo (`add_caller`).
+ * `update_receptionist` stays with `booking--<slug>` only, as AGENTS.md has it, until BeigeElk OKs more holders.
+ */
+export const AUTOOPS_OWNER_PHONE = via(AUTOOPS, "add_caller");
 /** The stage-demo receptionists. Read them, never change them (AXL has a real callback at 7am). */
 export const PROTECTED_SHOPS = ["axl-roadside", "demo-shop"] as const;
 const PROTECTED_RULE = `Never call update_receptionist or provision_receptionist for ${PROTECTED_SHOPS.map((id) => `"${id}"`).join(" or ")}: they are the stage demos; you may read them.`;
@@ -331,7 +334,7 @@ const sales = seat({
     INBOX_RULE,
     `When this session starts with "${EVENTS.shopReplied} <shop name>", the next lines give client_id, thread_id, shop email and the reply text. Otherwise (a scheduled pass or a card) find the work yourself: agentmail.list_threads and handle each thread whose latest message is from a shop and has no "${NOTES.replySent}" note after it.`,
     `For each reply: dashboard.get_client for the shop and read its "${NOTES.research}", "${NOTES.receptionist}" and earlier notes; agentmail.get_thread for the whole conversation. File the shop's reply verbatim as a note. Then answer with agentmail.reply_to_message, choosing one:`,
-    `(a) Interested, or asks to try it: thank them, give the demo link (\"You can call the demo I set up for <shop name> here: <demo_url>\", the demo_url copied exactly from its "${NOTES.receptionist}" note), and offer a 15-minute onboarding call. If there is no demo yet and the shop is auto repair, first call autoops.provision_demo once with shop = { name, kind "repair", demo true, phone in E.164, address, website, hours { mon..sun: "8:00-18:00" or "closed" }, policies ["Do not quote prices."] } from the research note, and file a "${NOTES.receptionist}" note with the returned shop_id, demo_url, portal_url and "preview". Any other sector has no demo until autoops takes kind "service" with a sector (sav#47): until then offer only the call. If they gave a cell number, call autoops.update_receptionist({ shop_id, notify_phone }) with only those two fields, and autoops.add_caller({ shop_id, phone, label "owner" }) so that phone reaches their demo, then tell them to call ${DEMO_LINE} from that phone, or use the demo page. ${DEMO_LINE} is the only phone number you ever put in an email; never another preview number. ${BOOKING_RULE}`,
+    `(a) Interested, or asks to try it: thank them, give the demo link (\"You can call the demo I set up for <shop name> here: <demo_url>\", the demo_url copied exactly from its "${NOTES.receptionist}" note), and offer a 15-minute onboarding call. If there is no demo yet and the shop is auto repair, first call autoops.provision_demo once with shop = { name, kind "repair", demo true, phone in E.164, address, website, hours { mon..sun: "8:00-18:00" or "closed" }, policies ["Do not quote prices."] } from the research note, and file a "${NOTES.receptionist}" note with the returned shop_id, demo_url, portal_url and "preview". Any other sector has no demo until autoops takes kind "service" with a sector (sav#47): until then offer only the call. If they gave a cell number, call autoops.add_caller({ shop_id, phone, label "owner" }) so that phone reaches their demo, then tell them to call ${DEMO_LINE} from that phone, or use the demo page. ${DEMO_LINE} is the only phone number you ever put in an email; never another preview number. ${BOOKING_RULE}`,
     "(b) Pushback or a question: one short, honest, convincing answer from the facts below, then the call offer. Say plainly when something is not supported.",
     `(c) Not interested or asks to stop: one polite line (\"No problem at all, thanks for letting me know. Aarav\"), then a note "${NOTES.unsubscribed}" with what they said and next_action "Do not contact".`,
     FACTS,
@@ -425,22 +428,20 @@ const monitoring = seat({
 const selfImprovement = seat({
   name: "self-improvement",
   role: "Self-improvement",
-  description: "Fixes what monitoring flags: tests a receptionist change with simulated calls and applies it only when the test passes. Proposes, never applies, changes to the crew's own instructions.",
+  description: "Works out fixes for what monitoring flags: reproduces each problem with simulated calls and proposes the smallest receptionist change. Never applies a change itself.",
   model: MODELS.careful,
   budget: BUDGETS["self-improvement"],
   system: real([
-    "You are the self-improvement agent for SAV. You make the receptionists better, carefully.",
+    "You are the self-improvement agent for SAV. You find what makes the receptionists get things wrong and propose fixes.",
     `Find the work: autoops.list_call_summaries since 24 hours ago for flags (quoted_price, confirmed_appointment, too_long and the rest; vehicle_unclear on a call with no vehicle_corrected after it is a prompt problem, while vehicle_unclear followed by vehicle_corrected means the receptionist recovered and needs no fix), and the "${NOTES.flag}" notes monitoring filed (dashboard.get_client). Group flags by shop and by cause. Read a transcript with autoops.get_call only when the summary cannot tell you the cause, and last.`,
     "For each problem, at most three per session and one per shop per day:",
-    "1. autoops.get_receptionist: keep its current policies, services, hours, first_message and version: that is your rollback.",
-    "2. Reproduce it with autoops.simulate_call, a short customer_script that triggers the problem.",
-    "3. Make the smallest change with autoops.update_receptionist: prefer one added or reworded rule in policies, or services or hours; touch system_prompt only if no fact can fix it.",
-    "4. Test again: the same script, plus a normal booking script (name, number, vehicle, service, time). It passes only if the problem is gone and neither run shows quoted_price, confirmed_appointment or too_long. If it fails, put the saved values back with update_receptionist at once.",
-    `5. Note on the shop "${NOTES.promptChanged}" with the version before and after, the change, the flag and call_ids it fixes, and the simulated caller's key lines from both runs; or, when rolled back, what you tried and why it failed.`,
+    "1. autoops.get_receptionist: read its current policies, services, hours and first_message.",
+    "2. Reproduce it with autoops.simulate_call, a short customer_script that triggers the problem, and quote the simulated caller's key lines.",
+    `3. Propose the smallest change that would fix it: prefer one added or reworded rule in policies, or services or hours; system_prompt only if no fact can fix it. Note it on the shop as "${NOTES.promptChanged}" PROPOSED, with the exact new value, the flag and call_ids it fixes, and the reproduction. Never call update_receptionist: changes are applied by the shop's own booking seat or a person (AGENTS.md).`,
     `Use at most six simulate_call runs per session: each costs the voice account. ${PROTECTED_RULE} For changes to the crew's own instructions or the outreach wording, propose them in your reply or card note (what, where, why, evidence); never apply those.`,
   ].join(" ")),
   mcp_servers: [AUTOOPS],
-  tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...AUTOOPS_READ, ...via(AUTOOPS, "update_receptionist"), ...REQUEST_TOOLS], OPERATOR),
+  tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...AUTOOPS_READ, ...REQUEST_TOOLS], OPERATOR),
   schedules: [
     every("0 22 * * *", "Fix flagged receptionist calls", "Scheduled pass: fix today's flagged calls, as your instructions say. If nothing was flagged, stop.", 0.75),
   ],

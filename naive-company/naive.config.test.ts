@@ -107,7 +107,7 @@ describe("naive.config.ts", () => {
         const receptionist: Record<string, string[]> = {
           ...Object.fromEntries(["research", "research-salon", "research-drycleaner", "research-pt", "research-home"].map((name) => [name, MONID_TOOLS])),
           monitoring: AUTOOPS_READS,
-          "self-improvement": [...AUTOOPS_READS, "autoops.update_receptionist"],
+          "self-improvement": [...AUTOOPS_READS],
         };
         expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO ? measurement[agent.name] : receptionist[agent.name]) || []]);
         if (!SEO && agent.name === "research") expect(agent.tools?.configs["monid.monid_run"]?.permission).toBe("allow");
