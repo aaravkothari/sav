@@ -10,9 +10,10 @@
  *
  * Every seat starts nothing on its own: no intake and no schedules, so `naive up` spends nothing; a
  * cheap model and a small budget. Tools are deny-by-default; anything that reaches outside the
- * company or spends (sending email, paid data runs, buying a receptionist's phone number, changing
- * what callers hear) is `ask`, so it waits on Approvals. Drafts, CRM notes, free demo receptionists
- * and simulated calls run without asking.
+ * company by email (send, reply, forward) is `ask`, so it waits on Approvals. Everything else a seat
+ * holds runs on its own, within its budget: drafts, CRM notes, paid data runs, demo and live
+ * receptionists, and simulated calls. A live receptionist (and its phone number) is only built for a
+ * shop the operator has moved to active.
  *
  * `templates/agents.ts` stays as the blueprint ships it: `seo-geo` still builds on it.
  */
@@ -41,15 +42,17 @@ export const AGENTMAIL = { name: "agentmail", url: "https://mcp.agentmail.to/mcp
 export const MONID = { name: "monid", url: "https://mcp.monid.ai/v1" } as const;
 const via = (server: { name: string }, ...names: string[]) => names.map((n) => `${server.name}.${n}`);
 
-/** AgentMail: read the inboxes freely. Drafting, sending, replying and creating an inbox wait for you. Deleting is not offered. */
+/** AgentMail: reading, drafting and creating the company inbox run freely. Sending, replying and forwarding wait for you. Deleting is not offered. */
 export const AGENTMAIL_READ = via(AGENTMAIL, "list_inboxes", "get_inbox", "list_threads", "search_threads", "get_thread", "list_messages", "search_messages", "get_message", "list_drafts", "get_draft", "get_attachment");
 /** Writing a draft changes nothing outside the inbox: the operator reviews it and is the one who sends. */
 export const AGENTMAIL_DRAFT = via(AGENTMAIL, "create_draft", "update_draft");
-export const AGENTMAIL_ASK = via(AGENTMAIL, "send_draft", "send_message", "reply_to_message", "forward_message", "create_inbox");
+export const AGENTMAIL_INBOX = via(AGENTMAIL, "create_inbox");
+/** The only thing in this crew that waits for the operator: email actually leaving the company. */
+export const AGENTMAIL_SEND = via(AGENTMAIL, "send_draft", "send_message", "reply_to_message", "forward_message");
 
-/** Monid: searching the catalogue and reading runs is free. A run spends the Monid balance, so it waits for you. Top-ups, promo codes, disputes and releases are not offered. */
+/** Monid: everything offered runs freely, capped by the seat budget. Top-ups, promo codes, disputes and releases are not offered. */
 export const MONID_READ = via(MONID, "monid_discover", "monid_inspect", "monid_get_run", "monid_list_runs", "monid_balance");
-export const MONID_ASK = via(MONID, "monid_run");
+export const MONID_RUN = via(MONID, "monid_run");
 
 /**
  * autoops-voice (Swayam's repo, swayambshah/autoops-voice): the Vapi receptionist. Its MCP is the
@@ -61,8 +64,8 @@ export const AUTOOPS = { name: "autoops", url: "https://submit-yoga-thoughts-sim
 /** Reads, free text-mode test calls, and `provision_demo` (forces preview mode, never attaches a number, spends nothing). */
 export const AUTOOPS_READ = via(AUTOOPS, "get_receptionist", "list_calls", "get_call", "list_shops", "simulate_call");
 export const AUTOOPS_DEMO = via(AUTOOPS, "provision_demo");
-/** A real receptionist can buy a phone number, and an update changes what callers hear: both wait for the operator. */
-export const AUTOOPS_ASK = via(AUTOOPS, "provision_receptionist", "update_receptionist");
+/** A real receptionist can buy a phone number, and an update changes what callers hear. Both run on their own; the stage demos are protected by the rule below. */
+export const AUTOOPS_WRITE = via(AUTOOPS, "provision_receptionist", "update_receptionist");
 /** The stage-demo receptionists. Read them, never change them (BeigeElk, msg 23; AXL has a real callback at 7am). */
 export const PROTECTED_SHOPS = ["axl-roadside", "demo-shop"] as const;
 const PROTECTED_RULE = `Never call update_receptionist or provision_receptionist for ${PROTECTED_SHOPS.map((id) => `"${id}"`).join(" or ")}: they are the stage demos; you may read them.`;
@@ -107,7 +110,7 @@ const real = (role: string, mail = false) =>
 export const INBOX_NAME = "Aarav from SAV";
 const INBOX_RULE =
   `Your email goes through AgentMail (agentmail.* tools), from the company inbox whose display name is "${INBOX_NAME}": find it with agentmail.list_inboxes. ` +
-  `If it does not exist yet, propose agentmail.create_inbox once with display_name "${INBOX_NAME}" and username "aarav.sav" (it waits for the operator). ` +
+  `If it does not exist yet, propose agentmail.create_inbox once with display_name "${INBOX_NAME}" and username "aarav.sav". ` +
   "Write every email as an AgentMail draft (agentmail.create_draft): drafts are reviewed by the operator, who sends them. Never call send_message, send_draft, reply_to_message or forward_message unless your card explicitly says the operator asked you to send.";
 
 const seat = (decl: Omit<AgentDecl, "model" | "budget" | "identity" | "schedules" | "handoffs">): AgentDecl => ({
@@ -125,7 +128,7 @@ export const receptionistRoster: AgentDecl[] = [
   seat({
     name: "research",
     role: "Research",
-    description: "Finds busy independent auto repair shops on Google Maps and files them as qualified leads. Every paid data lookup waits for your approval.",
+    description: "Finds busy independent auto repair shops on Google Maps and files them as qualified leads.",
     system: real([
       "You are the research agent for SAV, an AI receptionist for independent auto repair shops.",
       "Your card says how many shops to find and where; if it does not, find 3 in the area the context names, or the San Francisco Bay Area when it names none.",
@@ -136,10 +139,10 @@ export const receptionistRoster: AgentDecl[] = [
       "5. For each shop you keep, run monid.monid_inspect once on provider hunterio, endpoint /domain-search, then one monid.monid_run per shop domain with limit 3, to find the owner's or manager's first name and email. Prefer an owner, manager or the shop's own address; never guess or construct an email, and file the shop without one when none is found.",
       `6. File each shop with dashboard.create_lead (name, domain, contact_name, contact_email when found, contact_role, source outreach). Then dashboard.add_client_note on it, starting with "${RESEARCH_NOTE}": rating and review count, phone, address, hours, one line on why it fits, and one specific detail you actually read in its listing that an opener could mention. Set next_action to "Draft opener". Then a second note starting with "${RECEPTIONIST_NOTE}": the shop_id, demo_url and portal_url from step 4 exactly as returned, and "preview".`,
       "Order matters: once you have read people's data (owner names and emails from Hunter, call transcripts), Naïve makes every later outside tool call and board update wait for the operator, while CRM notes keep working. So do every outside lookup that does not return people's data first.",
-      "Every monid_run spends the Monid balance and waits for the operator's approval: propose it and wait. Keep each run small, one keyword or one domain per run. Report the total Monid cost in your card's note. Never invent a shop, a name, an email, a number or a detail.",
+      "Every monid_run spends the Monid balance. Keep each run small, one keyword or one domain per run. Report the total Monid cost in your card's note. Never invent a shop, a name, an email, a number or a detail.",
     ].join(" ")),
     mcp_servers: [MONID, AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MONID_READ, ...AUTOOPS_DEMO], [...MONID_ASK, ...OPERATOR]),
+    tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MONID_READ, ...MONID_RUN, ...AUTOOPS_DEMO], OPERATOR),
   }),
   seat({
     name: "sales",
@@ -160,8 +163,8 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT],
-      [...MAILBOX_SEND, ...AGENTMAIL_ASK, ...OPERATOR],
+      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
+      [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
     ),
   }),
   seat({
@@ -178,8 +181,8 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT],
-      [...MAILBOX_SEND, ...AGENTMAIL_ASK, ...OPERATOR],
+      [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
+      [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
     ),
   }),
   seat({
@@ -192,10 +195,10 @@ export const receptionistRoster: AgentDecl[] = [
       "Order matters: once you have read people's data (owner names and emails from Hunter, call transcripts), Naïve makes every later outside tool call and board update wait for the operator, while CRM notes keep working. So do every outside lookup that does not return people's data first.",
       "If this session starts with \"A receptionist call just ended\" (autoops-voice wakes you with a call_id and shop_id): first find the shop in the CRM (dashboard.list_clients, by name or domain, or by the shop_id in its RECEPTIONIST: note), then autoops.get_call for that call_id, and do not call any other autoops tool after it. Then dashboard.add_client_note: \"CALL: <call_id>\", the outcome, duration, one-line summary, each appointment request, and \"guardrails ok\" or exactly which one failed. If the shop is not in the CRM, write that in your reply and file nothing. There is no card to close in that case.",
       "When you work a card instead: autoops.list_shops and autoops.list_calls first (since the card's start, or the last 24 hours), then get_call only for the calls you need to read, file the same CALL: notes, and close the card with a summary: calls per shop, appointment requests, guardrail failures, and shops that started a free week (subscription_status trialing).",
-      `If a call shows a prompt problem, describe it and a fix in your note and test the fix idea with autoops.simulate_call; do not change a receptionist yourself (update_receptionist waits for the operator; propose it only with the exact change). ${PROTECTED_RULE}`,
+      `If a call shows a prompt problem, describe it and a fix in your note and test the fix idea with autoops.simulate_call; do not change a receptionist yourself: write the exact change in your note for the operator to decide on. ${PROTECTED_RULE}`,
     ].join(" ")),
     mcp_servers: [AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ], [...AUTOOPS_ASK, ...OPERATOR]),
+    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ], OPERATOR),
   }),
   seat({
     name: "self-improvement",
@@ -205,10 +208,10 @@ export const receptionistRoster: AgentDecl[] = [
       "You are the self-improvement agent for SAV. You make the company better without changing anything yourself.",
       "Read what happened in this order: the board's cards and notes (board_read), the CRM notes (RESEARCH:, OUTREACH DRAFTED, SAID YES:, CALL:), autoops.list_calls, and your autoops.simulate_call tests; read real transcripts with autoops.get_call last, because after that your outside calls and your card update wait for the operator.",
       "Pick at most three concrete improvements: to an agent's instructions, the outreach wording, or a receptionist's prompt. For a receptionist change, test it first with autoops.simulate_call on that shop (free, text only) and quote what the simulated caller heard.",
-      `Close your card with the three proposals: what to change, where (file or shop_id), why, and the evidence. Never apply a change yourself: update_receptionist waits for the operator, and agent instructions change only through the repo. ${PROTECTED_RULE}`,
+      `Close your card with the three proposals: what to change, where (file or shop_id), why, and the evidence. Never apply a change yourself: do not call update_receptionist, and agent instructions change only through the repo. ${PROTECTED_RULE}`,
     ].join(" ")),
     mcp_servers: [AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client"), ...AUTOOPS_READ], [...AUTOOPS_ASK, ...OPERATOR]),
+    tools: tools([...BASE, ...crm("get_client"), ...AUTOOPS_READ], OPERATOR),
   }),
 ];
 
@@ -220,16 +223,16 @@ export const receptionistCrew: AgentDecl[] = [
   seat({
     name: "booking",
     role: "Receptionist",
-    description: "Sets up and looks after this shop's live AI receptionist on autoops-voice. Buying its phone number or changing what callers hear waits for you.",
+    description: "Sets up and looks after this shop's live AI receptionist on autoops-voice. Created when you move the shop to active.",
     system: real([
       "You look after ONE shop's AI receptionist: the shop whose slug ends your agent name (booking--<slug>). The phone calls themselves are answered by autoops-voice; you set it up and watch it.",
       `1. dashboard.list_clients and dashboard.get_client for your shop. Read its "${CONFIG_NOTE}" note (hours, services, greeting, booking_rules, handoff) and its "${RECEPTIONIST_NOTE}" note (shop_id of its preview receptionist, if it has one).`,
-      "2. Propose the live receptionist with autoops.provision_receptionist: shop = { name, kind \"repair\", demo false, phone, address, website, hours, services, policies = booking_rules plus handoff, one rule per string }, the existing shop_id when there is one, and attach_phone_number true. It waits for the operator, because a number costs money. Then send the greeting as first_message with autoops.update_receptionist (also waits).",
+      "2. Create the live receptionist with autoops.provision_receptionist: shop = { name, kind \"repair\", demo false, phone, address, website, hours, services, policies = booking_rules plus handoff, one rule per string }, the existing shop_id when there is one, and attach_phone_number true. Call it once: a number costs money, and a re-call keeps the same number. Then send the greeting as first_message with autoops.update_receptionist.",
       `3. Once it is live, file a "${RECEPTIONIST_NOTE} live" note with shop_id, phone_number, demo_url and portal_url exactly as returned. For a test call card: autoops.simulate_call a short booking script (name, number, vehicle, service, time) and close the card with the transcript's key lines and its appointment_requests.`,
       PROTECTED_RULE,
     ].join(" ")),
     mcp_servers: [AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ], [...AUTOOPS_ASK, ...OPERATOR]),
+    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ, ...AUTOOPS_WRITE], OPERATOR),
   }),
 ];
 

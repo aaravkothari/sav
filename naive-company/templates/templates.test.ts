@@ -204,16 +204,14 @@ describe("connected accounts", () => {
     }
   });
 
-  it.each(all)("$name holds every outward one at `ask`, and nothing else outward", (template) => {
+  it.each(all)("$name holds email leaving the company at `ask`, and every other connection tool at `allow`", (template) => {
     for (const agent of [...template.agents, ...template.crew]) {
       for (const [name, config] of connectionTools(agent)) {
-        // Outward: anything that sends, publishes or changes state elsewhere, and anything that
-        // spends a third-party balance (Monid's `monid_run`; reading a run back is free).
-        // An AgentMail draft is not outward: it stays in the inbox until the operator sends it.
-        const draft = /^agentmail\.(create|update)_draft$/.test(name);
-        // provision_receptionist can buy a phone number; provision_demo never does (preview only, no spend).
-        const outward = !draft && /\.(send|post|publish|create|update|delete|write|reply|forward)|\.monid_run$|\.provision_receptionist$/.test(name);
-        expect([name, config.permission]).toEqual([name, outward ? "ask" : "allow"]);
+        // The one gate the operator keeps: email actually being sent (send, reply, forward).
+        // Drafts, the company inbox, paid Monid runs and receptionist changes run on their own,
+        // within the seat budget.
+        const sendsEmail = /\.(send|send_draft|send_message|reply|reply_to_message|forward|forward_message)$/.test(name);
+        expect([name, config.permission]).toEqual([name, sendsEmail ? "ask" : "allow"]);
       }
     }
   });
@@ -359,14 +357,14 @@ describe("blank", () => {
     expect(onboarding.tools?.configs["agentmail.send_message"]?.permission).toBe("ask");
   });
 
-  it("builds free demo receptionists, and waits for the operator before anything can buy a number or change what callers hear", () => {
+  it("builds free demo receptionists; only a shop's own booking seat can buy a number or change what callers hear", () => {
     for (const agent of [...blank.agents, ...blank.crew]) {
       const c = agent.tools?.configs ?? {};
-      for (const tool of ["autoops.provision_receptionist", "autoops.update_receptionist"]) {
-        expect([agent.name, tool, c[tool]?.permission ?? "ask"]).toEqual([agent.name, tool, "ask"]);
-      }
-      if (c["autoops.provision_receptionist"] || c["autoops.update_receptionist"]) {
-        // Every seat that could change a receptionist is told to leave the stage demos alone.
+      const writes = ["autoops.provision_receptionist", "autoops.update_receptionist"].filter((tool) => c[tool]);
+      expect([agent.name, writes.length > 0]).toEqual([agent.name, agent.name === "booking"]);
+      for (const tool of writes) expect([agent.name, tool, c[tool]?.permission]).toEqual([agent.name, tool, "allow"]);
+      if (agent.tools?.configs["autoops.get_receptionist"]) {
+        // Every seat that reaches a receptionist is told to leave the stage demos alone.
         expect(agent.system).toMatch(/Never call update_receptionist or provision_receptionist for "axl-roadside" or "demo-shop"/);
       }
     }
