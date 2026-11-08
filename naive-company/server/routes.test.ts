@@ -303,6 +303,35 @@ describe("public discovery documents", () => {
     expect((await call("GET", "/api/site", "")).status).toBe(200);
   });
 
+  it("never opens the store for the static landing page, and stays up when the store cannot be opened", async () => {
+    // Nov 8: `/` 503'd behind the database's row lock although the page is a baked-in string.
+    const landing = "<!doctype html><title>SAV</title>";
+    let opened = 0;
+    const down = fixture({
+      store: () => { opened += 1; return Promise.reject(new Error("connect ETIMEDOUT")); },
+      publicShell: () => Promise.resolve("<html><head><title>Agency</title></head></html>"),
+      landingPage: () => Promise.resolve(landing),
+    });
+    expect(await down.call("GET", "/", "")).toMatchObject({ status: 200, text: landing });
+    expect(opened).toBe(0);
+    expect((await down.call("GET", "/robots.txt", "")).status).toBe(200);
+    // Documents that need the store degrade instead of 503ing where a fallback exists.
+    const sitemap = await down.call("GET", "/sitemap.xml", "");
+    expect(sitemap.status).toBe(200);
+    expect(sitemap.text).toContain("<loc>");
+    expect(sitemap.text).not.toContain("/blog/");
+    expect((await down.call("GET", "/api/site", "")).status).toBe(200);
+    // Pure data documents say so plainly.
+    expect(await down.call("GET", "/api/stats", "")).toEqual({ status: 503, body: { error: "the app database is unavailable" } });
+    expect(await down.call("GET", "/api/blog", "")).toEqual({ status: 503, body: { error: "the app database is unavailable" } });
+    expect(await down.call("GET", "/llms.txt", "")).toEqual({ status: 503, body: { error: "the app database is unavailable" } });
+    // Without a landing page, `/` renders the holding site rather than failing.
+    const shell = fixture({ store: () => Promise.reject(new Error("connect ETIMEDOUT")), publicShell: () => Promise.resolve("<html><head><title>Agency</title></head></html>") });
+    const home = await shell.call("GET", "/", "");
+    expect(home.status).toBe(200);
+    expect(home.headers).toMatchObject({ "cache-control": "no-store" });
+  });
+
   it("serves crawl directives, dynamic metadata, permanent articles, a complete sitemap, and an agency-readable llms file", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-04T12:00:00Z"));

@@ -92,6 +92,8 @@ export const SSE_RETRY = "retry: 3000\n\n";
 
 const NO_ROUTE: ApiReply = { status: 404, body: { error: "no such route" } };
 const NOT_ALLOWED: ApiReply = { status: 405, body: { error: "method not allowed" } };
+/** A public document that needs the store while the store cannot be opened. The landing page itself never says this. */
+const STORE_DOWN: ApiReply = { status: 503, body: { error: "the app database is unavailable" } };
 const NOT_CONFIGURED: ApiReply = { status: 503, body: { error: "not configured — set NAIVE_API_KEY" } };
 const UNAUTHENTICATED: ApiReply = { status: 401, body: { error: "missing or invalid access token" } };
 const CROSS_SITE: ApiReply = { status: 403, body: { error: "cross-site request refused" } };
@@ -320,9 +322,17 @@ function originOf(req: ApiRequest): string {
 async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   const { method, path } = req;
   const origin = originOf(req);
-  const store = ["/", "/sitemap.xml", "/llms.txt", "/api/site", "/api/blog", "/api/stats"].includes(path) || path.startsWith("/blog/")
-    ? await ctx.store()
-    : null;
+  // The static landing page needs nothing from the store, so it never opens it: on the deployment that
+  // meant a database round trip (and, until Nov 8, a wait on the row lock) for every visit to `/`.
+  const staticLanding = path === "/" && ctx.landingPage !== undefined;
+  const needsStore = !staticLanding && (["/", "/sitemap.xml", "/llms.txt", "/api/site", "/api/blog", "/api/stats"].includes(path) || path.startsWith("/blog/"));
+  let store: Store | null = null;
+  let storeDown = false;
+  if (needsStore) {
+    // A public page is the one place a database failure should not be the answer: `/` and the
+    // sitemap render the holding site and no articles instead, and only the data documents say 503.
+    try { store = await ctx.store(); } catch (error) { console.error(error); storeDown = true; }
+  }
   const profile = store === null ? null : store.site();
   const articles = store === null ? [] : store.read().posts.filter((post) => publishedArticle(post));
   if (path === "/") {
@@ -330,16 +340,18 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     if (ctx.landingPage !== undefined) {
       return { status: 200, text: await ctx.landingPage(), headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } };
     }
-    if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
+    if (ctx.publicShell === undefined) return NO_ROUTE;
+    const shown = profile !== null && launchSafeSite(profile) ? profile : holdingSite;
     return {
       status: 200,
-      text: renderHome(await ctx.publicShell(), launchSafeSite(profile) ? profile : holdingSite, origin),
-      headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" },
+      text: renderHome(await ctx.publicShell(), shown, origin),
+      headers: { "content-type": "text/html; charset=utf-8", "cache-control": storeDown ? "no-store" : "public, max-age=60" },
     };
   }
   const article = /^\/blog\/([\w-]+)$/.exec(path);
   if (article !== null) {
     if (method !== "GET") return NOT_ALLOWED;
+    if (storeDown) return STORE_DOWN;
     if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
     const post = articles.find((candidate) => candidate.id === article[1]);
     if (post === undefined) return { status: 404, body: { error: "no such published article" } };
@@ -367,6 +379,7 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   }
   if (path === "/llms.txt") {
     if (method !== "GET") return NOT_ALLOWED;
+    if (storeDown) return STORE_DOWN;
     if (store === null || profile === null) return NO_ROUTE;
     return {
       status: 200,
@@ -392,6 +405,7 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   if (path === "/api/stats") {
     // Public, counts only (server/stats.ts): the landing page's live numbers. No names, emails or notes.
     if (method !== "GET") return NOT_ALLOWED;
+    if (storeDown) return STORE_DOWN;
     if (store === null) return NO_ROUTE;
     return {
       status: 200,
@@ -401,6 +415,7 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   }
   if (path === "/api/blog") {
     if (method !== "GET") return NOT_ALLOWED;
+    if (storeDown) return STORE_DOWN;
     const posts = articles
       .sort((a, b) => (b.postedAt ?? b.scheduledFor).localeCompare(a.postedAt ?? a.scheduledFor))
       .slice(0, 6)

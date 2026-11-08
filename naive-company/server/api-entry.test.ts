@@ -1,6 +1,6 @@
 /** The deployed entry point: what is decidable without a database, and what it does to one. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import handler, { libpqCompat, requestFrom } from "./api-entry.ts";
+import handler, { libpqCompat, readOnlyRequest, requestFrom } from "./api-entry.ts";
 
 /**
  * A Postgres faithful enough to tell last-write-wins from a locked read.
@@ -10,7 +10,7 @@ import handler, { libpqCompat, requestFrom } from "./api-entry.ts";
  * a FIFO row lock that `commit`/`rollback` releases, and a transaction refuses every statement
  * after one of its own has failed (`25P02`), which is why the table creation has to sit outside it.
  */
-const db = vi.hoisted(() => ({ created: false, row: null as string | null, queue: Promise.resolve() }));
+const db = vi.hoisted(() => ({ created: false, row: null as string | null, queue: Promise.resolve(), locks: 0, connects: 0 }));
 
 vi.mock("pg", () => {
   const fail = (code: string, message: string) => Object.assign(new Error(message), { code });
@@ -18,7 +18,7 @@ vi.mock("pg", () => {
     private release: (() => void) | null = null;
     private inTx = false;
     private aborted = false;
-    connect(): Promise<void> { return Promise.resolve(); }
+    connect(): Promise<void> { db.connects += 1; return Promise.resolve(); }
     end(): Promise<void> { this.unlock(); return Promise.resolve(); }
 
     private unlock(): void {
@@ -49,6 +49,7 @@ vi.mock("pg", () => {
       if (!db.created) { this.aborted = this.inTx; throw fail("42P01", `relation "${String(params[0])}" does not exist`); }
       if (sql.startsWith("select")) {
         if (sql.endsWith("for update")) {
+          db.locks += 1;
           await this.lock();
           if (!this.inTx) this.unlock(); // autocommit: the lock lives as long as the statement
         }
@@ -108,6 +109,8 @@ describe("the function itself", () => {
     db.created = false;
     db.row = null;
     db.queue = Promise.resolve();
+    db.locks = 0;
+    db.connects = 0;
     process.env["DASHBOARD_TOKEN"] = "dash";
   });
   afterEach(() => {
@@ -192,6 +195,41 @@ describe("the function itself", () => {
     expect((listed.body as { name: string }[]).map((c) => c.name).sort()).toEqual([...names].sort());
     // Distinct ids too: eight rows, not one row written eight times.
     expect(new Set((listed.body as { id: string }[]).map((c) => c.id)).size).toBe(8);
+  });
+
+  /**
+   * Nov 8: the landing page answered 503 "the app database is unavailable" for twenty minutes on the
+   * submission deadline. Nothing was wrong with the database: every request, reads included, took
+   * the row lock, and one Bookings read held it through 10–20 s of calls to the voice server while
+   * `/`, `/api/stats` and the approval sweep queued behind it past `statement_timeout`.
+   */
+  it("reads without the row lock, and locks only for a request that can write", async () => {
+    process.env["DATABASE_URL"] = "postgresql://u:p@db.test:5432/postgres";
+    expect(await send("GET", "/api/clients")).toEqual({ status: 200, body: [] });
+    expect(db.locks).toBe(0);
+    const created = await send("POST", "/api/leads", { name: "Alta", domain: "alta.test", contact: { name: "Jordan Lee", email: "jordan@alta.test", role: "Founder" } });
+    expect(created.status).toBe(201);
+    expect(db.locks).toBe(1);
+    // The read after the write sees it, lock-free.
+    expect(((await send("GET", "/api/clients")).body as { name: string }[]).map((c) => c.name)).toEqual(["Alta"]);
+    expect(db.locks).toBe(1);
+    // GET /api/company runs the pause sweep, which can write: it keeps the lock.
+    expect(readOnlyRequest({ method: "GET", path: "/api/company" })).toBe(false);
+    expect(readOnlyRequest({ method: "GET", path: "/api/bookings/requests" })).toBe(true);
+    expect(readOnlyRequest({ method: "POST", path: "/api/bookings/requests" })).toBe(false);
+  });
+
+  it("serves the static landing page without opening a database connection at all", async () => {
+    // `DATABASE_URL` is unset: any connect would 503. The landing page is a string baked in at build.
+    vi.stubGlobal("LANDING_HTML", "<!doctype html><title>SAV</title>");
+    try {
+      const { res, written } = reply();
+      await handler({ method: "GET", url: "/api/app?__path=/", headers: {} }, res);
+      expect(written.status).toBe(200);
+      expect(db.connects).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("creates the document on a fresh deployment without poisoning its own transaction", async () => {

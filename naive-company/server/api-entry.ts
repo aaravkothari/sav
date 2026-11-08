@@ -34,6 +34,19 @@ declare const LANDING_HTML: string;
 const TABLE = "agency_store";
 const ROW = "singleton";
 
+/**
+ * GET requests that still take the row lock, because their handler writes: `GET /api/company` runs
+ * `sweepPaused`, which can change the company's pause state. Every other GET is a read and must never
+ * queue behind a writer (Nov 8: the landing page 503'd behind a Bookings read that held the lock
+ * through 10–20 s of voice calls).
+ */
+const LOCKED_GETS = new Set(["/api/company"]);
+
+/** True when the request can only read: it is served from a plain `select`, with no row lock. */
+export function readOnlyRequest(req: Pick<ApiRequest, "method" | "path">): boolean {
+  return req.method === "GET" && !LOCKED_GETS.has(req.path);
+}
+
 interface Request {
   method?: string;
   url?: string;
@@ -82,9 +95,11 @@ async function connect(): Promise<Client> {
 }
 
 /**
- * Opens the request's transaction and returns the document, with the row locked until `commit`.
+ * Opens the request's transaction and returns the document, with the row locked until `commit` when
+ * `lock` is true. A read-only request passes `lock: false` and gets a plain `select`: it sees the last
+ * committed document and never waits on a writer, and writers never wait on it.
  *
- * Two round trips in the steady state — `begin`, then the locking select — and only on
+ * Two round trips in the steady state — `begin`, then the (locking) select — and only on
  * `undefined_table` the table is created. That creation happens **outside** the transaction on
  * purpose: a failed statement aborts a Postgres transaction, so every later statement in it would
  * answer `25P02` instead of doing its work.
@@ -92,8 +107,8 @@ async function connect(): Promise<Client> {
  * A fresh deployment starts **empty** — an empty CRM is the truth about a new deployment, and a
  * populated one would be a lie about whose rows those are.
  */
-async function begin(client: Client): Promise<StoreState> {
-  const lockingSelect = `select state from ${TABLE} where id = $1 for update`;
+async function begin(client: Client, lock = true): Promise<StoreState> {
+  const lockingSelect = `select state from ${TABLE} where id = $1${lock ? " for update" : ""}`;
   await client.query("begin");
   try {
     const { rows } = await client.query<{ state: StoreState }>(lockingSelect, [ROW]);
@@ -175,12 +190,14 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
     client: null, state: null, store: null, dirty: false,
   };
 
+  const request = requestFrom(req);
+  const readOnly = readOnlyRequest(request);
   try {
-    const reply = await handleRequest(requestFrom(req), {
+    const reply = await handleRequest(request, {
       async store() {
         if (open.store === null) {
           open.client = await connect();
-          open.state = await begin(open.client);
+          open.state = await begin(open.client, !readOnly);
           open.store = openStoreOver(open.state, () => { open.dirty = true; });
         }
         return open.store;
@@ -199,6 +216,14 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
     // Write and release inside the same transaction the read was taken in: the next writer's
     // `for update` unblocks only here, and unblocks onto what this request actually wrote.
     if (open.client !== null) {
+      if (open.dirty && readOnly) {
+        // A GET that wrote: not expected (see LOCKED_GETS). Keep the write, but take the lock for it in
+        // its own transaction so it cannot tear another request's, and say so in the logs.
+        console.error(`read-only request ${request.method} ${request.path} changed the store; add it to LOCKED_GETS`);
+        await open.client.query("commit");
+        await open.client.query("begin");
+        await open.client.query(`select state from ${TABLE} where id = $1 for update`, [ROW]);
+      }
       if (open.dirty) {
         await open.client.query(`update ${TABLE} set state = $2 where id = $1`, [ROW, JSON.stringify(open.state)]);
       }
