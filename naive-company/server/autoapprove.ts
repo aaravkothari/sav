@@ -82,7 +82,7 @@ function recipientsOf(args: Record<string, unknown>): string[] {
 }
 
 /** The decision for one held call: the rule that allows it, or null for "a person decides". */
-export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails: ReadonlySet<string>): string | null {
+export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails: ReadonlySet<string>, salesAgentIds: ReadonlySet<string> = new Set([SALES_AGENT_ID])): string | null {
   if (action.kind !== undefined && action.kind !== "tool") return null; // a question is the operator's
   const args = action.args ?? {};
   const name = action.name;
@@ -114,7 +114,7 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
   if (name === "autoops.add_caller") return "caller ID for the shared demo line";
   if (name === "autoops.update_receptionist") {
     // sales may only set an owner's notify_phone (BeigeElk, Nov 8); anything more waits for a person.
-    if (session.agent_id === SALES_AGENT_ID && Object.keys(args).some((k) => k !== "shop_id" && k !== "notify_phone")) return null;
+    if (salesAgentIds.has(session.agent_id) && Object.keys(args).some((k) => k !== "shop_id" && k !== "notify_phone")) return null;
     return "receptionist update";
   }
   // Going live: a number purchase without a PAID: note is a hard limit, so what reaches here is safe.
@@ -265,6 +265,9 @@ export async function autoApprove(config: ProxyConfig, store: Store, now: Date, 
   const agents = await collect<{ id: string; name: string; metadata?: Record<string, unknown> | null }>(config, "/v1/agents", fetchImpl);
   if (agents === null) return { ...none, ignored: sessions.reduce((n, s) => n + (s.pending_actions?.length ?? 0), 0) };
   const crew = new Set(agents.filter(isCrewAgent).map((a) => a.id));
+  // The sales seat by NAME, as deployed now, plus the id it has had all along: a re-created seat
+  // gets a new id, and the notify_phone-only rule must still apply to it (BeigeElk's review of #70).
+  const salesAgentIds = new Set([SALES_AGENT_ID, ...agents.filter((a) => a.name === "sales").map((a) => a.id)]);
 
   const clients = store.read().clients;
   const crmEmails = new Set(clients.map((c) => c.contact.email.trim().toLowerCase()).filter((e) => e !== ""));
@@ -282,7 +285,7 @@ export async function autoApprove(config: ProxyConfig, store: Store, now: Date, 
         continue;
       }
       const limit = hardLimit(action, limits);
-      const rule = limit === null ? ruleFor(action, session, crmEmails) : null;
+      const rule = limit === null ? ruleFor(action, session, crmEmails, salesAgentIds) : null;
       // No rule names it: a person decides on Approvals (PinkFalcon's review of #52). A tool a new
       // seat brings is never approved silently; add it to `ruleFor` when it is safe.
       if (limit === null && rule === null) {

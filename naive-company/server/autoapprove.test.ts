@@ -58,6 +58,9 @@ describe("review of #52: allowlist, not approve-everything", () => {
     expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", notify_phone: "+14155550100" }), sales, crm)).not.toBeNull();
     expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", system_prompt: "…" }), sales, crm)).toBeNull();
     expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", policies: ["a"] }), session, crm)).not.toBeNull();
+    // A re-created sales seat (new id) is still limited when the sweep names it.
+    const recreated = { ...session, agent_id: "agt_new_sales" };
+    expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", system_prompt: "…" }), recreated, crm, new Set([SALES_AGENT_ID, "agt_new_sales"]))).toBeNull();
   });
 
   it("approves what the crew needs", () => {
