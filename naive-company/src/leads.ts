@@ -15,7 +15,7 @@ import type { Client } from "./data";
 
 /** The funnel, in the order a shop moves through it. */
 export const STATUSES = ["researched", "emailed", "replied", "demo", "free_week", "paying"] as const;
-export type LeadStatus = (typeof STATUSES)[number] | "bounced";
+export type LeadStatus = (typeof STATUSES)[number] | "bounced" | "new";
 
 export const STATUS_LABEL: Record<LeadStatus, string> = {
   researched: "Researched",
@@ -25,6 +25,7 @@ export const STATUS_LABEL: Record<LeadStatus, string> = {
   free_week: "Free week",
   paying: "Paying",
   bounced: "Bounced",
+  new: "New",
 };
 
 /** The kind of event one note records, or `note` for anything without a prefix we know. */
@@ -223,6 +224,8 @@ export function cityOf(c: Client): string | null {
 
 export function sectorOf(c: Client): string {
   const research = c.notes.find((n) => kindOf(n).kind === "research") ?? "";
+  const tagged = /(?:^|\n|[.;]\s+)Sector:\s*([^\n.;]+)/i.exec(research)?.[1]?.trim();
+  if (tagged && !/^auto\b/i.test(tagged)) return tagged.replace(/\b\w/g, (ch) => ch.toUpperCase());
   const head = `${c.name} ${research.slice(0, 120)}`.toLowerCase();
   if (/\btow(ing)?\b|roadside/.test(head)) return "Towing";
   if (/collision|body shop|auto body/.test(head)) return "Body & collision";
@@ -272,10 +275,13 @@ export function leadOf(c: Client, mail: readonly MailMessage[] = []): Lead {
     ...events.filter((e) => e.at).map((e) => ({ at: e.at!, what: e.title })),
     ...mine.map((m) => ({ at: m.at, what: m.direction === "sent" ? `Emailed: ${m.subject}` : `Reply: ${m.subject}` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
-  const undatedLast = events.length > 0 ? events[events.length - 1]!.title : null;
+  // An unprefixed note says nothing a person can scan; show the last event that does, or nothing.
+  const undatedLast = [...events].reverse().find((e) => e.kind !== "note")?.title ?? null;
+  // Someone who filled the site form in has not been researched by anyone yet.
+  const fromSite = c.source === "site" && fixedRank === 0 && !events.some((e) => e.kind === "research");
   return {
     client: c,
-    status: fixedStatus,
+    status: fromSite ? "new" : fixedStatus,
     rank: fixedRank,
     city: cityOf(c),
     sector: sectorOf(c),
