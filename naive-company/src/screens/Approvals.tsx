@@ -112,7 +112,7 @@ function ApprovalQueue() {
     <div className="pane-in">
       <PageHeader
         title="Approvals"
-        subtitle="Agents stop here before doing anything you cannot take back. Nothing on this screen has happened yet."
+        subtitle="Agent actions the rules could not decide, and questions agents ask you. Nothing on this screen has happened yet."
         actions={error ? <span className="text-xs text-fail">{error}</span> : null}
       />
 
@@ -348,7 +348,7 @@ export function Approvals() {
       const result = manual
         ? await apiSend<{ approved: AutoApproval[]; left: number }>("POST", "/approvals/auto")
         : { approved: [], left: 0 };
-      if (manual) setMessage(result.approved.length ? `Approved ${result.approved.length} call(s). ${result.left} left for you.` : `Nothing to approve. ${result.left} left for you.`);
+      if (manual) setMessage(result.approved.length ? `Approved ${result.approved.length} ${result.approved.length === 1 ? "action" : "actions"}. ${result.left} left for you.` : `Nothing new to approve. ${result.left} left for you.`);
       const next = (await apiGet<{ log?: AutoApproval[] }>("/approvals/auto")).log ?? [];
       // Re-read the queue only when something was just approved (or on the button): re-reading on
       // a timer remounted the queue every few seconds and wiped an answer being typed into it.
@@ -372,18 +372,24 @@ export function Approvals() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <button type="button" className="btn btn-quiet btn-sm" disabled={busy} onClick={() => void run(true)}>
-          <Check size={14} strokeWidth={1.75} /> {busy ? "Approving…" : "Approve all now"}
-        </button>
-        <span className="text-xs text-ink-3">
-          {message ?? "Every held call is approved automatically every 2 s while any dashboard tab is open. Only questions an agent asks you wait here."}
-        </span>
+      <div className="mb-4 max-w-2xl text-sm text-ink-2">
+        <p>
+          Agent actions are checked automatically every 2 seconds while any dashboard tab is open. Safe actions,
+          like a maps search or an email to a shop already in the CRM, are approved. Unsafe ones, like buying a
+          phone number, sending a text or a payment in live mode, are refused, and the agent is told why.
+          Anything the rules do not know, and any question an agent asks you, waits here.
+        </p>
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-3">
+          {message ?? null}
+          <button type="button" className="sav-more p-0 text-xs" disabled={busy} onClick={() => void run(true)}>
+            {busy ? "Checking…" : "Check now"}
+          </button>
+        </p>
       </div>
       {ready ? <ApprovalQueue key={round} /> : <div className="absence">Approving what is safe…</div>}
       {log.length > 0 ? (
         <details className="mt-6">
-          <summary className="eyebrow cursor-pointer">Approved automatically ({log.length})</summary>
+          <summary className="eyebrow cursor-pointer">Agent actions approved automatically ({log.length})</summary>
           <div className="list mt-2">
             {log.slice(0, 50).map((row) => (
               <p key={`${row.session_id}:${row.at}:${row.tool}`} className="px-3 py-2 text-xs text-ink-2">
