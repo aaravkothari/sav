@@ -147,6 +147,8 @@ export interface Store {
   advanceClient(id: string): Client | null;
   /** Appends a working note to the client and, when given, replaces what it is waiting on. */
   addClientNote(id: string, note: string, nextAction?: string): Client | null;
+  /** Sets the given contact fields (name, email, role) on a client; fields left out are kept. */
+  updateClientContact(id: string, contact: Partial<Client["contact"]>): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
   onboardClient(id: string): Client | null;
   /**
@@ -330,6 +332,15 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         state.sends = { day, count: (state.sends?.day === day ? state.sends.count : 0) + 1 };
       }
       if (nextAction !== undefined) client.nextAction = nextAction;
+      save();
+      return client;
+    },
+    updateClientContact(id, contact) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return null;
+      for (const key of ["name", "email", "role"] as const) {
+        if (typeof contact[key] === "string") client.contact[key] = contact[key]!.trim();
+      }
       save();
       return client;
     },

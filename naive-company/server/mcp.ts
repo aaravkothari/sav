@@ -95,6 +95,9 @@ export const TOOLS = [
     id: str("Client id"), note: str("The note in full — a drafted follow-up goes here verbatim"),
     next_action: str("Optional: what this client is waiting on now, replacing the previous next action"),
   }, ["id", "note"]) },
+  { name: "update_client_contact", description: "Correct or fill in a client's contact person: name, email, role. Fields left out are kept. Only what the shop itself told us; never a guessed address.", inputSchema: obj({
+    id: str("Client id"), contact_name: str("Contact person"), contact_email: str("Contact email"), contact_role: str("Contact role"),
+  }, ["id"]) },
   { name: "list_posts", description: "Content queue for a client, optionally filtered by state.", inputSchema: obj({
     client: str("Client id"), state: str("Optional status filter: pending|ready|approved|posted|rejected"),
   }, ["client"]) },
@@ -224,6 +227,17 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
     case "add_client_note": {
       const client = store.addClientNote(need(params, "id"), need(params, "note"),
         typeof params.next_action === "string" && params.next_action !== "" ? params.next_action : undefined);
+      if (!client) throw new ToolError("no such client");
+      return client;
+    }
+    case "update_client_contact": {
+      const contact: Partial<{ name: string; email: string; role: string }> = {};
+      for (const [param, key] of [["contact_name", "name"], ["contact_email", "email"], ["contact_role", "role"]] as const) {
+        if (typeof params[param] === "string") contact[key] = params[param] as string;
+      }
+      if (Object.keys(contact).length === 0) throw new ToolError("give at least one of contact_name, contact_email, contact_role");
+      if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim())) throw new ToolError("contact_email is not an email address");
+      const client = store.updateClientContact(need(params, "id"), contact);
       if (!client) throw new ToolError("no such client");
       return client;
     }
