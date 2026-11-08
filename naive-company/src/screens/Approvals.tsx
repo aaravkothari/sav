@@ -1,5 +1,5 @@
 import { Check, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiGet, apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
 import type { Agent } from "../data";
@@ -338,6 +338,7 @@ export function Approvals() {
   const [log, setLog] = useState<AutoApproval[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const latest = useRef<string | null>(null);
 
   const run = async (manual: boolean) => {
     if (manual) setBusy(true);
@@ -346,9 +347,14 @@ export function Approvals() {
       const result = manual
         ? await apiSend<{ approved: AutoApproval[]; left: number }>("POST", "/approvals/auto")
         : { approved: [], left: 0 };
-      setRound((n) => n + 1);
-      if (manual) setMessage(result.approved.length ? `Approved ${result.approved.length} call(s) automatically. ${result.left} left for you.` : `Nothing safe to approve. ${result.left} left for you.`);
-      setLog((await apiGet<{ log?: AutoApproval[] }>("/approvals/auto")).log ?? []);
+      if (manual) setMessage(result.approved.length ? `Approved ${result.approved.length} call(s). ${result.left} left for you.` : `Nothing to approve. ${result.left} left for you.`);
+      const next = (await apiGet<{ log?: AutoApproval[] }>("/approvals/auto")).log ?? [];
+      // Re-read the queue only when something was just approved (or on the button): re-reading on
+      // a timer remounted the queue every few seconds and wiped an answer being typed into it.
+      const newest = next[0] ? `${next[0].session_id}:${next[0].at}:${next[0].tool}` : "";
+      if (manual || newest !== latest.current) setRound((n) => n + 1);
+      latest.current = newest;
+      setLog(next);
     } catch (err: unknown) {
       if (manual) setMessage(apiMessage(err));
     } finally {
