@@ -11,7 +11,8 @@
  * FOR NOW EVERY SEAT IS A PLACEHOLDER: no intake, no schedules (so `naive up` starts no work and
  * spends nothing on its own), a cheap model, a small budget, and a prompt that says to return a
  * MOCK result on its card. Tools are deny-by-default; anything that reaches outside the company
- * (email, web search/fetch, paid data) is `ask`, so it lands on Approvals before it can run.
+ * Only sending email is `ask`, so it lands on Approvals before it can run; everything else the
+ * seat holds runs on its own, within its budget.
  *
  * `templates/agents.ts` stays as the blueprint ships it: `seo-geo` still builds on it.
  */
@@ -40,15 +41,17 @@ export const AGENTMAIL = { name: "agentmail", url: "https://mcp.agentmail.to/mcp
 export const MONID = { name: "monid", url: "https://mcp.monid.ai/v1" } as const;
 const via = (server: { name: string }, ...names: string[]) => names.map((n) => `${server.name}.${n}`);
 
-/** AgentMail: read the inboxes freely. Drafting, sending, replying and creating an inbox wait for you. Deleting is not offered. */
+/** AgentMail: reading, drafting and creating the company inbox run freely. Sending, replying and forwarding wait for you. Deleting is not offered. */
 export const AGENTMAIL_READ = via(AGENTMAIL, "list_inboxes", "get_inbox", "list_threads", "search_threads", "get_thread", "list_messages", "search_messages", "get_message", "list_drafts", "get_draft", "get_attachment");
 /** Writing a draft changes nothing outside the inbox: the operator reviews it and is the one who sends. */
 export const AGENTMAIL_DRAFT = via(AGENTMAIL, "create_draft", "update_draft");
-export const AGENTMAIL_ASK = via(AGENTMAIL, "send_draft", "send_message", "reply_to_message", "forward_message", "create_inbox");
+export const AGENTMAIL_INBOX = via(AGENTMAIL, "create_inbox");
+/** The only thing in this crew that waits for the operator: email actually leaving the company. */
+export const AGENTMAIL_SEND = via(AGENTMAIL, "send_draft", "send_message", "reply_to_message", "forward_message");
 
-/** Monid: searching the catalogue and reading runs is free. A run spends the Monid balance, so it waits for you. Top-ups, promo codes, disputes and releases are not offered. */
+/** Monid: everything offered runs freely, capped by the seat budget. Top-ups, promo codes, disputes and releases are not offered. */
 export const MONID_READ = via(MONID, "monid_discover", "monid_inspect", "monid_get_run", "monid_list_runs", "monid_balance");
-export const MONID_ASK = via(MONID, "monid_run");
+export const MONID_RUN = via(MONID, "monid_run");
 
 /**
  * How outreach email reads. Personal, one-to-one, in the founder's voice. `EMAIL_FOOTER` is the
@@ -86,7 +89,7 @@ const real = (role: string, mail = false) =>
 export const INBOX_NAME = "Aarav from SAV";
 const INBOX_RULE =
   `Your email goes through AgentMail (agentmail.* tools), from the company inbox whose display name is "${INBOX_NAME}": find it with agentmail.list_inboxes. ` +
-  `If it does not exist yet, propose agentmail.create_inbox once with display_name "${INBOX_NAME}" and username "aarav.sav" (it waits for the operator). ` +
+  `If it does not exist yet, propose agentmail.create_inbox once with display_name "${INBOX_NAME}" and username "aarav.sav". ` +
   "Write every email as an AgentMail draft (agentmail.create_draft): drafts are reviewed by the operator, who sends them. Never call send_message, send_draft, reply_to_message or forward_message unless your card explicitly says the operator asked you to send.";
 
 const seat = (decl: Omit<AgentDecl, "model" | "budget" | "identity" | "schedules" | "handoffs">): AgentDecl => ({
@@ -104,7 +107,7 @@ export const receptionistRoster: AgentDecl[] = [
   seat({
     name: "research",
     role: "Research",
-    description: "Finds busy independent auto repair shops on Google Maps and files them as qualified leads. Every paid data lookup waits for your approval.",
+    description: "Finds busy independent auto repair shops on Google Maps and files them as qualified leads.",
     system: real([
       "You are the research agent for SAV, an AI receptionist for independent auto repair shops.",
       "Your card says how many shops to find and where; if it does not, find 3 in the area the context names, or the San Francisco Bay Area when it names none.",
@@ -113,10 +116,10 @@ export const receptionistRoster: AgentDecl[] = [
       "3. Keep only independent shops: skip chains, franchises and dealerships (Midas, Meineke, Jiffy Lube, Firestone, Pep Boys, Goodyear, Valvoline and the like) and anything without a website. Prefer busy shops, rating 4.0 or more with 50 or more reviews: busy shops miss the most calls.",
       "4. For each shop you keep, run monid.monid_inspect once on provider hunterio, endpoint /domain-search, then one monid.monid_run per shop domain with limit 3, to find the owner's or manager's first name and email. Prefer an owner, manager or the shop's own address; never guess or construct an email, and file the shop without one when none is found.",
       `5. File each shop with dashboard.create_lead (name, domain, contact_name, contact_email when found, contact_role, source outreach). Then dashboard.add_client_note on it, starting with "${RESEARCH_NOTE}": rating and review count, phone, address, hours, one line on why it fits, and one specific detail you actually read in its listing that an opener could mention. Set next_action to "Draft opener".`,
-      "Every monid_run spends the Monid balance and waits for the operator's approval: propose it and wait. Keep each run small, one keyword or one domain per run. Report the total Monid cost in your card's note. Never invent a shop, a name, an email, a number or a detail.",
+      "Every monid_run spends the Monid balance. Keep each run small, one keyword or one domain per run. Report the total Monid cost in your card's note. Never invent a shop, a name, an email, a number or a detail.",
     ].join(" ")),
     mcp_servers: [MONID],
-    tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MONID_READ], [...MONID_ASK, ...OPERATOR]),
+    tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MONID_READ, ...MONID_RUN], OPERATOR),
   }),
   seat({
     name: "sales",
@@ -136,8 +139,8 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT],
-      [...MAILBOX_SEND, ...AGENTMAIL_ASK, ...OPERATOR],
+      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
+      [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
     ),
   }),
   seat({
@@ -153,8 +156,8 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT],
-      [...MAILBOX_SEND, ...AGENTMAIL_ASK, ...OPERATOR],
+      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
+      [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
     ),
   }),
   seat({

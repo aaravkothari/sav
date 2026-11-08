@@ -204,15 +204,14 @@ describe("connected accounts", () => {
     }
   });
 
-  it.each(all)("$name holds every outward one at `ask`, and nothing else outward", (template) => {
+  it.each(all)("$name holds email leaving the company at `ask`, and every other connection tool at `allow`", (template) => {
     for (const agent of [...template.agents, ...template.crew]) {
       for (const [name, config] of connectionTools(agent)) {
-        // Outward: anything that sends, publishes or changes state elsewhere, and anything that
-        // spends a third-party balance (Monid's `monid_run`; reading a run back is free).
-        // An AgentMail draft is not outward: it stays in the inbox until the operator sends it.
-        const draft = /^agentmail\.(create|update)_draft$/.test(name);
-        const outward = !draft && /\.(send|post|publish|create|update|delete|write|reply|forward)|\.monid_run$/.test(name);
-        expect([name, config.permission]).toEqual([name, outward ? "ask" : "allow"]);
+        // The one gate the operator keeps: email actually being sent (send, reply, forward).
+        // Drafts, creating the company inbox and paid Monid runs run on their own, within the
+        // seat budget.
+        const sendsEmail = /\.(send|send_draft|send_message|reply|reply_to_message|forward|forward_message)$/.test(name);
+        expect([name, config.permission]).toEqual([name, sendsEmail ? "ask" : "allow"]);
       }
     }
   });
