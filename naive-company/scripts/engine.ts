@@ -171,6 +171,9 @@ export function sectorOf(research: string): string | null {
   const m = /(?:^|\n|[.;]\s+)Sector:\s*([^\n.;]+)/i.exec(research);
   return m ? m[1]!.trim().toLowerCase() : null;
 }
+/** Non-auto sectors send only when this is set (sav#47 gives the voice server demos for them). */
+export const SECTORS_LIVE = process.env["ENGINE_SECTORS_LIVE"] === "1";
+
 /** Auto repair (or no sector named): Aarav's exact template, with the Automotive Service Association figure. */
 export const isAutoSector = (sector: string | null): boolean => sector === null || /\b(auto|car|vehicle|smog|tire|body shop|mechanic|automotive|towing)\b/.test(sector);
 
@@ -199,8 +202,11 @@ export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: R
     if (taken.has(email)) { skipped.push({ client, reason: "address already emailed" }); continue; }
     const detail = personalizedDetail(research);
     if (detail === null) { skipped.push({ client, reason: "no usable detail in RESEARCH note" }); continue; }
-    // Auto repair gets Aarav's exact template; any other sector the general one (no auto statistic).
+    // Auto repair gets Aarav's exact template; any other sector the general one (no auto statistic),
+    // but only once the voice server builds demos for other sectors (sav#47): until then a salon that
+    // replies could not get a working demo. ENGINE_SECTORS_LIVE=1 turns them on.
     const sector = sectorOf(research);
+    if (!isAutoSector(sector) && !SECTORS_LIVE) { skipped.push({ client, reason: `sector ${sector}: held until other-sector demos are live (#47)` }); continue; }
     const email_ = renderColdEmail({ shop_name: client.name, contact_name: client.contact.name, personalized_detail: detail, sector: isAutoSector(sector) ? null : sector });
     if (email_ === null) { skipped.push({ client, reason: "could not render" }); continue; }
     taken.add(email);

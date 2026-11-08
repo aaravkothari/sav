@@ -64,7 +64,7 @@ export const MONID_RUN = via(MONID, "monid_run");
  * Token: `AUTOOPS_VOICE_TOKEN`, sealed into the vault like the others. The URL is a quick tunnel off
  * Swayam's laptop tonight: when it changes, update it here and replace the vault credential.
  */
-export const AUTOOPS = { name: "autoops", url: "https://submit-yoga-thoughts-similar.trycloudflare.com/mcp" } as const;
+export const AUTOOPS = { name: "autoops", url: "https://loves-jewel-undergraduate-republicans.trycloudflare.com/mcp" } as const;
 /** Reads, free text-mode test calls, and `provision_demo` (forces preview mode, never attaches a number, spends nothing). */
 export const AUTOOPS_READ = via(AUTOOPS, "get_receptionist", "list_calls", "get_call", "list_shops", "simulate_call");
 export const AUTOOPS_DEMO = via(AUTOOPS, "provision_demo");
