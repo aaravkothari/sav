@@ -10,15 +10,19 @@
  *
  * Every seat starts nothing on its own: no intake and no schedules, so `naive up` spends nothing; a
  * cheap model and a small budget. Tools are deny-by-default; anything that reaches outside the
- * company by email (send, reply, forward) is `ask`, so it waits on Approvals. Everything else a seat
- * holds runs on its own, within its budget: drafts, CRM notes, paid data runs, demo and live
- * receptionists, and simulated calls. A live receptionist (and its phone number) is only built for a
+ * crew asks no permission: every tool a seat holds is `allow` and runs within its budget, email
+ * sends and `request_tools` included (the operator's call, Nov 8). The one `ask` left is
+ * `ask_operator`, which is how a seat asks the operator a question, not a permission. Naïve's own
+ * people's-data hold (§64) is the platform's and is not configured here. A live receptionist (and its phone number) is only built for a
  * shop the operator has moved to active.
  *
  * `templates/agents.ts` stays as the blueprint ships it: `seo-geo` still builds on it.
  */
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
-import { AGENCY_IDENTITY, CONTEXT, crm, gate, MAILBOX_READ, MAILBOX_SEND, mailbox, OPERATOR, PREAMBLE, tools } from "./agents.ts";
+import { AGENCY_IDENTITY, ASK_OPERATOR, CONTEXT, crm, gate, MAILBOX_READ, MAILBOX_SEND, mailbox, PREAMBLE, REQUEST_TOOLS, tools } from "./agents.ts";
+
+/** The only `ask` in this crew: a seat asking the operator a question. Everything else, `request_tools` included, is `allow`. */
+const OPERATOR = ASK_OPERATOR;
 
 /** Cheap model from the Naïve quickstart, for placeholder seats. Upgrade per seat as it goes real. */
 export const placeholderModel = "z-ai/glm-5.3-flash";
@@ -42,12 +46,12 @@ export const AGENTMAIL = { name: "agentmail", url: "https://mcp.agentmail.to/mcp
 export const MONID = { name: "monid", url: "https://mcp.monid.ai/v1" } as const;
 const via = (server: { name: string }, ...names: string[]) => names.map((n) => `${server.name}.${n}`);
 
-/** AgentMail: reading, drafting and creating the company inbox run freely. Sending, replying and forwarding wait for you. Deleting is not offered. */
+/** AgentMail: everything offered runs freely, sending included. Deleting is not offered. */
 export const AGENTMAIL_READ = via(AGENTMAIL, "list_inboxes", "get_inbox", "list_threads", "search_threads", "get_thread", "list_messages", "search_messages", "get_message", "list_drafts", "get_draft", "get_attachment");
 /** Writing a draft changes nothing outside the inbox: the operator reviews it and is the one who sends. */
 export const AGENTMAIL_DRAFT = via(AGENTMAIL, "create_draft", "update_draft");
 export const AGENTMAIL_INBOX = via(AGENTMAIL, "create_inbox");
-/** The only thing in this crew that waits for the operator: email actually leaving the company. */
+/** Email leaving the company. `allow`, like everything else in this crew. */
 export const AGENTMAIL_SEND = via(AGENTMAIL, "send_draft", "send_message", "reply_to_message", "forward_message");
 
 /** Monid: everything offered runs freely, capped by the seat budget. Top-ups, promo codes, disputes and releases are not offered. */
@@ -143,7 +147,7 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" ")),
     mcp_servers: [MONID, AUTOOPS],
     // No list_clients and no get_client: both answer contacts (people's data), and research files without reading the CRM.
-    tools: tools([...CONTEXT, ...BOARD, ...crm("create_lead", "add_client_note"), ...MONID_READ, ...MONID_RUN, ...AUTOOPS_DEMO], OPERATOR),
+    tools: tools([...CONTEXT, ...BOARD, ...crm("create_lead", "add_client_note"), ...MONID_READ, ...MONID_RUN, ...AUTOOPS_DEMO, ...REQUEST_TOOLS], OPERATOR),
   }),
   seat({
     name: "sales",
@@ -164,8 +168,8 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
-      [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
+      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_SEND, ...REQUEST_TOOLS],
+      OPERATOR,
     ),
   }),
   seat({
@@ -182,8 +186,8 @@ export const receptionistRoster: AgentDecl[] = [
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
-      [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
+      [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_SEND, ...REQUEST_TOOLS],
+      OPERATOR,
     ),
   }),
   seat({
@@ -199,7 +203,7 @@ export const receptionistRoster: AgentDecl[] = [
       `If a call shows a prompt problem, describe it and a fix in your note and test the fix idea with autoops.simulate_call; do not change a receptionist yourself: write the exact change in your note for the operator to decide on. ${PROTECTED_RULE}`,
     ].join(" ")),
     mcp_servers: [AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ], OPERATOR),
+    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ, ...REQUEST_TOOLS], OPERATOR),
   }),
   seat({
     name: "self-improvement",
@@ -212,7 +216,7 @@ export const receptionistRoster: AgentDecl[] = [
       `Close your card with the three proposals: what to change, where (file or shop_id), why, and the evidence. Never apply a change yourself: do not call update_receptionist, and agent instructions change only through the repo. ${PROTECTED_RULE}`,
     ].join(" ")),
     mcp_servers: [AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client"), ...AUTOOPS_READ], OPERATOR),
+    tools: tools([...BASE, ...crm("get_client"), ...AUTOOPS_READ, ...REQUEST_TOOLS], OPERATOR),
   }),
 ];
 
@@ -233,7 +237,7 @@ export const receptionistCrew: AgentDecl[] = [
       PROTECTED_RULE,
     ].join(" ")),
     mcp_servers: [AUTOOPS],
-    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ, ...AUTOOPS_WRITE], OPERATOR),
+    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ, ...AUTOOPS_WRITE, ...REQUEST_TOOLS], OPERATOR),
   }),
 ];
 

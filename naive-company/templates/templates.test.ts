@@ -204,14 +204,19 @@ describe("connected accounts", () => {
     }
   });
 
-  it.each(all)("$name holds email leaving the company at `ask`, and every other connection tool at `allow`", (template) => {
+  it.each(all)("$name holds its connection tools at the permission its crew chose (blank: all `allow`)", (template) => {
     for (const agent of [...template.agents, ...template.crew]) {
       for (const [name, config] of connectionTools(agent)) {
-        // The one gate the operator keeps: email actually being sent (send, reply, forward).
-        // Drafts, the company inbox, paid Monid runs and receptionist changes run on their own,
-        // within the seat budget.
-        const sendsEmail = /\.(send|send_draft|send_message|reply|reply_to_message|forward|forward_message)$/.test(name);
-        expect([name, config.permission]).toEqual([name, sendsEmail ? "ask" : "allow"]);
+        // SAV's crew (blank): email sends, drafts, the company inbox, paid Monid runs and receptionist
+        // changes all run on their own, within the seat budget. Naïve's own people's-data hold (§64)
+        // still applies. The blueprint's other templates keep its rule: anything outward is `ask`.
+        if (template.name === "blank") {
+          expect([name, config.permission]).toEqual([name, "allow"]);
+          continue;
+        }
+        const draft = /^agentmail\.(create|update)_draft$/.test(name);
+        const outward = !draft && /\.(send|post|publish|create|update|delete|write|reply|forward)|\.monid_run$/.test(name);
+        expect([name, config.permission]).toEqual([name, outward ? "ask" : "allow"]);
       }
     }
   });
@@ -332,12 +337,10 @@ describe("blank", () => {
     expect(research).toMatch(/Never invent a shop, a name, an email, a number or a detail/);
   });
 
-  it("holds every outward or paid tool at ask", () => {
+  it("asks no permission: the only `ask` left is ask_operator, a question rather than a permission", () => {
     for (const agent of [...blank.agents, ...blank.crew]) {
-      for (const tool of ["email.send", "web_search", "web_fetch", "data_run"]) {
-        const permission = agent.tools?.configs[tool]?.permission;
-        expect([agent.name, tool, permission ?? "ask"]).toEqual([agent.name, tool, "ask"]);
-      }
+      const asks = Object.entries(agent.tools?.configs ?? {}).filter(([, c]) => c.permission === "ask").map(([name]) => name);
+      expect([agent.name, asks]).toEqual([agent.name, ["ask_operator"]]);
     }
   });
 
@@ -354,7 +357,7 @@ describe("blank", () => {
     for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline"]) {
       expect([tool, onboarding.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
     }
-    expect(onboarding.tools?.configs["agentmail.send_message"]?.permission).toBe("ask");
+    expect(onboarding.tools?.configs["agentmail.send_message"]?.permission).toBe("allow");
   });
 
   it("builds free demo receptionists; only a shop's own booking seat can buy a number or change what callers hear", () => {
@@ -379,7 +382,7 @@ describe("blank", () => {
     const research = blank.agents.find((a) => a.name === "research")!;
     for (const tool of ["dashboard.list_clients", "dashboard.get_client"]) expect([tool, research.tools?.configs[tool]]).toEqual([tool, undefined]);
     expect(research.system).toMatch(/Do not read the CRM/);
-    expect(research.system.indexOf("1. Find candidates with Monid")).toBeLessThan(research.system.indexOf("4. For each shop you keep, run monid.monid_inspect once on provider hunterio"));
+    expect(research.system!.indexOf("1. Find candidates with Monid")).toBeLessThan(research.system!.indexOf("4. For each shop you keep, run monid.monid_inspect once on provider hunterio"));
   });
 
   it("files the receptionist's kinds of work", () => {
