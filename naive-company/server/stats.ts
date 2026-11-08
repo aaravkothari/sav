@@ -53,7 +53,8 @@ export function companyStats(clients: readonly Client[], now: Date): CompanyStat
     free_week_yes: shopsWith(clients, PREFIX.yes),
     calls_reviewed: notesWith(clients, PREFIX.call),
     emails_sent: notesWith(clients, PREFIX.sent) + notesWith(clients, PREFIX.replied),
-    bounces: notesWith(clients, PREFIX.bounced),
+    // One bounce can be filed twice (the labelled sent message and the mailer-daemon notice): count addresses.
+    bounces: clients.reduce((n, c) => n + new Set(c.notes.filter((x) => x.startsWith(PREFIX.bounced)).map((x) => /\bto\s+(\S+@\S+)/.exec(x.split("\n")[0] ?? "")?.[1]?.toLowerCase() ?? x)).size, 0),
     replies: notesWith(clients, PREFIX.received),
     self_improvement_proposals: null,
     updated_at: now.toISOString(),
