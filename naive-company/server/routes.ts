@@ -9,6 +9,7 @@
  * Nothing here touches a socket, a file or a database: the store arrives through `ctx.store()`,
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
+import { companyStats } from "./stats.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
 import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
@@ -308,7 +309,7 @@ function originOf(req: ApiRequest): string {
 async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   const { method, path } = req;
   const origin = originOf(req);
-  const store = ["/", "/sitemap.xml", "/llms.txt", "/api/site", "/api/blog"].includes(path) || path.startsWith("/blog/")
+  const store = ["/", "/sitemap.xml", "/llms.txt", "/api/site", "/api/blog", "/api/stats"].includes(path) || path.startsWith("/blog/")
     ? await ctx.store()
     : null;
   const profile = store === null ? null : store.site();
@@ -373,6 +374,16 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     if (method !== "GET") return NOT_ALLOWED;
     const stored = profile ?? holdingSite;
     return { status: 200, body: launchSafeSite(stored) ? stored : holdingSite, headers: { "cache-control": "public, max-age=60" } };
+  }
+  if (path === "/api/stats") {
+    // Public, counts only (server/stats.ts): the landing page's live numbers. No names, emails or notes.
+    if (method !== "GET") return NOT_ALLOWED;
+    if (store === null) return NO_ROUTE;
+    return {
+      status: 200,
+      body: companyStats(store.read().clients, new Date()),
+      headers: { "cache-control": "public, max-age=60", "access-control-allow-origin": "*" },
+    };
   }
   if (path === "/api/blog") {
     if (method !== "GET") return NOT_ALLOWED;
