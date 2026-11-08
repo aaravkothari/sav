@@ -135,6 +135,9 @@ describe("the rest", () => {
     expect(demoShop({ name: "X", demo: false, website: null, notify_phone: "+15555550100", phone: "+16505550000" }))
       .toEqual({ name: "X", demo: true, phone: "+16505550000" });
   });
+  it("drops days with no hours", () => {
+    expect(demoShop({ name: "X", hours: { mon: null, tue: "9:00-17:00" } as never }).hours).toEqual({ tue: "9:00-17:00" });
+  });
   it("puts priority A first and applies the limit", () => {
     const leads = [lead("b1", {}, "B"), lead("a1"), lead("c1", {}, "C"), lead("a2")];
     expect(selectLeads(leads, { limit: 3 }).map((l) => l.name)).toEqual(["a1", "a2", "b1"]);

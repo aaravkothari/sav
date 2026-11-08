@@ -223,6 +223,9 @@ export async function withRetry<T>(fn: () => Promise<T>, retries = 2, baseMs = 1
 export function demoShop(input: ShopInput): ShopInput {
   const shop: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input)) if (value !== null && value !== undefined && key !== "notify_phone") shop[key] = value;
+  if (shop.hours && typeof shop.hours === "object") {
+    shop.hours = Object.fromEntries(Object.entries(shop.hours as Record<string, unknown>).filter(([, v]) => typeof v === "string"));
+  }
   return { ...(shop as unknown as ShopInput), demo: true };
 }
 
