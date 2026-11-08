@@ -6,9 +6,9 @@
  * (`templates/receptionist.ts`), so a number on the landing page is always something an agent did
  * and filed, not a figure someone typed in.
  *
- * Two counts are `null` on purpose: emails are sent by a person from the AgentMail inbox, and
- * self-improvement proposals live on the CEO's Naïve board, so neither is in this store yet.
- * `null` says "not tracked here", which is honest; a 0 would be a claim.
+ * Emails sent counts the crew's `OUTREACH SENT` and `REPLY SENT` notes. Self-improvement proposals
+ * live on the CEO's Naïve board, not in this store, so that count is `null`: "not tracked here",
+ * which is honest; a 0 would be a claim.
  */
 import type { Client } from "../seed/clients.ts";
 
@@ -18,7 +18,7 @@ export interface CompanyStats {
   drafts_written: number;
   free_week_yes: number;
   calls_reviewed: number;
-  emails_sent: null;
+  emails_sent: number;
   self_improvement_proposals: null;
   updated_at: string;
 }
@@ -27,6 +27,8 @@ const PREFIX = {
   research: "RESEARCH:",
   receptionist: "RECEPTIONIST:",
   drafted: "OUTREACH DRAFTED",
+  sent: "OUTREACH SENT",
+  replied: "REPLY SENT",
   yes: "SAID YES:",
   call: "CALL:",
 } as const;
@@ -44,7 +46,7 @@ export function companyStats(clients: readonly Client[], now: Date): CompanyStat
     drafts_written: notesWith(clients, PREFIX.drafted),
     free_week_yes: shopsWith(clients, PREFIX.yes),
     calls_reviewed: notesWith(clients, PREFIX.call),
-    emails_sent: null,
+    emails_sent: notesWith(clients, PREFIX.sent) + notesWith(clients, PREFIX.replied),
     self_improvement_proposals: null,
     updated_at: now.toISOString(),
   };
