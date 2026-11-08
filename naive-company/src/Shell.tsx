@@ -1,4 +1,4 @@
-import { Bot, Box, CalendarClock, ChevronRight, ClipboardCheck, Columns3, LayoutDashboard, ListChecks, Rocket, Rows3, ShieldCheck, Settings2, SlidersHorizontal } from "lucide-react";
+import { Bot, Box, CalendarClock, PhoneCall, ChevronRight, ClipboardCheck, Columns3, LayoutDashboard, ListChecks, Rocket, Rows3, ShieldCheck, Settings2, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { apiSend, useApi } from "./api";
@@ -106,8 +106,10 @@ export function Shell() {
   const nav: Item[] = [
     { to: "/", label: "Overview", Icon: LayoutDashboard },
     { to: "/leads", label: "Leads", Icon: Rows3, count: clients ? leadRows(clients).length : undefined },
-    // Onboarding calls with shops, and the appointments their receptionists took (`src/screens/Bookings.tsx`).
+    // Sales calls with shop owners (`src/screens/Bookings.tsx`).
     { to: "/bookings", label: "Bookings", Icon: CalendarClock, count: upcomingCalls || undefined },
+    // What callers asked the shops' receptionists for (`src/screens/Calls.tsx`).
+    { to: "/calls", label: "Calls", Icon: PhoneCall },
     { to: "/crm", label: "Pipeline", Icon: Columns3 },
     { to: "/approvals", label: "Approvals", Icon: ShieldCheck, count: waiting, hot: waiting > 0 },
     // Where the company is started, paused and watched (`src/screens/Runs.tsx`).
