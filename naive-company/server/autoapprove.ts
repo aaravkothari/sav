@@ -7,14 +7,14 @@
  * puts the whole research step on Approvals: the Maps search, the demo builds, its own card notes.
  * Aarav asked for those to run without him (Nov 8).
  *
- * What the flag protects against is a chat carrying data somewhere it shouldn't. So this approves
- * by RULE, never wholesale: the exact calls this crew makes, with the arguments that keep data
- * inside the company (our CRM, our own card, a demo with no phone number, an email to a contact
- * already on file). Anything else, a send to an unknown address, a real phone number, a new tool,
- * an unknown data source, stays on Approvals for a person. Every automatic approval is logged.
+ * Aarav's call (Nov 8, after a first version that approved by rule): approve EVERY held tool call.
+ * Nothing the crew proposes waits on a person any more, sends and phone numbers included; only a
+ * question an agent asks (`ask_operator`) still does, because it needs an answer, not a yes.
+ * `ruleFor` survives only to label each approval in the log ("Google Maps search", "email to a CRM
+ * contact", or "approved everything" for a call no rule names), so the log still says what ran.
  *
- * It runs whenever the dashboard reads the company state (the Runs screen polls every 10 s), from
- * the Approvals screen, and never while the company is paused.
+ * Any open dashboard screen asks for a sweep every 2 s (`src/Shell.tsx`), backing off when the
+ * platform answers 429. Never while the company is paused.
  */
 import { proxyFetch, type ProxyConfig } from "./proxy.ts";
 import type { Store } from "./store.ts";
@@ -92,8 +92,9 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
 }
 
 /** The held sessions, read the way the Approvals screen reads them. */
-async function parkedSessions(config: ProxyConfig, fetchImpl: typeof fetch): Promise<ParkedSession[]> {
+async function parkedSessions(config: ProxyConfig, fetchImpl: typeof fetch): Promise<ParkedSession[] | "rate_limited"> {
   const res = await proxyFetch(config, { method: "GET", path: "/v1/sessions?status=idle&limit=100" }, null, fetchImpl);
+  if (res.status === 429) return "rate_limited";
   if (!res.ok) return [];
   const page = (await res.json()) as { data?: ParkedSession[] };
   return (page.data ?? []).filter((s) => s.stop_reason === "awaiting_approval" && (s.pending_actions?.length ?? 0) > 0);
@@ -102,18 +103,21 @@ async function parkedSessions(config: ProxyConfig, fetchImpl: typeof fetch): Pro
 const LOG_CAP = 200;
 
 /** Approves every held call a rule allows, logs each one, and leaves the rest for a person. */
-export async function autoApprove(config: ProxyConfig, store: Store, now: Date, fetchImpl: typeof fetch = fetch): Promise<{ approved: AutoApproval[]; left: number }> {
+export async function autoApprove(config: ProxyConfig, store: Store, now: Date, fetchImpl: typeof fetch = fetch): Promise<{ approved: AutoApproval[]; left: number; rate_limited?: boolean }> {
   if (store.company().paused) return { approved: [], left: 0 };
+  const sessions = await parkedSessions(config, fetchImpl);
+  if (sessions === "rate_limited") return { approved: [], left: 0, rate_limited: true };
   const crmEmails = new Set(store.read().clients.map((c) => c.contact.email.trim().toLowerCase()).filter((e) => e !== ""));
   const approved: AutoApproval[] = [];
   let left = 0;
-  for (const session of await parkedSessions(config, fetchImpl)) {
+  for (const session of sessions) {
     for (const action of session.pending_actions ?? []) {
-      const rule = ruleFor(action, session, crmEmails);
-      if (rule === null) {
+      // A question needs an answer from a person; every tool call is approved.
+      if (action.kind !== undefined && action.kind !== "tool") {
         left += 1;
         continue;
       }
+      const rule = ruleFor(action, session, crmEmails) ?? "approved everything";
       const res = await proxyFetch(config, { method: "POST", path: `/v1/sessions/${encodeURIComponent(session.id)}/tool_confirmations` },
         JSON.stringify({ tool_call_id: action.tool_call_id, decision: "allow", reason: `Approved automatically by the dashboard: ${rule}.` }), fetchImpl);
       if (res.ok) approved.push({ at: now.toISOString(), session_id: session.id, agent_id: session.agent_id, tool: action.name, rule });

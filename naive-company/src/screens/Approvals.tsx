@@ -324,7 +324,8 @@ interface AutoApproval {
   rule: string;
 }
 
-const AUTO_MS = 10_000;
+/** The queue refreshes this often; the approving itself is the rail's 2 s sweep (`src/Shell.tsx`). */
+const AUTO_MS = 3_000;
 
 /**
  * The queue, with the dashboard approving by rule first (`server/autoapprove.ts`): every held call
@@ -341,10 +342,13 @@ export function Approvals() {
   const run = async (manual: boolean) => {
     if (manual) setBusy(true);
     try {
-      const result = await apiSend<{ approved: AutoApproval[]; left: number }>("POST", "/approvals/auto");
-      if (result.approved.length > 0 || manual) setRound((n) => n + 1);
+      // The rail approves every 2 s; this screen only re-reads (or, on the button, sweeps now).
+      const result = manual
+        ? await apiSend<{ approved: AutoApproval[]; left: number }>("POST", "/approvals/auto")
+        : { approved: [], left: 0 };
+      setRound((n) => n + 1);
       if (manual) setMessage(result.approved.length ? `Approved ${result.approved.length} call(s) automatically. ${result.left} left for you.` : `Nothing safe to approve. ${result.left} left for you.`);
-      setLog((await apiGet<{ log: AutoApproval[] }>("/approvals/auto")).log);
+      setLog((await apiGet<{ log?: AutoApproval[] }>("/approvals/auto")).log ?? []);
     } catch (err: unknown) {
       if (manual) setMessage(apiMessage(err));
     } finally {
@@ -363,10 +367,10 @@ export function Approvals() {
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <button type="button" className="btn btn-quiet btn-sm" disabled={busy} onClick={() => void run(true)}>
-          <Check size={14} strokeWidth={1.75} /> {busy ? "Approving…" : "Approve all safe"}
+          <Check size={14} strokeWidth={1.75} /> {busy ? "Approving…" : "Approve all now"}
         </button>
         <span className="text-xs text-ink-3">
-          {message ?? "Safe calls are approved automatically every 10 s: Maps and owner-email lookups, free demos, an agent's notes on its own card, our CRM and inbox, and email to contacts already in the CRM. Everything else waits here."}
+          {message ?? "Every held call is approved automatically every 2 s while any dashboard tab is open. Only questions an agent asks you wait here."}
         </span>
       </div>
       {ready ? <ApprovalQueue key={round} /> : <div className="absence">Approving what is safe…</div>}

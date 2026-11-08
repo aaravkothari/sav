@@ -621,10 +621,8 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
     if (req.path === "/api/company" || req.path.startsWith("/api/company/")) {
       const store = await ctx.store();
       if (req.method === "GET" && req.path === "/api/company") {
-        // The Runs screen polls this every 10 s: the moment to approve what the rules allow.
-        const state = await sweepPaused(config, store);
-        const auto = await autoApprove(config, store, new Date());
-        return { status: 200, body: { ...state, auto_approved: auto.approved.length, waiting_on_you: auto.left } };
+        // Approving is its own 2 s sweep now (`POST /api/approvals/auto`, from every screen).
+        return { status: 200, body: await sweepPaused(config, store) };
       }
       if (req.method === "POST" && req.path === "/api/company/pause") return { status: 200, body: await pauseCompany(config, store, new Date()) };
       if (req.method === "POST" && req.path === "/api/company/resume") return { status: 200, body: await resumeCompany(config, store, new Date()) };

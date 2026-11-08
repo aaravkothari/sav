@@ -53,14 +53,29 @@ describe("autoApprove", () => {
   };
   const config = { baseUrl: "https://api.example", apiKey: "k", identityId: null, project: "agency" };
 
-  it("approves what a rule allows, leaves the rest, and logs it", async () => {
+  it("approves every held tool call, labels each by its rule, and logs it", async () => {
     const store = openStoreOver(emptyState(), () => {});
     const { confirmed, fetchImpl } = platform();
     const result = await autoApprove(config, store, new Date("2026-11-08T03:30:00Z"), fetchImpl);
-    expect(result.left).toBe(1);
-    expect(result.approved.map((a) => a.tool)).toEqual(["monid.monid_run"]);
-    expect(confirmed).toEqual([{ tool_call_id: "tc_monid.monid_run", decision: "allow", reason: "Approved automatically by the dashboard: Google Maps search." }]);
-    expect(store.read().auto_approvals).toHaveLength(1);
+    expect(result.left).toBe(0);
+    expect(result.approved.map((a) => [a.tool, a.rule])).toEqual([
+      ["monid.monid_run", "Google Maps search"],
+      ["autoops.provision_receptionist", "approved everything"],
+    ]);
+    expect(confirmed).toEqual([
+      { tool_call_id: "tc_monid.monid_run", decision: "allow", reason: "Approved automatically by the dashboard: Google Maps search." },
+      { tool_call_id: "tc_autoops.provision_receptionist", decision: "allow", reason: "Approved automatically by the dashboard: approved everything." },
+    ]);
+    expect(store.read().auto_approvals).toHaveLength(2);
+  });
+
+  it("leaves a question for a person, and says when the platform is rate-limiting", async () => {
+    const store = openStoreOver(emptyState(), () => {});
+    const asked = { ...session, pending_actions: [{ kind: "question", name: "ask_operator", tool_call_id: "q" }] };
+    const once = vi.fn(async () => new Response(JSON.stringify({ data: [asked] }), { status: 200 })) as unknown as typeof fetch;
+    expect(await autoApprove(config, store, new Date(), once)).toEqual({ approved: [], left: 1 });
+    const limited = vi.fn(async () => new Response("{}", { status: 429 })) as unknown as typeof fetch;
+    expect(await autoApprove(config, store, new Date(), limited)).toEqual({ approved: [], left: 0, rate_limited: true });
   });
 
   it("approves nothing while the company is paused", async () => {
