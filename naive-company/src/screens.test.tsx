@@ -182,7 +182,7 @@ describe("the approval queue", () => {
       : path.includes("/api/agents") ? { body: roster }
       : { body: [] });
 
-    expect(text()).toContain("sales");
+    expect(text()).toContain("Sales");
     expect(text()).toContain("gmail.send_email");
     // Not a JSON dump: the address and the message itself are on the screen as text.
     expect(text()).toContain("owner@acmedental.example");
@@ -258,7 +258,7 @@ describe("the approval queue", () => {
       : path.includes("/api/sessions") ? { body: { data: [parkedQuestion] } }
       : path === "/api/clients" ? { body: [] }
       : { body: roster });
-    expect(screen.text()).toMatch(/sales\s*asks you/);
+    expect(screen.text()).toMatch(/Sales\s*asks you/);
     expect(screen.text()).toContain("Which address should I read as the agency mailbox?");
     expect(screen.text()).not.toMatch(/Approve — run this call/);
 
@@ -424,7 +424,7 @@ describe("an agent", () => {
     expect(screen.text()).toContain("Paused — out of budget");
     expect(screen.text()).toContain("1 session");
 
-    await screen.press("sales");
+    await screen.press("Sales");
     expect(screen.text()).toContain("$3.50");
     expect(screen.text()).toContain("Spent this day");
   });
@@ -435,7 +435,7 @@ describe("an agent", () => {
       : path.startsWith("/api/agents") ? { body: roster }
       : path.startsWith("/api/sessions") ? { body: sessions }
       : { body: [] });
-    await screen.press("sales");
+    await screen.press("Sales");
     expect(screen.text()).toContain("Spend unavailable");
     expect(screen.text()).not.toContain("$0.00");
   });
