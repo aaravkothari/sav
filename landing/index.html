@@ -255,6 +255,7 @@ p { margin: 0; }
 .step .n { font-family: var(--serif); font-size: 15px; color: var(--teal-2); width: 30px; height: 30px; border-radius: 50%; border: 1px solid #b8c6c0; display: grid; place-items: center; }
 .step h3 { font-size: 22px; margin-top: 20px; }
 .step p { color: var(--muted-2); font-size: 15px; margin-top: 10px; }
+.faq .step h3 { margin-top: 0; font-size: 20px; }
 @media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
 
 .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
@@ -286,6 +287,9 @@ footer .wrap { display: flex; justify-content: space-between; align-items: cente
 footer .logo { font-size: 18px; }
 footer .logo svg { width: 17px; height: 17px; }
 </style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do I have to change my phone number?","acceptedAnswer":{"@type":"Answer","text":"No. You keep your number and forward the calls you miss to your receptionist."}},{"@type":"Question","name":"Does it work with my shop software?","acceptedAnswer":{"@type":"Answer","text":"You keep your shop software and your way of booking. Requests come to you by text, so there is no new system to learn."}},{"@type":"Question","name":"Can it book appointments?","acceptedAnswer":{"@type":"Answer","text":"It takes appointment requests with the caller's details and sends them to you to confirm."}},{"@type":"Question","name":"What happens when a call needs me?","acceptedAnswer":{"@type":"Answer","text":"Anything that needs a person, like a big quote or a late tow, comes to you by text with the details already taken."}},{"@type":"Question","name":"Is my real line connected during the demo?","acceptedAnswer":{"@type":"Answer","text":"No. Nothing is connected to your real line until you say so."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"The first week is free. After that it is a monthly subscription, and you can stop any time."}}]}
+</script>
 </head>
 <body>
 
@@ -615,11 +619,28 @@ footer .logo svg { width: 17px; height: 17px; }
     </div>
   </section>
 
+  <section class="section faq" id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">Questions</span>
+        <h2>Common questions</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Do I have to change my phone number?</h3><p>No. You keep your number and forward the calls you miss to your receptionist.</p></div>
+        <div class="step"><h3>Does it work with my shop software?</h3><p>You keep your shop software and your way of booking. Requests come to you by text, so there is no new system to learn.</p></div>
+        <div class="step"><h3>Can it book appointments?</h3><p>It takes appointment requests with the caller's details and sends them to you to confirm.</p></div>
+        <div class="step"><h3>What happens when a call needs me?</h3><p>Anything that needs a person, like a big quote or a late tow, comes to you by text with the details already taken.</p></div>
+        <div class="step"><h3>Is my real line connected during the demo?</h3><p>No. Nothing is connected to your real line until you say so.</p></div>
+        <div class="step"><h3>What does it cost?</h3><p>The first week is free. After that it is a monthly subscription, and you can stop any time.</p></div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="numbers" hidden>
     <div class="wrap">
       <div class="sec-head">
         <span class="label">So far</span>
-        <h2>Run by a small team and a lot of automation</h2>
+        <h2>Real numbers from real calls</h2>
         <p>These numbers come straight from our receptionists and update on their own.</p>
       </div>
       <div class="numbers proof" id="proof"></div>
