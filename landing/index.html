@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAV Receptionist</title>
+<meta name="description" content="SAV builds an AI receptionist for your auto repair shop before we ever email you. Call it. Free for a week, no card.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #f6f4ec;
+  --cream-2: #efece0;
+  --paper: #fbfaf5;
+  --ink: #14110f;
+  --ink-2: #4a4440;
+  --ink-3: #7a726b;
+  --line: #ddd8c9;
+  --orange: #e2560f;
+  --orange-ink: #b8430a;
+  --orange-soft: #fbe6d8;
+  --console: #0f100d;
+  --console-2: #171914;
+  --console-3: #20231c;
+  --console-line: #2c3027;
+  --c-text: #e9e7df;
+  --c-dim: #9a9a8e;
+  --c-faint: #66675d;
+  --green: #4ade80;
+  --amber: #f5b544;
+  --radius: 14px;
+  --head: "Inter Tight", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--head); font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--ink-2); background: var(--paper); border: 1px solid var(--line);
+  padding: 5px 10px; border-radius: 999px;
+}
+.chip .tick { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: var(--head); font-weight: 600; font-size: 16px;
+  padding: 14px 20px; border-radius: 10px; text-decoration: none; border: 1px solid transparent;
+  transition: transform .15s ease, background .15s ease;
+  cursor: pointer;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--orange); color: #fff; }
+.btn-primary:hover { background: var(--orange-ink); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn-ghost:hover { background: var(--ink); color: var(--cream); }
+.btn svg { width: 18px; height: 18px; }
+
+/* nav */
+.nav { position: sticky; top: 0; z-index: 10; background: rgba(246,244,236,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid transparent; }
+.nav.scrolled { border-bottom-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--head); font-weight: 700; font-size: 20px; letter-spacing: -0.03em; text-decoration: none; }
+.logo-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); display: grid; place-items: center; }
+.logo-mark span { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); display: block; }
+.nav-links { display: flex; gap: 4px; align-items: center; }
+.nav-links a { font-size: 14px; color: var(--ink-2); text-decoration: none; padding: 8px 12px; border-radius: 8px; }
+.nav-links a:hover { background: var(--cream-2); color: var(--ink); }
+.nav-links .btn { padding: 9px 14px; font-size: 14px; margin-left: 6px; }
+.nav-links a.btn-primary { color: #fff; }
+.nav-links a.btn-primary:hover { background: var(--orange-ink); color: #fff; }
+@media (max-width: 760px) { .nav-links a:not(.btn) { display: none; } }
+
+/* hero */
+.hero { padding: 64px 0 40px; }
+.hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; }
+.hero h1 { font-size: clamp(38px, 5.6vw, 68px); line-height: 1.04; letter-spacing: -0.03em; margin-top: 20px; }
+.hero h1 em { font-style: normal; color: var(--orange); }
+.hero .lede { font-size: 19px; color: var(--ink-2); max-width: 540px; margin-top: 22px; }
+.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.hero-fine { margin-top: 16px; font-size: 14px; color: var(--ink-3); }
+
+.transcript {
+  position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 20px;
+  padding: 22px; box-shadow: 0 30px 60px -30px rgba(40,30,20,.25);
+}
+.transcript-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 16px; gap: 10px; }
+.transcript-head strong { font-family: var(--head); font-size: 15px; }
+.transcript-head small { font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+.bubble { max-width: 88%; padding: 11px 14px; border-radius: 12px; font-size: 14.5px; line-height: 1.45; margin-bottom: 10px; }
+.bubble .who { display: block; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; opacity: .65; margin-bottom: 3px; }
+.bubble.caller { background: var(--cream-2); color: var(--ink); }
+.bubble.sav { background: var(--ink); color: #f3f1e8; margin-left: auto; }
+.bubble.sav .who { color: #ffb68c; opacity: 1; }
+.wave { display: flex; align-items: center; gap: 3px; height: 22px; margin-top: 12px; }
+.wave i { width: 3px; border-radius: 2px; background: var(--orange); opacity: .8; animation: wave 1.2s ease-in-out infinite; }
+@keyframes wave { 0%,100% { height: 4px; } 50% { height: 20px; } }
+@media (prefers-reduced-motion: reduce) { .wave i { animation: none; height: 8px; } }
+
+/* demo call */
+.demo { padding: 24px 0 48px; }
+.demo-card {
+  display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 32px; align-items: center;
+  background: var(--ink); color: #f3f1e8; border-radius: 24px; padding: 36px 40px;
+}
+.demo-card .label { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #ffb68c; }
+.demo-card h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; margin-top: 10px; }
+.demo-card p { color: #c9c5b9; margin-top: 12px; font-size: 15.5px; }
+.phone-big { font-family: var(--head); font-weight: 600; font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -0.02em; text-decoration: none; display: block; color: #fff; }
+.phone-big.pending { font-size: 20px; color: #c9c5b9; font-weight: 500; }
+.demo-actions { display: flex; flex-direction: column; gap: 12px; }
+.demo-actions .btn { width: 100%; }
+.demo-actions .btn-ghost { color: #f3f1e8; border-color: #5a554f; }
+.demo-actions .btn-ghost:hover { background: #f3f1e8; color: var(--ink); }
+.qr { width: 132px; height: 132px; background: #fff; border-radius: 12px; padding: 10px; display: grid; place-items: center; }
+.qr img, .qr canvas { width: 112px !important; height: 112px !important; }
+.qr.empty { background: transparent; border: 1px dashed #5a554f; color: #9c978d; font-family: var(--mono); font-size: 10.5px; text-align: center; line-height: 1.4; padding: 12px; }
+.qr-cap { font-family: var(--mono); font-size: 11px; color: #9c978d; text-align: center; margin-top: 8px; }
+
+/* counter strip */
+.strip { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); }
+.strip-grid { display: grid; grid-template-columns: repeat(5, 1fr); }
+.stat { padding: 22px 20px; border-right: 1px solid var(--line); min-width: 0; }
+.stat:last-child { border-right: 0; }
+.stat .v { font-family: var(--head); font-weight: 600; font-size: clamp(30px, 3.4vw, 44px); letter-spacing: -0.03em; line-height: 1; }
+.stat .v.muted { color: var(--ink-3); font-size: 20px; letter-spacing: 0; line-height: 1.5; font-weight: 500; }
+.stat .k { font-size: 13.5px; color: var(--ink-2); margin-top: 8px; }
+.strip-meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0 12px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); border-top: 1px solid var(--line); }
+@media (max-width: 900px) {
+  .strip-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat { border-bottom: 1px solid var(--line); }
+  .stat:nth-child(2n) { border-right: 0; }
+  .stat:last-child { grid-column: 1 / -1; border-bottom: 0; }
+}
+
+/* live dot */
+.live { display: inline-flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-faint); position: relative; flex: none; }
+.dot.ok { background: var(--green); }
+.dot.ok::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; animation: pulse 2s ease-out infinite; }
+.dot.wait { background: var(--amber); }
+@keyframes pulse { 0% { transform: scale(.5); opacity: .7; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dot.ok::after { animation: none; } }
+
+/* sections, light */
+section.light { padding: 88px 0; }
+.sec-head { max-width: 680px; }
+.sec-head h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.05; margin-top: 16px; }
+.sec-head p { color: var(--ink-2); font-size: 18px; margin-top: 16px; }
+.pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 44px; }
+.pain { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
+.pain .time { font-family: var(--mono); font-size: 12px; color: var(--orange-ink); letter-spacing: .04em; }
+.pain h3 { font-size: 21px; margin-top: 12px; line-height: 1.2; }
+.pain p { color: var(--ink-2); margin-top: 10px; font-size: 15px; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; border-top: 1px solid var(--ink); }
+.step { padding: 26px 26px 0 0; }
+.step + .step { padding-left: 26px; border-left: 1px solid var(--line); }
+.step .n { font-family: var(--mono); font-size: 13px; color: var(--orange-ink); }
+.step h3 { font-size: 22px; margin-top: 14px; line-height: 1.2; }
+.step p { color: var(--ink-2); margin-top: 10px; font-size: 15.5px; }
+@media (max-width: 860px) {
+  .hero-grid, .demo-card { grid-template-columns: 1fr; }
+  .demo-card { padding: 28px 22px; gap: 24px; }
+  .qr-col { display: flex; align-items: center; gap: 16px; }
+  .qr-cap { text-align: left; margin-top: 0; }
+  .pain-grid, .steps { grid-template-columns: 1fr; }
+  .step, .step + .step { padding: 22px 0; border-left: 0; border-bottom: 1px solid var(--line); }
+  .hero { padding-top: 36px; }
+  section.light { padding: 64px 0; }
+}
+
+/* console */
+.console { background: var(--console); color: var(--c-text); padding: 88px 0 72px; }
+.console .chip { background: var(--console-2); border-color: var(--console-line); color: var(--c-dim); }
+.console .sec-head p { color: var(--c-dim); }
+.console-bar {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 12px; color: var(--c-dim);
+  border: 1px solid var(--console-line); background: var(--console-2); border-radius: 10px; padding: 10px 14px; margin-top: 36px;
+}
+.console-bar .src { display: flex; gap: 18px; flex-wrap: wrap; }
+.panel { border: 1px solid var(--console-line); background: var(--console-2); border-radius: var(--radius); }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--console-line); font-family: var(--mono); font-size: 12px; color: var(--c-dim); text-transform: uppercase; letter-spacing: .05em; flex-wrap: wrap; }
+.panel-head b { color: var(--c-text); font-weight: 500; }
+
+.org { padding: 28px 18px; }
+.org-ceo { display: flex; justify-content: center; }
+.org-lines { position: relative; height: 28px; }
+.org-lines::before { content: ""; position: absolute; left: 50%; top: 0; height: 14px; border-left: 1px solid var(--console-line); }
+.org-lines::after { content: ""; position: absolute; left: 8%; right: 8%; top: 14px; border-top: 1px solid var(--console-line); }
+.org-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.agent { background: var(--console-3); border: 1px solid var(--console-line); border-radius: 12px; padding: 14px; min-width: 0; position: relative; }
+.agent.ceo { width: min(320px, 100%); }
+.agent .role { font-family: var(--mono); font-size: 11px; color: var(--c-dim); text-transform: uppercase; letter-spacing: .06em; display: flex; justify-content: space-between; gap: 6px; }
+.agent h3 { font-size: 16px; margin-top: 8px; color: var(--c-text); font-weight: 600; letter-spacing: -0.01em; }
+.agent p { font-size: 12.5px; color: var(--c-dim); margin-top: 6px; line-height: 1.45; }
+.agent .metric { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--console-line); }
+.agent .metric .v { font-family: var(--head); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #fff; line-height: 1; }
+.agent .metric .v.muted { font-size: 13px; color: var(--c-faint); font-weight: 500; letter-spacing: 0; line-height: 1.6; font-family: var(--mono); }
+.agent .metric small { display: block; font-size: 11.5px; color: var(--c-dim); margin-top: 4px; }
+.human { margin-top: 14px; display: flex; gap: 12px; align-items: center; border: 1px dashed #6b4a32; background: rgba(226,86,15,.07); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: #f1c6a8; }
+.human .tag { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; background: var(--orange); color: #fff; padding: 3px 8px; border-radius: 6px; flex: none; }
+@media (max-width: 1020px) { .org-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .org-grid { grid-template-columns: 1fr 1fr; } .org-lines::after { left: 25%; right: 25%; } }
+
+.two { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; margin-top: 16px; }
+@media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+
+.feed { list-style: none; margin: 0; padding: 0; }
+.feed li { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: baseline; padding: 12px 18px; border-bottom: 1px solid var(--console-line); font-size: 14px; }
+.feed li:last-child { border-bottom: 0; }
+.feed .who { font-family: var(--mono); font-size: 11.5px; color: var(--orange); text-transform: uppercase; letter-spacing: .05em; }
+.feed .when { font-family: var(--mono); font-size: 11.5px; color: var(--c-faint); white-space: nowrap; }
+.feed li.new { animation: flash 2.4s ease-out; }
+@keyframes flash { from { background: rgba(226,86,15,.18); } to { background: transparent; } }
+.empty { padding: 26px 18px; color: var(--c-dim); font-size: 14px; }
+.empty b { color: var(--c-text); font-weight: 500; }
+@media (max-width: 600px) { .feed li { grid-template-columns: 1fr auto; } .feed .who { grid-column: 1 / -1; } }
+
+.voice-list { padding: 6px 18px 14px; }
+.voice-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--console-line); font-size: 14px; color: var(--c-dim); }
+.voice-row:last-child { border-bottom: 0; }
+.voice-row b { font-family: var(--head); color: #fff; font-size: 18px; font-weight: 600; }
+
+/* trace */
+.trace { margin-top: 16px; padding: 22px 18px; }
+.trace-steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; counter-reset: s; }
+.tstep { position: relative; background: var(--console-3); border: 1px solid var(--console-line); border-radius: 10px; padding: 12px; min-width: 0; }
+.tstep .a { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--c-dim); }
+.tstep h4 { font-family: var(--head); font-size: 14.5px; font-weight: 600; margin: 6px 0 0; color: var(--c-text); line-height: 1.25; }
+.tstep .c { font-family: var(--head); font-size: 20px; font-weight: 600; color: #fff; margin-top: 10px; }
+.tstep .c.muted { font-family: var(--mono); font-size: 11.5px; color: var(--c-faint); font-weight: 400; }
+.tstep.gate { border: 1px dashed var(--orange); background: rgba(226,86,15,.08); }
+.tstep.gate .a { color: var(--orange); }
+@media (max-width: 1020px) { .trace-steps { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 600px) { .trace-steps { grid-template-columns: 1fr; } .tstep { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 12px; } .tstep .c { margin-top: 0; grid-row: 1 / span 2; grid-column: 2; } }
+
+/* improvement log */
+.log { margin-top: 16px; }
+.stages { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--console-line); }
+.stage { padding: 16px 18px; border-right: 1px solid var(--console-line); }
+.stage:last-child { border-right: 0; }
+.stage .s { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
+.stage .s i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.stage p { font-size: 13px; color: var(--c-dim); margin-top: 8px; line-height: 1.45; }
+.st-obs i { background: #8ab4f8; } .st-pro i { background: var(--amber); } .st-shi i { background: var(--orange); } .st-res i { background: var(--green); }
+@media (max-width: 760px) { .stages { grid-template-columns: 1fr 1fr; } .stage:nth-child(2n) { border-right: 0; } .stage:nth-child(-n+2) { border-bottom: 1px solid var(--console-line); } }
+.entry { display: grid; grid-template-columns: 130px 110px 1fr; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--console-line); font-size: 14px; }
+.entry:last-child { border-bottom: 0; }
+.entry .t { font-family: var(--mono); font-size: 12px; color: var(--c-faint); }
+.entry .sg { font-family: var(--mono); font-size: 12px; text-transform: uppercase; }
+@media (max-width: 600px) { .entry { grid-template-columns: 1fr auto; } .entry .txt { grid-column: 1 / -1; } }
+
+/* cta */
+.cta { background: var(--cream); padding: 96px 0; }
+.cta-card { background: var(--paper); border: 1px solid var(--line); border-radius: 28px; padding: 56px 48px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
+.cta-card h2 { font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; }
+.cta-card p { color: var(--ink-2); font-size: 18px; margin-top: 16px; }
+.cta-list { list-style: none; padding: 0; margin: 0 0 24px; }
+.cta-list li { padding: 12px 0; border-bottom: 1px solid var(--line); display: flex; gap: 12px; font-size: 15.5px; }
+.cta-list li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); margin-top: 8px; flex: none; }
+.cta-actions { display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 860px) { .cta-card { grid-template-columns: 1fr; padding: 32px 22px; } .cta { padding: 64px 0; } }
+
+footer { background: var(--console); color: var(--c-dim); padding: 40px 0; font-size: 14px; border-top: 1px solid var(--console-line); }
+footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
+footer .logo { color: var(--c-text); }
+footer .logo-mark { background: var(--c-text); }
+footer b { color: var(--c-text); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="SAV home"><span class="logo-mark"><span></span></span>SAV</a>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#company">The company</a>
+      <a href="#log">Self-improvement</a>
+      <a class="btn btn-primary js-demo" href="#demo">Call the demo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="chip"><span class="tick"></span>AI receptionist for independent repair shops</span>
+        <h1>Your shop misses calls. <em>We built you a receptionist</em> before we ever emailed you.</h1>
+        <p class="lede">SAV answers when your techs are under a car. It knows your hours, your services and how to book a drop-off, and it was built from your public listing before we ever reached out.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary js-demo" href="#demo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+            Call your receptionist
+          </a>
+          <a class="btn btn-ghost" href="#company">Watch the company work</a>
+        </div>
+        <p class="hero-fine">Free for the first week. No card.</p>
+      </div>
+      <div class="transcript" aria-label="Sample call">
+        <div class="transcript-head">
+          <strong>Incoming call, 2:14 pm</strong>
+          <small>Sample transcript</small>
+        </div>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>Thanks for calling. Everyone's out in the bay right now, but I can help. What's going on with the car?</div>
+        <div class="bubble caller"><span class="who">Caller</span>Brakes are grinding on my Civic. Can you look at it this week?</div>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>We can. I have Thursday at 8 am for a drop-off. Want me to put you down and text you a confirmation?</div>
+        <div class="bubble caller"><span class="who">Caller</span>Thursday works.</div>
+        <div class="wave" aria-hidden="true"><i style="animation-delay:0s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.5s"></i><i style="animation-delay:.6s"></i><i style="animation-delay:.7s"></i><i style="animation-delay:.8s"></i><i style="animation-delay:.9s"></i><i style="animation-delay:1s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.35s"></i><i style="animation-delay:.55s"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo" id="demo">
+    <div class="wrap">
+      <div class="demo-card">
+        <div>
+          <span class="label">Demo line</span>
+          <h2>We already built one for your shop. Call it.</h2>
+          <p>Your email has a number that rings a receptionist trained on your shop. Call it like a customer would: ask for a quote, try to book a slot, ask if you're open Saturday.</p>
+        </div>
+        <div class="demo-actions">
+          <a class="phone-big pending js-phone" href="#demo">Your shop's number is in our email to you</a>
+          <a class="btn btn-primary js-demo" href="#demo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+            Call from your browser
+          </a>
+        </div>
+        <div class="qr-col">
+          <div class="qr empty" id="qr">QR appears when the demo link is live</div>
+          <div class="qr-cap">Scan to call from your phone</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip" aria-label="Company totals">
+    <div class="wrap">
+      <div class="strip-grid">
+        <div class="stat"><div class="v num" data-field="leads_found">--</div><div class="k">Shops found</div></div>
+        <div class="stat"><div class="v num" data-field="demos_built">--</div><div class="k">Receptionists built</div></div>
+        <div class="stat"><div class="v num" data-field="drafts_written">--</div><div class="k">Emails drafted</div></div>
+        <div class="stat"><div class="v num" data-field="free_week_yes">--</div><div class="k">Free weeks started</div></div>
+        <div class="stat"><div class="v num" data-voice="calls">--</div><div class="k">Calls answered</div></div>
+      </div>
+      <div class="strip-meta">
+        <span class="live"><span class="dot js-dot-company"></span><span class="js-status-company">Connecting to the company</span></span>
+        <span>Refreshes every 30s</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="light" id="pain">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="chip"><span class="tick"></span>The problem</span>
+        <h2>The phone rings while everyone is under a car.</h2>
+        <p>Independent shops run lean. The people who could answer are the people turning wrenches, and a caller with a check-engine light does not leave a voicemail.</p>
+      </div>
+      <div class="pain-grid">
+        <div class="pain"><div class="time">10:42 am</div><h3>Your tech is mid brake job.</h3><p>Gloves on, wheel off. The phone rings out on the counter.</p></div>
+        <div class="pain"><div class="time">10:43 am</div><h3>The caller tries the next shop.</h3><p>They searched "auto repair near me". You were first on the list. Now you're not.</p></div>
+        <div class="pain"><div class="time">10:44 am</div><h3>That job is gone.</h3><p>Nobody calls back a voicemail they never left. You never even learn it happened.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="light" id="how" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="chip"><span class="tick"></span>How it works</span>
+        <h2>Built first. Emailed second. Yours if you like it.</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="n">01</div><h3>We build your receptionist</h3><p>Before we contact you, we read your public listing and website and set up a receptionist that knows your hours, services and how you book work.</p></div>
+        <div class="step"><div class="n">02</div><h3>You call it</h3><p>We email you its number. Call it like a customer. Try to stump it. Nothing is connected to your real line yet.</p></div>
+        <div class="step"><div class="n">03</div><h3>Turn it on for a week</h3><p>Like it? Forward your missed calls to it. The first week is free and needs no card. Every call is reviewed and the receptionist keeps getting better.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="console" id="company">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="chip"><span class="dot js-dot-company"></span>Live company</span>
+        <h2>SAV is run by AI agents. Here is the company, live.</h2>
+        <p>A CEO agent hands out work. Each agent below files what it does, and the counts come straight from those filings. A person approves every email before it leaves.</p>
+      </div>
+
+      <div class="console-bar">
+        <div class="src">
+          <span class="live"><span class="dot js-dot-company"></span><span>company: <span class="js-status-company">connecting</span></span></span>
+          <span class="live"><span class="dot js-dot-voice"></span><span>voice line: <span class="js-status-voice">connecting</span></span></span>
+        </div>
+        <span>refreshes every 30s</span>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><b>Org chart</b><span>one card per agent</span></div>
+        <div class="org">
+          <div class="org-ceo">
+            <div class="agent ceo">
+              <div class="role"><span>CEO</span><span>Naive</span></div>
+              <h3>CEO agent</h3>
+              <p>Reads the board, hands each card to the right agent, and hears back when a card is done or blocked.</p>
+            </div>
+          </div>
+          <div class="org-lines" aria-hidden="true"></div>
+          <div class="org-grid">
+            <div class="agent"><div class="role"><span>Research</span></div><h3>Finds shops</h3><p>Busy independent shops on Google Maps. Skips chains and dealers.</p><div class="metric"><div class="v num" data-field="leads_found">--</div><small>shops filed</small></div></div>
+            <div class="agent"><div class="role"><span>Receptionists</span></div><h3>One per shop</h3><p>Built before first contact from the shop's own listing. Answers its calls by voice.</p><div class="metric"><div class="v num" data-field="demos_built">--</div><small>receptionists built</small></div></div>
+            <div class="agent"><div class="role"><span>Outreach</span></div><h3>Drafts emails</h3><p>One personal email per owner. Drafts only. A person sends.</p><div class="metric"><div class="v num" data-field="drafts_written">--</div><small>drafts written</small></div></div>
+            <div class="agent"><div class="role"><span>Onboarding</span></div><h3>Starts free weeks</h3><p>Sets up the shop when an owner says yes on their demo page.</p><div class="metric"><div class="v num" data-field="free_week_yes">--</div><small>owners said yes</small></div></div>
+            <div class="agent"><div class="role"><span>Monitoring</span></div><h3>Reviews every call</h3><p>Reads each transcript and flags anything a receptionist got wrong.</p><div class="metric"><div class="v num" data-field="calls_reviewed">--</div><small>calls reviewed</small></div></div>
+            <div class="agent"><div class="role"><span>Improve</span></div><h3>Proposes fixes</h3><p>Writes a prompt fix, tests it on simulated calls, never applies it alone.</p><div class="metric"><div class="v num" data-field="self_improvement_proposals">--</div><small>proposals</small></div></div>
+          </div>
+          <div class="human"><span class="tag">Human</span><span>A person approves every email before it is sent, and every change to what callers hear.</span></div>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel" id="feed">
+          <div class="panel-head"><b>Activity</b><span class="live"><span class="dot js-dot-company"></span>refreshes every 30s</span></div>
+          <ul class="feed" id="feed-list"></ul>
+          <div class="empty" id="feed-empty"><b>Watching for changes.</b> A row appears here the moment an agent files new work. Nothing is shown until something actually happens.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><b>Voice line</b><span class="live"><span class="dot js-dot-voice"></span><span class="js-status-voice">connecting</span></span></div>
+          <div class="voice-list" id="voice-list"></div>
+          <div class="empty" id="voice-empty"><b>Connecting to the voice service.</b> Call counts from the receptionists show here once it responds.</div>
+        </div>
+      </div>
+
+      <div class="panel trace" id="trace">
+        <div class="panel-head" style="margin:-22px -18px 18px"><b>One shop, end to end</b><span>count of shops at each step</span></div>
+        <div class="trace-steps">
+          <div class="tstep"><div class="a">Research</div><h4>Shop found and filed</h4><div class="c num" data-field="leads_found">--</div></div>
+          <div class="tstep"><div class="a">Research</div><h4>Receptionist built for it</h4><div class="c num" data-field="demos_built">--</div></div>
+          <div class="tstep"><div class="a">Outreach</div><h4>Email drafted</h4><div class="c num" data-field="drafts_written">--</div></div>
+          <div class="tstep gate"><div class="a">Human</div><h4>Person approves and sends</h4><div class="c num" data-field="emails_sent">--</div></div>
+          <div class="tstep"><div class="a">Owner</div><h4>Calls the demo, says yes</h4><div class="c num" data-field="free_week_yes">--</div></div>
+          <div class="tstep"><div class="a">Receptionist</div><h4>Answers calls</h4><div class="c num muted" data-voice="calls">--</div></div>
+          <div class="tstep"><div class="a">Monitoring</div><h4>Every call reviewed</h4><div class="c num" data-field="calls_reviewed">--</div></div>
+        </div>
+      </div>
+
+      <div class="panel log" id="log">
+        <div class="panel-head"><b>Self-improvement log</b><span>nothing ships without a person</span></div>
+        <div class="stages">
+          <div class="stage st-obs"><div class="s"><i></i>Observed</div><p>Monitoring flags a call the receptionist handled badly.</p></div>
+          <div class="stage st-pro"><div class="s"><i></i>Proposed</div><p>The improve agent writes a prompt fix and tests it on simulated calls.</p></div>
+          <div class="stage st-shi"><div class="s"><i></i>Shipped</div><p>A person reviews the test results and approves the change.</p></div>
+          <div class="stage st-res"><div class="s"><i></i>Result</div><p>The next real calls show whether the fix worked.</p></div>
+        </div>
+        <div id="log-list"></div>
+        <div class="empty" id="log-empty"><b>No entries published yet.</b> Proposals live on the CEO's board today. Entries will appear here with timestamps once the log is exposed.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" id="start">
+    <div class="wrap">
+      <div class="cta-card">
+        <div>
+          <span class="chip"><span class="tick"></span>Free first week</span>
+          <h2>Call it. If it sounds like your shop, keep it.</h2>
+          <p>Your receptionist is already built. Try it on your own phone, then let it pick up the calls you miss for a week, free.</p>
+        </div>
+        <div>
+          <ul class="cta-list">
+            <li>First week free, no card</li>
+            <li>Nothing changes on your line until you say so</li>
+            <li>Every call reviewed, every fix approved by a person</li>
+          </ul>
+          <div class="cta-actions">
+            <a class="btn btn-primary js-demo" href="#demo">Call your receptionist</a>
+            <a class="btn btn-ghost js-demo" href="#demo">Start my free week</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#top"><span class="logo-mark"><span></span></span>SAV</a>
+    <span><b>Every number above is live.</b> Nothing on this page is made up.</span>
+    <span>Built at the Naive x YC hackathon, Nov 7-8 2026.</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const CONFIG = {
+  STATS_URL: "https://dashboard-wfcawtyqg9ge.vercel.app/api/stats",
+  VOICE_STATS_URL: "https://submit-yoga-thoughts-similar.trycloudflare.com/stats.json",
+  DEMO_URL: "#demo",
+  DEMO_PHONE: "",
+  VOICE_FALLBACK: {"receptionists_built":2,"previews_live":2,"free_week_signups":0,"active_customers":0,"calls_handled":4,"minutes_on_the_phone":6,"appointment_requests":3,"requests_confirmed":2,"updated_at":"2026-11-08T01:02:14.548Z"},
+  POLL_MS: 30000,
+  TIMEOUT_MS: 10000
+};
+
+const FEED_TEXT = {
+  leads_found: ["Research", n => `found ${n} new shop${n === 1 ? "" : "s"} and filed ${n === 1 ? "it" : "them"}`],
+  demos_built: ["Research", n => `built ${n} receptionist${n === 1 ? "" : "s"} for shops we have not contacted yet`],
+  drafts_written: ["Outreach", n => `drafted ${n} email${n === 1 ? "" : "s"}, waiting for a person to approve`],
+  free_week_yes: ["Onboarding", n => `${n} owner${n === 1 ? "" : "s"} started a free week`],
+  calls_reviewed: ["Monitoring", n => `reviewed ${n} call${n === 1 ? "" : "s"}`],
+  emails_sent: ["Human", n => `approved and sent ${n} email${n === 1 ? "" : "s"}`],
+  self_improvement_proposals: ["Improve", n => `proposed ${n} fix${n === 1 ? "" : "es"}`]
+};
+
+const NULL_TEXT = {
+  emails_sent: "sent by a person, not counted here",
+  self_improvement_proposals: "not tracked yet"
+};
+
+const VOICE_LABELS = {
+  receptionists_built: "Receptionists built",
+  previews_live: "Demo lines live",
+  free_week_signups: "Free week signups",
+  active_customers: "Shops live on real calls",
+  minutes_on_the_phone: "Minutes on the phone",
+  appointment_requests: "Appointment requests taken",
+  requests_confirmed: "Appointments confirmed",
+  calls: "Calls answered",
+  calls_total: "Calls answered",
+  calls_handled: "Calls answered",
+  total_calls: "Calls answered",
+  calls_today: "Calls today",
+  receptionists: "Receptionists live",
+  receptionists_live: "Receptionists live",
+  shops: "Shops on the line",
+  bookings: "Bookings made",
+  appointments_booked: "Appointments booked",
+  transfers: "Calls passed to a person"
+};
+const VOICE_CALL_KEYS = ["calls_handled", "calls_total", "total_calls", "calls"];
+
+const VOICE_FEED_TEXT = {
+  calls_handled: ["Receptionist", n => `answered ${n} call${n === 1 ? "" : "s"}`],
+  appointment_requests: ["Receptionist", n => `took ${n} appointment request${n === 1 ? "" : "s"}`],
+  requests_confirmed: ["Receptionist", n => `confirmed ${n} appointment${n === 1 ? "" : "s"}`],
+  previews_live: ["Research", n => `put ${n} new demo line${n === 1 ? "" : "s"} live`]
+};
+
+const sources = {
+  company: { url: CONFIG.STATS_URL, data: null, okAt: 0, failing: false },
+  voice: { url: CONFIG.VOICE_STATS_URL, data: null, okAt: 0, failing: false, snapshot: false, fallback: CONFIG.VOICE_FALLBACK }
+};
+const feed = [];
+const shown = new Map();
+
+async function getJSON(url) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), CONFIG.TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: ctl.signal, headers: { accept: "application/json" } });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const body = await res.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("bad shape");
+    return body;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function ago(ms) {
+  const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+  if (s < 45) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} hr ago`;
+  return `${Math.round(h / 24)} d ago`;
+}
+
+function fmt(n) { return Number(n).toLocaleString("en-US"); }
+
+function tick(el, to) {
+  const key = el;
+  const from = shown.get(key);
+  shown.set(key, to);
+  el.classList.remove("muted");
+  if (typeof from !== "number" || from === to || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = fmt(to);
+    return;
+  }
+  const start = performance.now(), dur = 700;
+  const step = now => {
+    const p = Math.min(1, (now - start) / dur);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = fmt(Math.round(from + (to - from) * e));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function setMuted(el, text) {
+  shown.delete(el);
+  el.textContent = text;
+  el.classList.add("muted");
+}
+
+function renderCompany() {
+  const src = sources.company;
+  document.querySelectorAll("[data-field]").forEach(el => {
+    const f = el.dataset.field;
+    if (!src.data) { setMuted(el, src.failing ? "connecting" : "--"); return; }
+    const v = src.data[f];
+    if (typeof v === "number" && isFinite(v)) tick(el, v);
+    else if (v === null && NULL_TEXT[f]) setMuted(el, NULL_TEXT[f]);
+    else setMuted(el, "not reported");
+  });
+}
+
+function voiceCalls(d) {
+  for (const k of VOICE_CALL_KEYS) if (typeof d[k] === "number") return d[k];
+  return null;
+}
+
+function humanize(k) { return k.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase()); }
+
+function renderVoice() {
+  const src = sources.voice;
+  const list = document.getElementById("voice-list");
+  const empty = document.getElementById("voice-empty");
+  const callEls = document.querySelectorAll("[data-voice='calls']");
+  if (!src.data) {
+    list.innerHTML = "";
+    empty.style.display = "";
+    callEls.forEach(el => setMuted(el, src.failing ? "connecting" : "--"));
+    return;
+  }
+  const rows = Object.entries(src.data).filter(([, v]) => typeof v === "number" && isFinite(v));
+  empty.style.display = rows.length ? "none" : "";
+  if (!rows.length) empty.innerHTML = "<b>Voice service is up.</b> It has not reported any counts yet.";
+  const seen = new Set();
+  list.innerHTML = "";
+  rows.forEach(([k, v]) => {
+    const label = VOICE_LABELS[k] || humanize(k);
+    if (seen.has(label)) return;
+    seen.add(label);
+    const row = document.createElement("div");
+    row.className = "voice-row";
+    const span = document.createElement("span");
+    span.textContent = label;
+    const b = document.createElement("b");
+    b.className = "num";
+    b.textContent = fmt(v);
+    row.append(span, b);
+    list.append(row);
+  });
+  const calls = voiceCalls(src.data);
+  callEls.forEach(el => { if (calls === null) setMuted(el, "not reported"); else tick(el, calls); });
+}
+
+function renderStatus() {
+  for (const name of ["company", "voice"]) {
+    const src = sources[name];
+    let cls = "", text;
+    if (src.snapshot) { cls = "wait"; text = `Reconnecting, showing saved counts from ${ago(Date.parse(src.data.updated_at))}`; }
+    else if (src.okAt && !src.failing) { cls = "ok"; text = `Live, updated ${ago(src.okAt)}`; }
+    else if (src.okAt && src.failing) { cls = "wait"; text = `Reconnecting, showing values from ${ago(src.okAt)}`; }
+    else { cls = "wait"; text = name === "company" ? "Connecting to the company" : "Connecting to the voice line"; }
+    document.querySelectorAll(".js-dot-" + name).forEach(d => { d.className = "dot js-dot-" + name + (cls ? " " + cls : ""); });
+    document.querySelectorAll(".js-status-" + name).forEach(s => { s.textContent = text; });
+  }
+}
+
+function diffIntoFeed(prev, next, texts) {
+  if (!prev) return;
+  const at = Date.parse(next.updated_at) || Date.now();
+  for (const [field, [who, say]] of Object.entries(texts)) {
+    const a = prev[field], b = next[field];
+    if (typeof a === "number" && typeof b === "number" && b > a) {
+      feed.unshift({ who, text: say(b - a), at, fresh: true });
+    }
+  }
+  feed.splice(12);
+}
+
+function serverFeed(d) {
+  const list = Array.isArray(d.activity) ? d.activity : null;
+  if (!list) return false;
+  feed.length = 0;
+  list.slice(0, 12).forEach(r => {
+    if (r && typeof r.text === "string") feed.push({ who: String(r.agent || r.who || "Agent"), text: r.text, at: Date.parse(r.at || r.created_at) || null });
+  });
+  return true;
+}
+
+function renderFeed() {
+  const ul = document.getElementById("feed-list");
+  document.getElementById("feed-empty").style.display = feed.length ? "none" : "";
+  ul.innerHTML = "";
+  feed.forEach(r => {
+    const li = document.createElement("li");
+    if (r.fresh) { li.className = "new"; r.fresh = false; }
+    const who = document.createElement("span"); who.className = "who"; who.textContent = r.who;
+    const txt = document.createElement("span"); txt.textContent = r.text;
+    const when = document.createElement("span"); when.className = "when"; when.textContent = r.at ? ago(r.at) : "";
+    li.append(who, txt, when);
+    ul.append(li);
+  });
+}
+
+const STAGE_CLASS = { observed: "st-obs", proposed: "st-pro", shipped: "st-shi", result: "st-res" };
+function renderLog() {
+  const d = sources.company.data;
+  const list = d && Array.isArray(d.self_improvement_log) ? d.self_improvement_log : null;
+  const box = document.getElementById("log-list");
+  document.getElementById("log-empty").style.display = list && list.length ? "none" : "";
+  box.innerHTML = "";
+  if (!list) return;
+  list.slice(0, 20).forEach(e => {
+    if (!e || typeof e.text !== "string") return;
+    const stage = String(e.stage || "").toLowerCase();
+    const row = document.createElement("div"); row.className = "entry";
+    const t = document.createElement("span"); t.className = "t";
+    const ts = Date.parse(e.at || e.created_at);
+    t.textContent = ts ? new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+    const sg = document.createElement("span"); sg.className = "sg " + (STAGE_CLASS[stage] || "");
+    sg.style.color = { observed: "#8ab4f8", proposed: "#f5b544", shipped: "#e2560f", result: "#4ade80" }[stage] || "";
+    sg.textContent = stage || "entry";
+    const txt = document.createElement("span"); txt.className = "txt"; txt.textContent = e.text;
+    row.append(t, sg, txt);
+    box.append(row);
+  });
+}
+
+async function pollOne(name) {
+  const src = sources[name];
+  try {
+    const data = await getJSON(src.url);
+    if (name === "company") {
+      if (!serverFeed(data)) diffIntoFeed(src.data, data, FEED_TEXT);
+    } else if (!src.snapshot) {
+      diffIntoFeed(src.data, data, VOICE_FEED_TEXT);
+    }
+    src.data = data;
+    src.snapshot = false;
+    src.okAt = Date.now();
+    src.failing = false;
+  } catch (err) {
+    src.failing = true;
+    if (!src.data && src.fallback) { src.data = src.fallback; src.snapshot = true; }
+  }
+}
+
+async function poll() {
+  await Promise.allSettled([pollOne("company"), pollOne("voice")]);
+  renderCompany();
+  renderVoice();
+  renderFeed();
+  renderLog();
+  renderStatus();
+}
+
+function setupDemo() {
+  document.querySelectorAll(".js-demo").forEach(a => { a.href = CONFIG.DEMO_URL; });
+  const phone = document.querySelector(".js-phone");
+  if (CONFIG.DEMO_PHONE) {
+    phone.textContent = CONFIG.DEMO_PHONE;
+    phone.href = "tel:" + CONFIG.DEMO_PHONE.replace(/[^\d+]/g, "");
+    phone.classList.remove("pending");
+  } else {
+    phone.href = CONFIG.DEMO_URL;
+  }
+  const qr = document.getElementById("qr");
+  if (/^https?:\/\//.test(CONFIG.DEMO_URL) && window.QRCode) {
+    qr.textContent = "";
+    qr.classList.remove("empty");
+    new QRCode(qr, { text: CONFIG.DEMO_URL, width: 112, height: 112, colorDark: "#14110f", colorLight: "#ffffff" });
+  }
+}
+
+const nav = document.getElementById("nav");
+addEventListener("scroll", () => nav.classList.toggle("scrolled", scrollY > 8), { passive: true });
+
+setupDemo();
+renderCompany();
+renderVoice();
+renderFeed();
+renderStatus();
+poll();
+setInterval(poll, CONFIG.POLL_MS);
+setInterval(() => { renderStatus(); renderFeed(); }, 15000);
+</script>
+</body>
+</html>
