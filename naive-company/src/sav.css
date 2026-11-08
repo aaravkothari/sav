@@ -349,3 +349,59 @@ h1, h2, h3 { font-weight: 400; }
   .sav-stat .n { font-size: 26px; }
   .sav-stat .lab { font-size: 13px; }
 }
+
+/* ── Bookings ── */
+.sav-tabbar { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
+.sav-tabbar button {
+  font: inherit; font-size: 15px; color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 8px 12px 10px; margin-bottom: -1px; cursor: pointer; white-space: nowrap;
+}
+.sav-tabbar button:hover { color: var(--ink); }
+.sav-tabbar button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--teal); }
+.sav-status.b-requested, .sav-status.r-pending { background: #f5ecd9; border-color: #e6d4ae; }
+.sav-status.b-requested::before, .sav-status.r-pending::before { background: var(--warn); }
+.sav-status.b-booked { background: rgba(17, 72, 73, .08); border-color: rgba(17, 72, 73, .2); }
+.sav-status.b-booked::before { background: var(--teal-2); }
+.sav-status.b-done, .sav-status.r-confirmed { background: var(--ok-bg); border-color: #c7dfca; color: var(--ok); }
+.sav-status.b-done::before, .sav-status.r-confirmed::before { background: var(--ok); }
+.sav-status.r-declined { color: var(--tone-fail); border-color: #e3c5b8; }
+.sav-status.r-declined::before { background: var(--tone-fail); }
+.sav-script { display: flex; flex-direction: column; gap: 18px; }
+.sav-script .sav-h3 { margin-bottom: 6px; }
+.sav-script ul { list-style: disc; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14.5px; line-height: 1.5; }
+.sav-script blockquote.sav-letter { margin: 6px 0 8px; }
+.sav-form { display: flex; flex-direction: column; gap: 14px; }
+.sav-form label { display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
+.sav-form label > span { color: var(--muted); }
+.sav-form textarea {
+  font: inherit; font-size: 14.5px; color: var(--ink); background: #faf9f4; border: 1px solid var(--edge); border-radius: 4px;
+  padding: 9px 11px; resize: vertical; min-height: 2.75rem; width: 100%;
+}
+.sav-form textarea:focus { outline: none; border-color: var(--line-strong); background: #fff; }
+.sav-fb-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; }
+.sav-fb-lines li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: 12px; overflow-wrap: anywhere; }
+.sav-fb-lines .k { color: var(--muted-2); }
+@media (max-width: 599px) { .sav-fb-lines li { grid-template-columns: 1fr; gap: 2px; } }
+.sav-reqs { list-style: none; margin: 0; padding: 0; }
+.sav-reqs li { border-bottom: 1px solid var(--edge); }
+.sav-reqs li:last-child { border-bottom: 0; }
+.sav-reqs .row {
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.2fr) 6rem; gap: 14px; align-items: center;
+  width: 100%; padding: 13px 18px; background: none; border: 0; text-align: left; font: inherit; font-size: 14.5px; color: inherit; cursor: pointer;
+}
+.sav-reqs .row:hover { background: #f7f6ec; }
+.sav-reqs .who { display: flex; flex-direction: column; min-width: 0; }
+.sav-reqs .who .name { font-weight: 700; }
+.sav-reqs .who .shop { color: var(--muted-2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sav-reqs .what, .sav-reqs .time { min-width: 0; overflow-wrap: anywhere; }
+.sav-reqs .time { color: var(--muted); }
+.sav-reqs .state { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sav-reqs .when { color: var(--muted-2); font-size: 13px; text-align: right; white-space: nowrap; }
+.sav-reqs .detail { padding: 4px 18px 18px; }
+@media (max-width: 899px) {
+  .sav-reqs .row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 14px 16px; }
+  .sav-reqs .who { grid-column: 1; }
+  .sav-reqs .when { grid-column: 2; grid-row: 1; align-self: start; }
+  .sav-reqs .what, .sav-reqs .time, .sav-reqs .state { grid-column: 1 / -1; }
+  .sav-reqs .detail { padding: 0 16px 16px; }
+}

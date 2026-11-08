@@ -1,9 +1,10 @@
-import { Bot, Box, ChevronRight, ClipboardCheck, Columns3, LayoutDashboard, ListChecks, Rocket, Rows3, ShieldCheck, Settings2, SlidersHorizontal } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Bot, Box, CalendarClock, ChevronRight, ClipboardCheck, Columns3, LayoutDashboard, ListChecks, Rocket, Rows3, ShieldCheck, Settings2, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { apiSend, useApi } from "./api";
 import { leadRows, ShopName } from "./components/sav";
 import { TEMPLATE_NAME, type Client } from "./data";
+import { bookingRows } from "./bookings";
 import { leadPath } from "./leads";
 import { waitingOn, type PlatformSession } from "./platform";
 
@@ -100,10 +101,13 @@ export function Shell() {
   const { data: sessions } = useApi<{ data?: PlatformSession[] }>("/sessions?status=idle");
   const active = (clients ?? []).filter((c) => c.stage === "active");
   const waiting = waitingOn(sessions?.data ?? [], new Map()).length;
+  const upcomingCalls = useMemo(() => bookingRows(clients ?? []).filter((r) => r.upcoming).length, [clients]);
   type Item = { to: string; label: string; Icon: typeof Bot; count?: number; hot?: boolean };
   const nav: Item[] = [
     { to: "/", label: "Overview", Icon: LayoutDashboard },
     { to: "/leads", label: "Leads", Icon: Rows3, count: clients ? leadRows(clients).length : undefined },
+    // Onboarding calls with shops, and the appointments their receptionists took (`src/screens/Bookings.tsx`).
+    { to: "/bookings", label: "Bookings", Icon: CalendarClock, count: upcomingCalls || undefined },
     { to: "/crm", label: "Pipeline", Icon: Columns3 },
     { to: "/approvals", label: "Approvals", Icon: ShieldCheck, count: waiting, hot: waiting > 0 },
     // Where the company is started, paused and watched (`src/screens/Runs.tsx`).
