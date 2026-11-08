@@ -60,6 +60,14 @@ describe("appointment requests from the voice server", () => {
     for (const secret of ["Freecss", "4155557890", "portal", "secret", "req-1", "call-1", "demo-shop", "14155550000", "gon@x.com"]) expect([secret, wire.includes(secret)]).toEqual([secret, false]);
   });
 
+  it("reads the CRM (and so takes the store's lock) only after every voice call", async () => {
+    const v = voice([{ shop_id: "demo-shop", appointment_requests: 2 }], { "demo-shop": detail });
+    let seenAtLoad = -1;
+    const reply = await appointmentRequests(async () => { seenAtLoad = v.seen.length; return [pat]; }, ENV, v.fetcher, 1000);
+    expect(seenAtLoad).toBe(2);
+    expect(reply.requests[0]).toMatchObject({ lead: "pats-garage" });
+  });
+
   it("caches for 30 s, and says which shops could not be read", async () => {
     const v = voice([{ shop_id: "a", appointment_requests: 1 }, { shop_id: "b", appointment_requests: 1 }], { a: detail }, ["b"]);
     const first = await appointmentRequests([], ENV, v.fetcher, 1000);

@@ -1,9 +1,9 @@
-import { ArrowLeft, Check, Copy, ExternalLink, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Copy, ExternalLink, Sparkles } from "lucide-react";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { apiMessage, apiSend, useApi } from "../api";
 import {
-  bookingRows, buildPrepScript, CALL_STATUS_LABEL, callsOf, callTimeLabel, FEEDBACK_FIELDS, formatScriptNote, scriptNoteOf, scriptText,
+  bookingRows, buildPrepScript, CALL_STATUS_LABEL, DEFAULT_ZONE, callsOf, callTimeLabel, FEEDBACK_FIELDS, formatScriptNote, scriptNoteOf, scriptText,
   type BookingRow, type CallFeedback, type CallStatus, type OnboardingCall, type ScriptReceptionist, type ScriptSection,
 } from "../bookings";
 import { PageHead, Quiet, useLeads } from "../components/sav";
@@ -11,39 +11,27 @@ import type { Client } from "../data";
 import { ago, findLead, leadPath, mailKind, shopName, type Lead, type MailMessage } from "../leads";
 
 /**
- * Bookings, both ends of them.
+ * Bookings: sales calls between SAV and a shop, and nothing else.
  *
- *   Onboarding calls: calls between SAV and a shop, read from the CRM notes sales and onboarding
- *   file (`CALL REQUESTED:`, `CALL BOOKED:`). Each one opens a prep script and, once it is over, a
- *   form for what was learned (`src/bookings.ts`, `server/feedback.ts`).
+ *   A calendar of the onboarding calls sales and onboarding file in the CRM (`CALL REQUESTED:`,
+ *   `CALL BOOKED:`). Each one opens a prep script and, once it is over, a form for what was learned,
+ *   which becomes the shop's receptionist config (`src/bookings.ts`, `server/feedback.ts`).
  *
- *   Appointment requests: bookings the shops' receptionists took from callers, read server-side
- *   from the voice server (`server/booking-routes.ts`). First names and masked numbers only.
+ * Calls callers made to the shops' receptionists, and the appointments they asked for, are on the
+ * Calls page (`src/screens/Calls.tsx`), not here.
  */
 
-type Tab = "calls" | "requests";
-
 export function Bookings() {
-  const [params, setParams] = useSearchParams();
-  const tab: Tab = params.get("tab") === "requests" ? "requests" : "calls";
-  const pick = (t: Tab) => {
-    const next = new URLSearchParams();
-    if (t === "requests") next.set("tab", "requests");
-    setParams(next, { replace: true });
-  };
+  const [params] = useSearchParams();
+  // The old "Appointment requests" tab lives on its own page now.
+  if (params.get("tab") === "requests") return <Navigate to="/calls" replace />;
   return (
     <div className="pane-in">
       <PageHead
         title="Bookings"
-        sub={tab === "calls"
-          ? "Onboarding calls between us and a shop. Open one for a prep script, and file what you learned when it is over."
-          : "Appointments callers asked the shops' receptionists for. Shops confirm or decline them in their own portal."}
+        sub="Sales calls with shop owners. Open one for its prep script, and fill in what you learned when it is over: that is what the shop's receptionist is set up from."
       />
-      <div className="sav-tabbar" role="tablist" aria-label="Bookings">
-        <button type="button" role="tab" aria-selected={tab === "calls"} onClick={() => pick("calls")}>Onboarding calls</button>
-        <button type="button" role="tab" aria-selected={tab === "requests"} onClick={() => pick("requests")}>Appointment requests</button>
-      </div>
-      {tab === "calls" ? <OnboardingCalls /> : <AppointmentRequests />}
+      <OnboardingCalls />
     </div>
   );
 }
@@ -123,11 +111,72 @@ function OnboardingCalls() {
       )}
     </section>
   );
+  const timed = upcoming.filter((r) => r.call.at !== null);
+  const untimed = upcoming.filter((r) => r.call.at === null);
   return (
     <>
-      {group("Upcoming", upcoming, "Nothing on the calendar.")}
+      <CallCalendar rows={timed} />
+      {untimed.length > 0 ? group("Asked for a call, no time yet", untimed, "") : null}
+      {group("Upcoming", timed, "Nothing on the calendar.")}
       {past.length > 0 ? group("Past", past, "") : null}
     </>
+  );
+}
+
+// ── The calendar ─────────────────────────────────────────────────────────────
+
+const DAY_MS = 86_400_000;
+/** The Pacific calendar day of an instant, "2026-11-09". */
+const pacificDay = (t: number) => new Date(t).toLocaleDateString("en-CA", { timeZone: DEFAULT_ZONE });
+
+/** Two weeks of days from `start`, each with the calls on it, soonest first. */
+export function calendarDays(rows: readonly BookingRow[], start: number, days = 14): { key: string; at: number; rows: BookingRow[] }[] {
+  const out = Array.from({ length: days }, (_, i) => {
+    const at = start + i * DAY_MS;
+    return { key: pacificDay(at), at, rows: [] as BookingRow[] };
+  });
+  const byKey = new Map(out.map((d) => [d.key, d]));
+  for (const r of rows) {
+    if (!r.call.at) continue;
+    byKey.get(pacificDay(Date.parse(r.call.at)))?.rows.push(r);
+  }
+  for (const d of out) d.rows.sort((a, b) => Date.parse(a.call.at!) - Date.parse(b.call.at!));
+  return out;
+}
+
+function CallCalendar({ rows }: { rows: readonly BookingRow[] }) {
+  const [offset, setOffset] = useState(0);
+  // Noon today, Pacific, so stepping by whole days never crosses a day boundary on a DST change.
+  const today = pacificDay(Date.now());
+  const start = Date.parse(`${today}T12:00:00-08:00`) + offset * 7 * DAY_MS;
+  const days = calendarDays(rows, start);
+  const label = (t: number, o: Intl.DateTimeFormatOptions) => new Date(t).toLocaleDateString("en-US", { timeZone: DEFAULT_ZONE, ...o });
+  const clock = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { timeZone: DEFAULT_ZONE, hour: "numeric", minute: "2-digit" });
+  return (
+    <section className="sav-card mb-5">
+      <div className="sav-card-head">
+        <h2 className="sav-h2">{label(days[0]!.at, { month: "short", day: "numeric" })} – {label(days[days.length - 1]!.at, { month: "short", day: "numeric" })}</h2>
+        <span className="sav-cal-nav">
+          <button type="button" aria-label="Earlier" onClick={() => setOffset((o) => o - 1)}><ChevronLeft size={16} /></button>
+          {offset !== 0 ? <button type="button" onClick={() => setOffset(0)}>Today</button> : null}
+          <button type="button" aria-label="Later" onClick={() => setOffset((o) => o + 1)}><ChevronRight size={16} /></button>
+        </span>
+      </div>
+      <div className="sav-cal" role="grid" aria-label="Sales calls, Pacific time">
+        {days.map((d) => (
+          <div key={d.key} role="gridcell" className={`sav-cal-day${d.key === today ? " today" : ""}${d.rows.length > 0 ? " busy" : ""}`}>
+            <div className="sav-cal-date"><span>{label(d.at, { weekday: "short" })}</span> {label(d.at, { day: "numeric" })}</div>
+            {d.rows.map((r) => (
+              <Link key={`${r.client.id}-${r.call.n}`} className={`sav-cal-call b-${r.call.status}`} to={callPath(r.client, r.call.n)} title={`${r.client.name}, ${callTimeLabel(r.call)}`}>
+                <span className="t">{clock(r.call.at!)}</span>
+                <span className="n">{shopName(r.client.name)}</span>
+              </Link>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 sav-fine">Times are Pacific. Click a call for its prep script.</p>
+    </section>
   );
 }
 
@@ -370,7 +419,7 @@ interface RequestsReply {
 const REQUEST_LABEL: Record<RequestStatus, string> = { pending: "Pending", confirmed: "Confirmed", declined: "Declined" };
 const minutes = (sec: number | null) => (sec === null ? "" : sec < 60 ? `${sec} s` : `${Math.round(sec / 60)} min`);
 
-function AppointmentRequests() {
+export function AppointmentRequests() {
   const { data, error } = useApi<RequestsReply>("/bookings/requests");
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState<string | null>(null);

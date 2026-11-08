@@ -8,6 +8,7 @@ import { Shell } from "./Shell";
 import { AgencyAgents } from "./screens/AgencyAgents";
 import { Approvals } from "./screens/Approvals";
 import { BookingDetail, Bookings } from "./screens/Bookings";
+import { Calls } from "./screens/Calls";
 import { ClientAgents } from "./screens/ClientAgents";
 import { ClientCalendar } from "./screens/ClientCalendar";
 import { ClientConnections } from "./screens/ClientConnections";
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
       { path: "bookings", Component: Bookings },
       { path: "bookings/:id", Component: BookingDetail },
       { path: "bookings/:id/:n", Component: BookingDetail },
+      { path: "calls", Component: Calls },
       { path: "setup", Component: Home },
       { path: "runs", Component: Runs },
       { path: "launch-review", Component: LaunchReview },

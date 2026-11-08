@@ -24,7 +24,8 @@ type Env = Record<string, string | undefined>;
 type Rec = Record<string, unknown>;
 const env = (): Env => (typeof process === "undefined" ? {} : process.env);
 
-const TIMEOUT_MS = 10_000;
+/** Short: a slow voice server must not keep a dashboard request open. */
+const TIMEOUT_MS = 4_000;
 /** Shops read at once from the voice server: a quick tunnel off a laptop, so a small number. */
 export const FAN_OUT = 4;
 const CACHE_MS = 30_000;
@@ -174,7 +175,13 @@ let cache: { at: number; reply: RequestsReply } | null = null;
  * (`appointment_requests`), so only those are read, `FAN_OUT` at a time, and the whole answer is
  * kept for 30 s.
  */
-export async function appointmentRequests(clients: readonly Client[], e: Env = env(), fetcher: typeof fetch = fetch, now = Date.now()): Promise<RequestsReply> {
+/**
+ * `clients` may be a loader, called only AFTER the voice fan-out: on the deployed app the store is one
+ * row held `for update` from the first `ctx.store()` until the request ends, so reading the CRM first
+ * held that lock through 10-20 s of voice calls and every other request (the landing page, the
+ * approval sweep) queued behind it and failed with 503 (Nov 8, 18:52Z).
+ */
+export async function appointmentRequests(clients: readonly Client[] | (() => Promise<readonly Client[]>), e: Env = env(), fetcher: typeof fetch = fetch, now = Date.now()): Promise<RequestsReply> {
   const token = voiceToken(e);
   const base = voiceApiBase(e);
   if (!token || base === null) return { configured: false, requests: [], missing: 0 };
@@ -186,22 +193,24 @@ export async function appointmentRequests(clients: readonly Client[], e: Env = e
   } catch {
     return { configured: true, requests: [], missing: 0, error: "The receptionist service could not be reached just now." };
   }
+  const busy = shops.filter((s) => (num(s.appointment_requests) ?? 0) > 0 && str(s.shop_id) !== null);
+  let missing = 0;
+  const details = await mapLimit(busy, FAN_OUT, async (s) => {
+    try {
+      return await voiceGet(`/shops/${encodeURIComponent(str(s.shop_id)!)}`, token, base, fetcher);
+    } catch {
+      missing += 1;
+      return null;
+    }
+  });
+  // Only now touch the CRM (and with it the store's lock), for the shop -> lead links.
+  const crm = typeof clients === "function" ? await clients() : clients;
   const slugs = new Map<string, string>();
-  for (const c of clients) {
+  for (const c of crm) {
     const id = shopIdOf(c);
     if (id) slugs.set(id, c.slug || c.id);
   }
-  const busy = shops.filter((s) => (num(s.appointment_requests) ?? 0) > 0 && str(s.shop_id) !== null);
-  let missing = 0;
-  const lists = await mapLimit(busy, FAN_OUT, async (s) => {
-    const id = str(s.shop_id)!;
-    try {
-      return requestRows(await voiceGet(`/shops/${encodeURIComponent(id)}`, token, base, fetcher), slugs.get(id) ?? null);
-    } catch {
-      missing += 1;
-      return [];
-    }
-  });
+  const lists = busy.map((s, i) => (details[i] ? requestRows(details[i]!, slugs.get(str(s.shop_id)!) ?? null) : []));
   const requests = lists
     .flatMap((rows, s) => rows.map((r, i) => ({ ...r, key: `${s}-${i}` })))
     .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
@@ -217,7 +226,7 @@ export const resetRequestsCache = () => { cache = null; };
 export async function bookingRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   if (req.path === "/api/bookings/requests") {
     if (req.method !== "GET") return { status: 405, body: { error: "read-only route" } };
-    return { status: 200, body: await appointmentRequests((await ctx.store()).read().clients) };
+    return { status: 200, body: await appointmentRequests(async () => (await ctx.store()).read().clients) };
   }
   const action = /^\/api\/bookings\/([\w-]+)\/(script|feedback)$/.exec(req.path);
   if (!action) return null;
