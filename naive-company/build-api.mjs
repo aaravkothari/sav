@@ -32,6 +32,10 @@ const index = join(dist, "index.html");
 const shell = join(dist, "site-shell.html");
 if (existsSync(index)) renameSync(index, shell);
 const publicShell = readFileSync(shell, "utf8");
+// SAV's own public page (`landing/index.html` at the repo root), compiled into the function so the
+// deployed `/` serves it. A deploy tree without it falls back to the blueprint's site above.
+const landingFile = join(root, "..", "landing", "index.html");
+const landingHtml = existsSync(landingFile) ? readFileSync(landingFile, "utf8") : "";
 // The template the screens were built for: `vite build` resolves it through `templates/index.ts` and
 // writes it to `dist/.naive-template`, so the server half is compiled for the same one by
 // construction. Only an `api:build` run without that `vite build` falls back to the environment.
@@ -58,6 +62,7 @@ await build({
   define: {
     "process.env.NAIVE_TEMPLATE": JSON.stringify(template),
     PUBLIC_INDEX_HTML: JSON.stringify(publicShell),
+    LANDING_HTML: JSON.stringify(landingHtml),
   },
 });
 

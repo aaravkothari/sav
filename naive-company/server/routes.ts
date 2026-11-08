@@ -79,6 +79,8 @@ export interface ApiContext {
   local: boolean;
   /** The built public shell, used to serve crawlable metadata and permanent article pages. */
   publicShell?: () => Promise<string>;
+  /** SAV's own public page (`landing/index.html`). When set, `/` serves it instead of the blueprint's site. */
+  landingPage?: () => Promise<string>;
 }
 
 /**
@@ -319,6 +321,9 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   const articles = store === null ? [] : store.read().posts.filter((post) => publishedArticle(post));
   if (path === "/") {
     if (method !== "GET") return NOT_ALLOWED;
+    if (ctx.landingPage !== undefined) {
+      return { status: 200, text: await ctx.landingPage(), headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } };
+    }
     if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
     return {
       status: 200,

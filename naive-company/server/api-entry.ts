@@ -28,6 +28,8 @@ import { emptyState, openStoreOver, type Store, type StoreState } from "./store.
 
 /** Replaced with the Vite-built public document by `build-api.mjs`. */
 declare const PUBLIC_INDEX_HTML: string;
+/** Replaced with the repo's `landing/index.html` by `build-api.mjs` ("" when it was not there). */
+declare const LANDING_HTML: string;
 
 const TABLE = "agency_store";
 const ROW = "singleton";
@@ -191,6 +193,7 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
       appId: process.env["NAIVE_APP_ID"],
       local: false,
       publicShell: () => Promise.resolve(PUBLIC_INDEX_HTML),
+      ...(typeof LANDING_HTML === "string" && LANDING_HTML !== "" ? { landingPage: () => Promise.resolve(LANDING_HTML) } : {}),
     });
 
     // Write and release inside the same transaction the read was taken in: the next writer's

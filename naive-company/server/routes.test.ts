@@ -294,6 +294,15 @@ describe("the store routes", () => {
 });
 
 describe("public discovery documents", () => {
+  it("serves SAV's landing page at / when there is one, and leaves the dashboard and the public APIs where they were", async () => {
+    const landing = "<!doctype html><title>SAV Receptionist</title><h1>Your shop's phone, answered</h1>";
+    const { call } = fixture({ publicShell: () => Promise.resolve("<html><head><title>Agency</title></head></html>"), landingPage: () => Promise.resolve(landing) });
+    const home = await call("GET", "/", "");
+    expect(home).toMatchObject({ status: 200, text: landing, headers: { "content-type": "text/html; charset=utf-8" } });
+    expect((await call("GET", "/api/stats", "")).status).toBe(200);
+    expect((await call("GET", "/api/site", "")).status).toBe(200);
+  });
+
   it("serves crawl directives, dynamic metadata, permanent articles, a complete sitemap, and an agency-readable llms file", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-04T12:00:00Z"));
