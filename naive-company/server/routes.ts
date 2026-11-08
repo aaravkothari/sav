@@ -10,7 +10,7 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { companyStats } from "./stats.ts";
-import { findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused } from "./runs.ts";
+import { findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused, UpstreamError } from "./runs.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
 import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
@@ -713,7 +713,9 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
     const answer = await proxyFetch(config, upstream, req.method === "GET" ? null : req.body || "{}");
     if (upstream.sse) return { status: answer.status, stream: answer };
     return { status: answer.status, body: await answer.json() };
-  } catch {
+  } catch (err: unknown) {
+    // A run or a pause names the step and the platform's own words; anything else stays generic.
+    if (err instanceof UpstreamError) return { status: 502, body: { error: err.message } };
     return { status: 502, body: { error: "upstream unavailable" } };
   }
 }

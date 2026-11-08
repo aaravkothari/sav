@@ -109,3 +109,16 @@ describe("pause and resume", () => {
     expect((await sweepPaused(config, store, fetchImpl)).interrupted).toEqual(["ses_old", "ses_new"]);
   });
 });
+
+describe("a refused run", () => {
+  it("says which step the platform refused, in the platform's words", async () => {
+    const { fetchImpl } = platform({ "POST /v1/boards": () => ({ id: "brd_1" }) });
+    const refuse = vi.fn(async (url: string | URL | Request, init?: RequestInit) =>
+      String(url).endsWith("/cards")
+        ? new Response(JSON.stringify({ error: { code: "forbidden", message: "this key may not write boards" } }), { status: 403 })
+        : fetchImpl(url, init)) as unknown as typeof fetch;
+    await expect(startRun(config, "agt_ceo", "x", new Date(), refuse)).rejects.toThrow(
+      'adding the "research" card: the platform answered 403 (forbidden: this key may not write boards)',
+    );
+  });
+});
