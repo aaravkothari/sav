@@ -158,7 +158,7 @@ export const blank: AgencyTemplate = {
   name: "blank",
   title: "AI Receptionist for Auto Shops",
   description: VOCABULARY.blank.description,
-  roadmap: { day_one: "Crew and CEO board set up; nothing runs until you start it" },
+  roadmap: { day_one: "Crew, board and schedules set up", every_day: "New leads · Shop replies · Call checks" },
   kinds: VOCABULARY.blank.kinds,
   words: { ...VOCABULARY.blank.words },
   seed: { clients, posts },

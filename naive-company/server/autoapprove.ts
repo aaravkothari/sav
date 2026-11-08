@@ -84,6 +84,12 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
   const args = action.args ?? {};
   const name = action.name;
 
+  // The seat's own context, skills and board, and talking to the crew's other seats.
+  if (["project_context", "read_skill", "board_read", "list_agents", "send_to_agent"].includes(name)) return "the crew's own context";
+  // Onboarding calls on the company calendar (the owner asked for the call). Inert until the
+  // Google Calendar connection is authorized.
+  if (/^googlecalendar\.(get_current_date_time|find_free_slots|events_list|find_event|create_event|update_event)$/.test(name)) return "booking an onboarding call";
+
   // Reading the public web (research finds shop emails on the shop's own site).
   if (name === "web_fetch" || name === "web_search") return "reading the public web";
 

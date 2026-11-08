@@ -49,15 +49,19 @@ describe("the company", () => {
 describe("naive.config.ts", () => {
   it("runs the agency blueprint's blank template with our crew", () => {
     expect([config.blueprint, config.template]).toEqual(["agency", "blank"]);
-    expect(config.agents.map((a) => a.name)).toEqual(["research", "sales", "client-manager", "monitoring", "self-improvement"]);
+    expect(config.agents.map((a) => a.name)).toEqual([
+      "research", "research-salon", "research-drycleaner", "research-pt", "research-home",
+      "sales", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison",
+    ]);
     expect((config.crew_per_client ?? []).map((a) => a.name)).toEqual(["booking"]);
   });
 
-  it("seeds the CEO's board with the pipeline, unassigned, so `naive up` starts nothing", () => {
+  it("seeds the CEO's board with the pipeline, unassigned, and opens no session on apply: only capped timers run", () => {
     expect(config.tasks.map((t) => t.key)).toEqual(PIPELINE.map((s) => s.key));
     expect(config.tasks.every((t) => t.assignee === undefined)).toBe(true);
     for (const agent of config.agents) {
-      expect([agent.name, agent.intake, agent.schedules]).toEqual([agent.name, undefined, []]);
+      expect([agent.name, agent.intake]).toEqual([agent.name, undefined]);
+      for (const s of agent.schedules ?? []) expect([agent.name, s.cron, s.budget_micro_usd > 0]).toEqual([agent.name, s.cron, true]);
     }
   });
 
@@ -65,7 +69,8 @@ describe("naive.config.ts", () => {
     for (const agent of config.agents) {
       expect(agent.tools?.default_config.permission).toBe("deny");
       const asks = Object.entries(agent.tools?.configs ?? {}).filter(([, c]) => c.permission === "ask").map(([name]) => name);
-      expect([agent.name, asks]).toEqual([agent.name, ["ask_operator"]]);
+      // The public site is public: the SEO seat's update_site waits for a person.
+      expect([agent.name, asks]).toEqual([agent.name, agent.name === "seo" ? ["ask_operator", "dashboard.update_site"] : ["ask_operator"]]);
     }
   });
 });

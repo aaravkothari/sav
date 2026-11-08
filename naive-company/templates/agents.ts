@@ -36,7 +36,7 @@ export const AGENCY_IDENTITY = "agency";
  * The zone every schedule in this repo fires in, and the one line to edit to move all of them.
  * `POST /v1/deployments` defaults `timezone` to `"UTC"`, so omitting it is not "no opinion".
  */
-export const AGENCY_TIMEZONE = "America/New_York";
+export const AGENCY_TIMEZONE = "America/Los_Angeles";
 
 /**
  * Everything off except the named tools — an agency agent needs no sandbox. `ask` is the second

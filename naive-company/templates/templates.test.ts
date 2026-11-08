@@ -15,7 +15,7 @@ import { TEMPLATES } from "./active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE, REFERRAL_ASK, roster } from "./agents.ts";
 import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
-import { BOARD, PIPELINE, placeholderBudget, placeholderModel } from "./receptionist.ts";
+import { BOARD, BOOKING_URL, DEMO_LINE, GOOGLE_CALENDAR, MODELS, PIPELINE, placeholderBudget, placeholderModel, RESEARCH_CITIES, SECTORS } from "./receptionist.ts";
 import { productDesign, STUDIO_NOTE } from "./product-design.ts";
 import { seoGeo } from "./seo-geo.ts";
 
@@ -172,7 +172,8 @@ describe("connected accounts", () => {
       const outward = agent.name === "sales" || agent.name === "client-manager" || agent.name === "account-manager" ||
         (template.name === "seo-geo" && ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"].includes(agent.name)) ||
         // Every receptionist seat reaches a third-party MCP server: Monid, AgentMail or autoops-voice.
-        template.name === "blank";
+        // Except SAV's own SEO, promotion and coding-liaison seats, which work only on the dashboard.
+        (template.name === "blank" && !["seo", "promotion", "coding-liaison"].includes(agent.name));
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
     // The search crew reads each client's own accounts; the receptionist crew runs its shop's autoops-voice receptionist.
@@ -240,8 +241,9 @@ describe("handoffs", () => {
     designer: ["visualizer"],
     engineer: ["visualizer"],
   };
-  /** The receptionist crew hands nothing around itself: the CEO assigns every card. */
-  const chainOf = (template: (typeof all)[number]): Record<string, string[]> => (template.name === "blank" ? {} : CHAIN);
+  /** The receptionist crew hands two things on itself: a call to book (sales), a yes to charge (onboarding). */
+  const BLANK_CHAIN: Record<string, string[]> = { sales: ["client-manager"], "client-manager": ["payments"] };
+  const chainOf = (template: (typeof all)[number]): Record<string, string[]> => (template.name === "blank" ? BLANK_CHAIN : CHAIN);
   const handoffTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
     ["send_to_agent", "list_agents"].filter((name) => agent.tools?.configs[name]?.permission === "allow");
 
@@ -287,61 +289,219 @@ describe("handoffs", () => {
 
 describe("blank", () => {
   /**
-   * `blank` runs this company: an AI receptionist for auto repair shops. Every seat is a
-   * placeholder for now, so applying it must start nothing and spend nothing by itself.
+   * `blank` runs this company: SAV, an AI receptionist for small service businesses, auto repair
+   * first. The crew runs itself on capped schedules and event wakes (#32); applying it opens no
+   * session (no intake) and every fire is bounded by its own budget and its seat's daily cap.
    */
-  it("names no specialism of the search agency anywhere", () => {
+  const seatOf = (name: string) => [...blank.agents, ...blank.crew].find((a) => a.name === name)!;
+  const fires = blank.agents.flatMap((agent) => (agent.schedules ?? []).map((s) => [agent.name, s] as const));
+
+  it("names no specialism of the search agency anywhere, outside the seat that does SAV's own SEO", () => {
     // `/serp/google-maps` is the name of a Monid data endpoint research reads listings from, not search work.
-    expect(prose(blank).replaceAll("/serp/google-maps", "")).not.toMatch(/\bSEO\b|\bGEO\b|search engine|generative-engine|SERP|schema|llms\.txt|citation/i);
+    const text = prose({ ...blank, agents: blank.agents.filter((a) => a.name !== "seo") });
+    expect(text.replaceAll("/serp/google-maps", "")).not.toMatch(/\bSEO\b|\bGEO\b|search engine|generative-engine|SERP|schema|llms\.txt|citation/i);
   });
 
-  it("runs the receptionist crew, with one receptionist per shop", () => {
+  it("runs the receptionist crew: a research seat per sector, then replies, onboarding, payments, monitoring, self-improvement, SEO, promotion and the coding liaison", () => {
     expect(blank.agents.map((a) => [a.name, a.role])).toEqual([
       ["research", "Research"],
+      ["research-salon", "Research (hair salon)"],
+      ["research-drycleaner", "Research (dry cleaner)"],
+      ["research-pt", "Research (physical therapy)"],
+      ["research-home", "Research (plumber)"],
       ["sales", "Outreach"],
       ["client-manager", "Onboarding"],
+      ["payments", "Payments"],
       ["monitoring", "Monitoring"],
       ["self-improvement", "Self-improvement"],
+      ["seo", "SEO"],
+      ["promotion", "Promotion"],
+      ["coding-liaison", "Coding liaison"],
     ]);
+    expect(SECTORS.map((s) => s.seat)).toEqual(blank.agents.slice(0, SECTORS.length).map((a) => a.name));
     expect(blank.crew.map((a) => a.name)).toEqual(["booking"]);
     expect(blank.words.noCrew).toMatch(/moving it to active creates one/);
   });
 
-  /** Seats are built one at a time; these are real, the rest still close their card with a MOCK note. */
-  const BUILT = ["research", "sales", "client-manager", "monitoring", "self-improvement", "booking"];
-
-  it("starts nothing on its own: no intake, no timer, a small budget, the shared preamble and gate", () => {
+  it("opens no session on apply, and caps every seat by the day", () => {
     for (const agent of [...blank.agents, ...blank.crew]) {
       const at = agent.name;
-      expect([at, agent.intake, agent.schedules]).toEqual([at, undefined, []]);
-      expect([at, agent.model, agent.budget]).toEqual([at, placeholderModel, placeholderBudget]);
+      expect([at, agent.intake]).toEqual([at, undefined]);
+      expect([at, agent.budget?.period]).toEqual([at, "day"]);
+      expect([at, (agent.budget?.cap_micro_usd ?? 0) <= 3_000_000]).toEqual([at, true]);
+      expect([at, (agent.budget?.max_task_micro_usd ?? 0) <= (agent.budget?.cap_micro_usd ?? 0)]).toEqual([at, true]);
+      expect([at, (Object.values(MODELS) as string[]).includes(agent.model)]).toEqual([at, true]);
       expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
       expect(agent.system).toMatch(/never send or publish anything yourself/);
       for (const tool of BOARD) expect([at, tool, agent.tools?.configs[tool]?.permission]).toEqual([at, tool, "allow"]);
     }
+    // The live seats' caps stay well inside the org's credits: under $15 a day all together.
+    const live = blank.agents.filter((a) => !SECTORS.some((s) => s.seat === a.name && !s.live));
+    expect(live.reduce((sum, a) => sum + (a.budget?.cap_micro_usd ?? 0), 0)).toBeLessThanOrEqual(15_000_000);
+    // The reply seat writes what owners read, so it gets the strong model; bulk seats the cheap one.
+    expect(seatOf("sales").model).toBe(MODELS.writer);
+    expect(seatOf("research").model).toBe(MODELS.bulk);
+    expect(placeholderModel).toBe(MODELS.bulk);
+    expect(seatOf("booking").budget).toEqual(placeholderBudget);
   });
 
-  it("marks each seat that is not built yet as a placeholder, and no built seat as one", () => {
-    for (const agent of [...blank.agents, ...blank.crew]) {
-      const placeholder = /PLACEHOLDER SEAT.*MOCK:/.test(agent.system ?? "");
-      expect([agent.name, placeholder]).toEqual([agent.name, !BUILT.includes(agent.name)]);
+  it("schedules each repeating step, capped per fire and inside its seat's daily cap", () => {
+    for (const [agent, schedule] of fires) {
+      const at = `${agent} @ ${schedule.cron}`;
+      const owner = seatOf(agent);
+      expect([at, schedule.budget_micro_usd > 0 && schedule.budget_micro_usd <= owner.budget.max_task_micro_usd]).toEqual([at, true]);
+    }
+    /** Fires a day for the crons this crew writes: `M H * * D`, H a number, a list, or `a-b/n` or `*\/n`. */
+    const firesPerDay = (cron: string): number => {
+      const [, hour = "*", , , dow = "*"] = cron.split(" ");
+      let hours: number;
+      if (hour.includes("/")) {
+        const [range = "*", step = "1"] = hour.split("/");
+        const [from, to] = range === "*" ? [0, 23] : range.split("-").map(Number);
+        hours = Math.floor((to! - from!) / Number(step)) + 1;
+      } else hours = hour === "*" ? 24 : hour.split(",").length;
+      return dow === "*" ? hours : (hours * dow.split(",").length) / 7;
+    };
+    const perDay = new Map<string, number>();
+    for (const [agent, schedule] of fires) perDay.set(agent, (perDay.get(agent) ?? 0) + firesPerDay(schedule.cron) * schedule.budget_micro_usd);
+    for (const [agent, total] of perDay) expect([agent, total <= seatOf(agent).budget.cap_micro_usd]).toEqual([agent, true]);
+    expect([...new Set(fires.map(([a]) => a))]).toEqual(["research", "sales", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
+  });
+
+  it("researches two cities a day, a new pair each weekday, and arms only the live sector", () => {
+    const research = fires.filter(([a]) => a === "research").map(([, s]) => s);
+    expect(research).toHaveLength(RESEARCH_CITIES.length * 2);
+    expect(new Set(research.map((s) => /City: ([^.]+)\./.exec(s.input)?.[1])).size).toBe(RESEARCH_CITIES.length * 2);
+    for (const sector of SECTORS.filter((s) => !s.live)) expect([sector.seat, seatOf(sector.seat).schedules]).toEqual([sector.seat, []]);
+    expect(SECTORS.filter((s) => s.live).map((s) => s.seat)).toEqual(["research"]);
+  });
+
+  it("researches fast: one Maps run, the shop's own site for the email, Hunter only as the fallback, and no email means no lead", () => {
+    for (const sector of SECTORS) {
+      const system = seatOf(sector.seat).system!;
+      expect(system).toMatch(/ONE Google Maps search/);
+      expect(system).toMatch(/depth: 100/);
+      expect(system.indexOf("web_fetch the business's own homepage")).toBeLessThan(system.indexOf('provider "hunterio"'));
+      expect(system).toMatch(/Only if both pages show none/);
+      expect(system).toMatch(/A business with no email found is not a lead: skip it/);
+      expect(system).toMatch(/"Opener detail: <one specific, true thing.*in second person.*I came across <name> and noticed.*no trailing period/);
+      expect(system).toMatch(/Never call autoops\.provision_demo/);
+      expect(seatOf(sector.seat).tools?.configs["autoops.provision_demo"]).toBeUndefined();
+      expect(system).toMatch(/never guess or construct an email/i);
+      expect(system).toMatch(/Never invent a business, a name, an email, a number or a detail/);
+      expect(seatOf(sector.seat).tools?.configs["web_fetch"]?.permission).toBe("allow");
     }
   });
 
-  it("only lets outreach claim a call the operator really made, and invents nothing", () => {
-    const sales = blank.agents.find((a) => a.name === "sales")!.system ?? "";
-    expect(sales).toMatch(/Use the "called" template ONLY when the shop's notes hold an "OPERATOR CALLED:" note/);
-    expect(sales).toMatch(/Never claim a call, a hold, a visit or anything else that did not happen/);
-    const research = blank.agents.find((a) => a.name === "research")!.system ?? "";
-    expect(research).toMatch(/never guess or construct an email/);
-    expect(research).toMatch(/Never invent a shop, a name, an email, a number or a detail/);
+  it("research never reads the CRM, so its paid lookups are not held for having read people's data", () => {
+    for (const sector of SECTORS) {
+      const research = seatOf(sector.seat);
+      for (const tool of ["dashboard.list_clients", "dashboard.get_client"]) expect([sector.seat, tool, research.tools?.configs[tool]]).toEqual([sector.seat, tool, undefined]);
+      expect(research.system).toMatch(/Do not read the CRM/);
+    }
   });
 
-  it("asks no permission: the only `ask` left is ask_operator, a question rather than a permission", () => {
+  it("sends no first email from sales: it answers a shop that replied, three ways, as Aarav", () => {
+    const sales = seatOf("sales");
+    const c = sales.tools?.configs ?? {};
+    expect(c["agentmail.send_message"]).toBeUndefined();
+    expect(c["agentmail.reply_to_message"]?.permission).toBe("allow");
+    expect(sales.system).toMatch(/You never send a first email: the outbound engine does that/);
+    expect(sales.system).toMatch(/starts with "SHOP REPLIED: <shop name>"/);
+    expect(sales.system).toMatch(/\(a\) Interested.*demo link.*15-minute onboarding call/);
+    expect(sales.system).toMatch(/If there is no demo yet and the shop is auto repair, first call autoops\.provision_demo once/);
+    expect(sales.system).toMatch(/\(b\) Pushback or a question: one short, honest, convincing answer/);
+    expect(sales.system).toMatch(/\(c\) Not interested.*"UNSUBSCRIBED:"/);
+    expect(sales.system).toMatch(/note "REPLY SENT: <message id>" followed by the reply in full/);
+    expect(sales.system).toMatch(/Write as Aarav/);
+    expect(sales.system).not.toMatch(/autoops\.update_receptionist/);
+    expect(sales.system).toMatch(/autoops\.add_caller/);
+    expect(sales.system).toContain(`call ${DEMO_LINE} from that phone, or use the demo page`);
+    expect(sales.system).toMatch(/is the only phone number you ever put in an email/);
+    expect(sales.system).toMatch(/do nothing if its latest message is already ours/);
+  });
+
+  it("books the onboarding call on Google Calendar when connected, else by asking, and never sends a placeholder link", () => {
+    const manager = seatOf("client-manager");
+    for (const tool of GOOGLE_CALENDAR) expect([tool, manager.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
+    expect(GOOGLE_CALENDAR.some((t) => /delete|acl|clear/i.test(t))).toBe(false);
+    expect(manager.system).toMatch(/if googlecalendar tools are offered.*googlecalendar\.create_event/);
+    expect(manager.system).toMatch(/Without calendar tools/);
+    expect(BOOKING_URL).toMatch(/TODO/);
+    expect(manager.system).toMatch(/contains "TODO", it is a placeholder: never send it/);
+    expect(manager.system).toMatch(/"MEETING SCRIPT:" for Aarav/);
+    for (const part of ["who the owner is", "what they said", "likely pain points", "demo status", "the questions to ask", "the close: start the free week, then \\$49\\.99 a month"]) {
+      expect([part, new RegExp(part).test(manager.system!)]).toEqual([part, true]);
+    }
+  });
+
+  it("onboards an owner who started a free week, sends the questions itself, and hands the shop to payments", () => {
+    const onboarding = seatOf("client-manager");
+    expect(onboarding.system).toMatch(/starts with "FREE WEEK STARTED:", there is no card/);
+    expect(onboarding.system).toMatch(/using only what the message gives/);
+    expect(onboarding.system).toMatch(/"RECEPTIONIST CONFIG:" followed by JSON with keys hours, services, greeting, booking_rules, handoff/);
+    expect(onboarding.system).toMatch(/send_to_agent payments \(wait false\) with "CHECKOUT NEEDED: <shop name>"/);
+    for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline", "agentmail.send_message", "agentmail.reply_to_message"]) {
+      expect([tool, onboarding.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
+    }
+  });
+
+  it("charges through the checkout link, and turns a shop on only once its subscription is active", () => {
+    const payments = seatOf("payments");
+    for (const tool of ["autoops.create_trial_checkout", "autoops.activate_shop", "autoops.list_shops"]) expect([tool, payments.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
+    expect(payments.system).toMatch(/autoops\.create_trial_checkout\(\{ shop_id, owner_email \}\)/);
+    expect(payments.system).toMatch(/a completed Stripe checkout activates the shop server-side/);
+    expect(payments.system).toMatch(/Call autoops\.activate_shop\(\{ shop_id \}\) only to repair/);
+    expect(payments.system).toMatch(/phone_error, that is not a failure.*We'll text your dedicated number within a day/);
+    expect(payments.system).toMatch(/TEST mode/);
+  });
+
+  it("never offers an agent the owner-contact tool, and monitors from the PII-free summaries first", () => {
+    for (const agent of [...blank.agents, ...blank.crew]) expect([agent.name, agent.tools?.configs["autoops.get_claim"]]).toEqual([agent.name, undefined]);
+    const monitoring = seatOf("monitoring").system!;
+    expect(monitoring).toMatch(/autoops\.list_call_summaries first/);
+    expect(monitoring.indexOf("list_call_summaries")).toBeLessThan(monitoring.indexOf("autoops.get_call only"));
+    expect(monitoring).toMatch(/the tunnel is down: ask_operator once/);
+    expect(monitoring).toMatch(/"MONITOR FLAG:"/);
+  });
+
+  it("lets only a shop's own booking seat change a receptionist (AGENTS.md); self-improvement proposes, and never the stage demos", () => {
+    for (const agent of [...blank.agents, ...blank.crew]) {
+      const c = agent.tools?.configs ?? {};
+      const writes = ["autoops.provision_receptionist", "autoops.update_receptionist"].filter((tool) => c[tool]);
+      const expected = agent.name === "booking" ? ["autoops.provision_receptionist", "autoops.update_receptionist"] : [];
+      expect([agent.name, writes]).toEqual([agent.name, expected]);
+      if (agent.tools?.configs["autoops.get_receptionist"]) {
+        expect(agent.system).toMatch(/Never call update_receptionist or provision_receptionist for "axl-roadside" or "demo-shop"/);
+      }
+    }
+    const fixer = seatOf("self-improvement").system!;
+    expect(fixer.indexOf("2. Reproduce it with autoops.simulate_call")).toBeLessThan(fixer.indexOf("3. Propose the smallest change"));
+    expect(fixer).toMatch(/Never call update_receptionist/);
+    expect(fixer).toMatch(/vehicle_unclear on a call with no vehicle_corrected after it is a prompt problem/);
+  });
+
+  it("asks no permission except a question, and the public site, which a person approves", () => {
     for (const agent of [...blank.agents, ...blank.crew]) {
       const asks = Object.entries(agent.tools?.configs ?? {}).filter(([, c]) => c.permission === "ask").map(([name]) => name);
-      expect([agent.name, asks]).toEqual([agent.name, ["ask_operator"]]);
+      expect([agent.name, asks]).toEqual([agent.name, agent.name === "seo" ? ["ask_operator", "dashboard.update_site"] : ["ask_operator"]]);
     }
+  });
+
+  it("drafts promotion and never posts it", () => {
+    const promotion = seatOf("promotion");
+    const names = Object.keys(promotion.tools?.configs ?? {});
+    expect(names.filter((n) => /social|publish|approve_post|schedule_post/.test(n))).toEqual([]);
+    expect(promotion.tools?.configs["dashboard.create_draft_post"]?.permission).toBe("allow");
+    expect(promotion.system).toMatch(/You draft; you never post/);
+  });
+
+  it("collects infra requests from every seat for the human coding agents", () => {
+    for (const agent of [...blank.agents, ...blank.crew]) {
+      expect([agent.name, agent.system?.includes('starting "INFRA REQUEST:"')]).toEqual([agent.name, true]);
+      expect([agent.name, agent.tools?.configs["dashboard.create_lead"]?.permission, agent.tools?.configs["dashboard.add_client_note"]?.permission]).toEqual([agent.name, "allow", "allow"]);
+    }
+    expect(seatOf("coding-liaison").system).toMatch(/ask_operator once with the whole list/);
   });
 
   it("plans a pipeline whose every owner is a seat of this template", () => {
@@ -349,44 +509,8 @@ describe("blank", () => {
     for (const step of PIPELINE) expect([step.key, seats.has(step.owner)]).toEqual([step.key, true]);
   });
 
-  it("onboards an owner who started a free week from the demo page, drafting only", () => {
-    const onboarding = blank.agents.find((a) => a.name === "client-manager")!;
-    expect(onboarding.system).toMatch(/starts with "FREE WEEK STARTED:", there is no card/);
-    expect(onboarding.system).toMatch(/using only what the message gives/);
-    expect(onboarding.system).toMatch(/Draft only, never send/);
-    for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline"]) {
-      expect([tool, onboarding.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
-    }
-    expect(onboarding.tools?.configs["agentmail.send_message"]?.permission).toBe("allow");
-  });
-
-  it("builds free demo receptionists; only a shop's own booking seat can buy a number or change what callers hear", () => {
-    for (const agent of [...blank.agents, ...blank.crew]) {
-      const c = agent.tools?.configs ?? {};
-      const writes = ["autoops.provision_receptionist", "autoops.update_receptionist"].filter((tool) => c[tool]);
-      expect([agent.name, writes.length > 0]).toEqual([agent.name, agent.name === "booking"]);
-      for (const tool of writes) expect([agent.name, tool, c[tool]?.permission]).toEqual([agent.name, tool, "allow"]);
-      if (agent.tools?.configs["autoops.get_receptionist"]) {
-        // Every seat that reaches a receptionist is told to leave the stage demos alone.
-        expect(agent.system).toMatch(/Never call update_receptionist or provision_receptionist for "axl-roadside" or "demo-shop"/);
-      }
-    }
-    const research = blank.agents.find((a) => a.name === "research")!;
-    expect(research.tools?.configs["autoops.provision_demo"]?.permission).toBe("allow");
-    expect(research.system).toMatch(/autoops\.provision_demo once/);
-    const sales = blank.agents.find((a) => a.name === "sales")!;
-    expect(sales.system).toMatch(/Never put a preview phone number in an email/);
-  });
-
-  it("research never reads the CRM, so its paid lookups are not held for having read people's data", () => {
-    const research = blank.agents.find((a) => a.name === "research")!;
-    for (const tool of ["dashboard.list_clients", "dashboard.get_client"]) expect([tool, research.tools?.configs[tool]]).toEqual([tool, undefined]);
-    expect(research.system).toMatch(/Do not read the CRM/);
-    expect(research.system!.indexOf("1. Find candidates with Monid")).toBeLessThan(research.system!.indexOf("4. For each shop you keep, run monid.monid_inspect once on provider hunterio"));
-  });
-
-  it("files the receptionist's kinds of work", () => {
-    expect(blank.kinds.map((k) => k.id)).toEqual(["script", "report", "audit"]);
+  it("files the receptionist's kinds of work, and the promotion seat's", () => {
+    expect(blank.kinds.map((k) => k.id)).toEqual(["script", "report", "audit", "post", "ad"]);
   });
 });
 
@@ -660,14 +784,17 @@ describe("the launch card's words", () => {
     }
   });
 
-  it("says what Day 1 comes to, and claims no every-day line the weekday timers cannot keep", () => {
+  it("says what Day 1 comes to, and claims an every-day line only where a timer runs every day", () => {
     expect(all.map((t) => [t.name, t.roadmap])).toEqual([
-      ["blank", { day_one: "Crew and CEO board set up; nothing runs until you start it" }],
+      ["blank", { day_one: "Crew, board and schedules set up", every_day: "New leads · Shop replies · Call checks" }],
       ["seo-geo", { day_one: "Set up your site, pipeline and competitor gaps" }],
       ["product-design", { day_one: "Write the studio note and make the first concept look" }],
     ]);
-    // Every timer is weekday-only or weekly, so "every day" would promise weekends that do not run.
-    for (const t of all) {
+    // blank runs every day (research on every weekday's cron, replies and checks on `*`); the other
+    // templates' timers are weekday-only or weekly, so "every day" would promise weekends that do not run.
+    const daily = (t: (typeof all)[number]) => t.agents.flatMap((agent) => agent.schedules ?? []).some((s) => s.cron.split(" ")[4] === "*");
+    expect(daily(blank)).toBe(true);
+    for (const t of all.filter((one) => one.name !== "blank")) {
       expect(t.roadmap.every_day).toBeUndefined();
       for (const schedule of t.agents.flatMap((agent) => agent.schedules ?? [])) {
         expect(schedule.cron.split(" ")[4]).not.toBe("*");
@@ -704,9 +831,13 @@ describe("what the README promises about spend", () => {
   const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
   const usd = (micro: number) => `$${(micro / 1_000_000).toFixed(2)}`;
 
-  it("names the placeholder cap and per-task ceiling every seat runs on", () => {
-    expect(readme).toContain(`**${usd(placeholderBudget.cap_micro_usd)}**`);
-    expect(readme).toContain(`**${usd(placeholderBudget.max_task_micro_usd)}**`);
-    expect(readme).toMatch(/nothing runs until/i);
+  it("names every seat's daily cap and per-task ceiling, and its model", () => {
+    for (const agent of [...blank.agents, ...blank.crew]) {
+      const row = readme.split("\n").find((line) => line.startsWith(`| \`${agent.name}\``) || line.startsWith(`| \`${agent.name}--<shop>\``));
+      expect([agent.name, row]).toEqual([agent.name, expect.stringContaining(`${usd(agent.budget.cap_micro_usd)}/day`)]);
+      expect([agent.name, row]).toEqual([agent.name, expect.stringContaining(usd(agent.budget.max_task_micro_usd))]);
+      expect([agent.name, row]).toEqual([agent.name, expect.stringContaining(agent.model)]);
+    }
+    expect(readme).toMatch(/Pause the company/);
   });
 });

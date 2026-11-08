@@ -39,6 +39,14 @@ const shop = (over: Partial<Client> = {}): Client => ({
 const limits = (over: Partial<LimitContext> = {}): LimitContext => ({ crmEmails: crm, clients: [shop()], sendsToday: 0, ...over });
 
 describe("review of #52: allowlist, not approve-everything", () => {
+  it("approves the crew's own reads and onboarding-call booking, and holds a site edit", () => {
+    for (const n of ["project_context", "read_skill", "board_read", "send_to_agent", "googlecalendar.create_event", "googlecalendar.find_free_slots"]) {
+      expect(ruleFor(tool(n), session, crm), n).not.toBeNull();
+    }
+    expect(ruleFor(tool("googlecalendar.delete_event"), session, crm)).toBeNull();
+    expect(ruleFor(tool("agentmail.forward_message", { to: "x@y.z" }), session, crm)).toBeNull();
+  });
+
   it("approves what the crew needs", () => {
     expect(ruleFor(tool("monid.monid_run", { provider: "anyapi", endpoint: "/maps.contacts" }), session, crm)).toBe("Maps contacts search");
     expect(ruleFor(tool("autoops.create_trial_checkout", { shop_id: "x" }), session, crm)).not.toBeNull();
