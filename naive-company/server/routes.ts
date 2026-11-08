@@ -19,6 +19,7 @@ import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 import { FILE_ID } from "../seed/posts.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
 import { articlePath, publishedArticle, renderArticle, renderHome } from "./public-site.ts";
+import { shopRoutes } from "./shop-routes.ts";
 
 export interface ApiRequest {
   /** Upper-case. */
@@ -827,5 +828,5 @@ export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<A
   // Before the route table, so an unauthenticated caller cannot even map which routes exist.
   const denied = apiGate(req, ctx);
   if (denied !== null) return denied;
-  return (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
+  return (await shopRoutes(req, ctx)) ?? (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
 }
