@@ -180,6 +180,11 @@ export default defineProject({
         NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
         DASHBOARD_TOKEN: { generate: true as const },
         DASHBOARD_PASSWORD: { generate: true as const },
+        // The shop pages read each receptionist and the company inbox server-side (`server/shop-routes.ts`).
+        AUTOOPS_VOICE_TOKEN: { from_env: "AUTOOPS_VOICE_TOKEN" },
+        AGENTMAIL_API_KEY: { from_env: "AGENTMAIL_API_KEY" },
+        // The autoops-voice tunnel as of Nov 8. Update it here (and re-apply) when the tunnel moves.
+        AUTOOPS_MCP_URL: "https://loves-jewel-undergraduate-republicans.trycloudflare.com/mcp",
       },
     },
   ],
