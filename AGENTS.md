@@ -56,7 +56,7 @@ Build done by **7:00 am PT Sun Nov 8**. Hard stop 11:00 am. Feature freeze at 7:
 | Area | Owner |
 |---|---|
 | `naive-company/` (Naive crew, CEO board, dashboard) | FoggyReef |
-| `autoops-voice/` (Vapi receptionist, MCP server, demo page, portal) | BeigeElk |
+| [swayambshah/autoops-voice](https://github.com/swayambshah/autoops-voice), its own repo (Vapi receptionist, MCP server, demo page, portal) | BeigeElk |
 | Coordination, issue board, discovery data, lead list | PinkFalcon |
 | Root docs (`AGENTS.md`, `AGENT-CONVENTIONS.md`, `README.md`) | shared, PR only |
 
