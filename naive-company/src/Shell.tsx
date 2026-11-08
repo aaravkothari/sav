@@ -113,7 +113,7 @@ export function Shell() {
     { to: "/crm", label: "Pipeline", Icon: Columns3 },
     { to: "/approvals", label: "Approvals", Icon: ShieldCheck, count: waiting, hot: waiting > 0 },
     // Where the company is started, paused and watched (`src/screens/Runs.tsx`).
-    { to: "/runs", label: "Runs", Icon: Rocket },
+    { to: "/runs", label: "Live", Icon: Rocket },
     { to: "/agents", label: "Agents", Icon: Bot },
     // The agency blueprint's launch checks are about an agency's own site; the receptionist company (blank) has no use for them.
     ...(TEMPLATE_NAME === "blank" ? [] : [
