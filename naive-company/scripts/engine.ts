@@ -462,6 +462,8 @@ export function latestByEmail(rows: readonly LedgerRow[]): Map<string, LedgerRow
 }
 
 class Engine {
+  /** Addresses whose bounce was already noted in this run. */
+  bouncedNoted = new Set<string>();
   readonly opts: Options;
   readonly env: Env;
   readonly mail: ReturnType<typeof agentmail>;
@@ -645,6 +647,9 @@ class Engine {
     if (kind === "bounce") {
       const to = ownBounce ? parseAddress((Array.isArray(item.to) ? item.to : [item.to])[0]) : bouncedAddress(msg, mailed);
       const client = to ? clients.find((c) => normEmail(c.contact?.email) === to) : null;
+      // One bounce arrives twice (our sent message labelled `bounced`, and the mailer-daemon notice): note and count it once.
+      if (to && (this.bouncedNoted.has(to) || client?.notes.some((n) => n.startsWith("BOUNCED:") && n.includes(` to ${to}`)))) return;
+      if (to) this.bouncedNoted.add(to);
       if (this.state.last_tick && !this.dry) this.state.last_tick.bounced += 1;
       if (!client) return log(`bounce  ${msg.message_id} (${to ?? "address unknown"}): no CRM shop to note it on`);
       return act(`note    ${client.id} BOUNCED ${to}`, () => this.crm.addNote(client.id, `BOUNCED: ${msg.message_id} to ${to}\nSubject: ${msg.subject}\n\n${msg.text.slice(0, 2000)}`, "Find another contact email; this one bounced"));
