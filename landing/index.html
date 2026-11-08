@@ -4,15 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SAV | Phone answering and booking for auto repair shops</title>
-<meta name="description" content="Your shop's phone, answered while you're under a car. SAV picks up missed and after-hours calls and books appointments 24/7. Free first week, no card.">
+<meta name="description" content="Your shop's phone, answered while you're under a car. SAV picks up missed and after-hours calls and books appointments 24/7. Free first week.">
 <meta name="robots" content="index,follow">
+<link rel="canonical" href="https://dashboard-wfcawtyqg9ge.vercel.app/">
+<meta property="og:url" content="https://dashboard-wfcawtyqg9ge.vercel.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SAV">
 <meta property="og:title" content="SAV | Phone answering and booking for auto repair shops">
-<meta property="og:description" content="SAV picks up missed and after-hours calls and books appointments 24/7. Free first week, no card.">
+<meta property="og:description" content="SAV picks up missed and after-hours calls and books appointments 24/7. Free first week.">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Service","name":"SAV","serviceType":"Telephone answering and appointment booking","audience":{"@type":"BusinessAudience","audienceType":"Auto repair shops"},"description":"SAV picks up missed and after-hours calls for auto repair shops and books appointments 24/7.","offers":{"@type":"Offer","description":"Free first week, no card required"}}
+{"@context":"https://schema.org","@type":"Service","name":"SAV","serviceType":"Telephone answering and appointment booking","audience":{"@type":"BusinessAudience","audienceType":"Auto repair shops"},"description":"SAV picks up missed and after-hours calls for auto repair shops and books appointments 24/7.","offers":{"@type":"Offer","description":"Free first week"}}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -157,6 +159,11 @@ p { margin: 0; }
 .call-card .lead { font-family: var(--serif); font-size: 28px; line-height: 1.2; max-width: 340px; }
 .call-card .sub { color: var(--muted-2); font-size: 14.5px; margin-top: 10px; }
 .call-card .btn { margin-top: 22px; }
+.signup { width: 100%; }
+.signup label { display: block; margin-top: 14px; font-size: 14.5px; color: var(--ink-2); }
+.signup input { display: block; width: 100%; margin-top: 6px; padding: 11px 12px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid #cfccb8; border-radius: 4px; }
+.signup input:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+.signup button:disabled { opacity: .6; }
 .qr { width: 128px; height: 128px; border-radius: 12px; background: #fff; padding: 10px; display: grid; place-items: center; flex: none; }
 .qr img, .qr canvas { width: 108px !important; height: 108px !important; }
 .qr.empty { display: none; }
@@ -280,7 +287,7 @@ footer .logo svg { width: 17px; height: 17px; }
       <a href="#handles">What it handles</a>
       <a href="#how">How it works</a>
     </nav>
-    <a class="btn btn-outline js-demo" href="#demo">Call your receptionist</a>
+    <a class="btn btn-outline" href="#start">See if your shop qualifies</a>
   </div>
 </header>
 
@@ -431,12 +438,11 @@ footer .logo svg { width: 17px; height: 17px; }
 
   <section class="statement">
     <div class="wrap">
-      <p class="big">We already built a receptionist for your shop. Call our demo line at +1 208 675 9241 and talk to it like a customer would.</p>
+      <p class="big">We build a receptionist for your shop before you pay for anything. Tell us where to find you and we'll send you the number to call.</p>
       <div class="actions">
-        <a class="btn btn-teal" href="tel:+12086759241">Call +1 208 675 9241 <span class="arr">&rarr;</span></a>
-        <a class="btn btn-outline js-demo" href="#demo">Start your free week</a>
+        <a class="btn btn-teal" href="#start">See if your shop qualifies <span class="arr">&rarr;</span></a>
       </div>
-      <p class="fine">Free first week. No card.</p>
+      <p class="fine">Free first week.</p>
     </div>
   </section>
 
@@ -445,7 +451,7 @@ footer .logo svg { width: 17px; height: 17px; }
       <div class="sec-head">
         <span class="label">Try it</span>
         <h2>Call it like a customer would</h2>
-        <p>It already knows your hours, your services and how you book work. Nothing is connected to your real line until you say so.</p>
+        <p>We build it from your public listing and website: your hours, your services and how you book work. Nothing is connected to your real line until you say so.</p>
       </div>
       <div class="try">
         <ul class="try-list">
@@ -454,16 +460,17 @@ footer .logo svg { width: 17px; height: 17px; }
           <li><span class="n">3</span>Ask if you're open Saturday.</li>
           <li><span class="n">4</span>Ask for a tow at 9 pm.</li>
         </ul>
-        <div class="call-card">
-          <div>
-            <p class="lead">Call the demo line: <a href="tel:+12086759241" class="num" style="white-space:nowrap;text-decoration:none">+1 208 675 9241</a></p>
-            <p class="sub">No phone handy? Call it from this page.</p>
-            <a class="btn btn-teal js-demo" href="#demo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
-              Call from your browser
-            </a>
-          </div>
-          <div class="qr empty" id="qr" aria-label="QR code to the demo page"></div>
+        <div class="call-card" id="start">
+          <form class="signup" id="signup">
+            <p class="lead">Get your receptionist</p>
+            <p class="sub">We'll build it, then email you the number to call.</p>
+            <label>Shop name<input name="shop" required maxlength="120" autocomplete="organization"></label>
+            <label>Website<input name="website" required maxlength="200" placeholder="yourshop.com" autocomplete="url"></label>
+            <label>Your name<input name="contact" required maxlength="120" autocomplete="name"></label>
+            <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+            <button class="btn btn-teal" type="submit">Send <span class="arr">&rarr;</span></button>
+            <p class="sub" id="signup-status" role="status"></p>
+          </form>
         </div>
       </div>
     </div>
@@ -569,9 +576,9 @@ footer .logo svg { width: 17px; height: 17px; }
         <h2>Built first. Yours if you like it.</h2>
       </div>
       <div class="steps">
-        <div class="step"><span class="n">1</span><h3>We built it already</h3><p>From your public listing and website: your hours, your services, how you book.</p></div>
-        <div class="step"><span class="n">2</span><h3>You call it</h3><p>Call the demo line at +1 208 675 9241. Try to stump it.</p></div>
-        <div class="step"><span class="n">3</span><h3>Keep it for a week, free</h3><p>Forward your missed calls to it. No card. Stop any time.</p></div>
+        <div class="step"><span class="n">1</span><h3>We build it first</h3><p>From your public listing and website: your hours, your services, how you book.</p></div>
+        <div class="step"><span class="n">2</span><h3>You call it</h3><p>We email you the number. Try to stump it.</p></div>
+        <div class="step"><span class="n">3</span><h3>Keep it for a week, free</h3><p>Forward your missed calls to it. Stop any time.</p></div>
       </div>
     </div>
   </section>
@@ -580,7 +587,7 @@ footer .logo svg { width: 17px; height: 17px; }
     <div class="wrap">
       <div class="sec-head">
         <span class="label">So far</span>
-        <h2>Run by a small team and a lot of automation</h2>
+        <h2>Real numbers from real calls</h2>
         <p>These numbers come straight from our receptionists and update on their own.</p>
       </div>
       <div class="numbers">
@@ -618,8 +625,8 @@ footer .logo svg { width: 17px; height: 17px; }
     <div class="wrap">
       <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke="#1f3a3d" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="#1f3a3d"/></svg>
       <h2>Hear it answer your phone</h2>
-      <p>Call the demo line at +1 208 675 9241. Free first week, no card.</p>
-      <a class="btn btn-teal" href="tel:+12086759241">Call +1 208 675 9241 <span class="arr">&rarr;</span></a>
+      <p>Tell us about your shop and we'll send you a number to call. Free first week.</p>
+      <a class="btn btn-teal" href="#start">See if your shop qualifies <span class="arr">&rarr;</span></a>
     </div>
   </section>
 </main>
@@ -632,13 +639,11 @@ footer .logo svg { width: 17px; height: 17px; }
   </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const CONFIG = {
   STATS_URL: "/api/stats",
   VOICE_STATS_URL: "https://loves-jewel-undergraduate-republicans.trycloudflare.com/stats.json",
   VOICE_FALLBACK: {"receptionists_built":2,"previews_live":2,"free_week_signups":0,"active_customers":0,"calls_handled":4,"minutes_on_the_phone":6,"appointment_requests":3,"requests_confirmed":2,"updated_at":"2026-11-08T01:02:14.548Z"},
-  DEMO_URL: "#demo",
   POLL_MS: 30000,
   TIMEOUT_MS: 10000
 };
@@ -742,19 +747,38 @@ async function poll() {
   render();
 }
 
-function setupDemo() {
-  document.querySelectorAll(".js-demo").forEach(a => { a.href = CONFIG.DEMO_URL; });
-  const qr = document.getElementById("qr");
-  if (/^https?:\/\//.test(CONFIG.DEMO_URL) && window.QRCode) {
-    qr.classList.remove("empty");
-    new QRCode(qr, { text: CONFIG.DEMO_URL, width: 108, height: 108, colorDark: "#1f3a3d", colorLight: "#ffffff" });
-  }
+function setupSignup() {
+  const form = document.getElementById("signup");
+  const status = document.getElementById("signup-status");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const d = new FormData(form);
+    const email = d.get("email").trim();
+    const domain = d.get("website").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
+    const button = form.querySelector("button");
+    button.disabled = true;
+    status.textContent = "Sending...";
+    try {
+      const r = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: d.get("shop").trim(), domain, contact: { name: d.get("contact").trim(), email } })
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      form.reset();
+      status.textContent = "Thanks, we got it. We'll be in touch at " + email + ".";
+    } catch {
+      status.textContent = "That didn't go through. Please try again in a few minutes.";
+    } finally {
+      button.disabled = false;
+    }
+  });
 }
 
 const nav = document.getElementById("nav");
 addEventListener("scroll", () => nav.classList.toggle("scrolled", scrollY > 8), { passive: true });
 
-setupDemo();
+setupSignup();
 render();
 poll();
 setInterval(poll, CONFIG.POLL_MS);
