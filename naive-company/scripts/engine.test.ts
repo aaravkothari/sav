@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, siteLeadMessage, siteLeadsToResearch, visitorText, siteLeadsToWelcome, siteWelcomeMessage, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
-  parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
+  parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, alreadyMailed, parseSentNote, pickInbox, runBatch, senderKeys, OTHER_MAILBOX_NOTE, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
 const client = (id: string, over: Partial<CrmClient> = {}): CrmClient => ({
@@ -212,6 +212,94 @@ describe("the inbox watcher", () => {
       "shop email: pat@a.example",
       "reply: Sure, tell me more. What does it cost?",
     ]);
+  });
+});
+
+describe("multiple senders", () => {
+  const LIMIT = 'POST /v0/inboxes/x/messages/send: HTTP 429 {"name":"RateLimitError","message":"New account recipient limit exceeded"}';
+
+  it("reads AGENTMAIL_API_KEY, AGENTMAIL_API_KEY2, … in order, whichever are set, each once", () => {
+    expect(senderKeys({ AGENTMAIL_API_KEY: "k1", AGENTMAIL_API_KEY2: "k2", AGENTMAIL_API_KEY4: "k4" })).toEqual(["k1", "k2", "k4"]);
+    expect(senderKeys({ AGENTMAIL_API_KEY: "k1", AGENTMAIL_API_KEY2: "k1", AGENTMAIL_API_KEY3: " " })).toEqual(["k1"]);
+  });
+
+  it("picks the inbox named for us, else an org's only inbox to rename, else none", () => {
+    const named = { inbox_id: "a", email: "aarav.sav@agentmail.to", display_name: "Aarav from SAV" };
+    const other = { inbox_id: "b", email: "aaravkothari-sav@agentmail.to", display_name: "AgentMail" };
+    expect(pickInbox([other, named], "Aarav from SAV")).toEqual({ inbox: named, rename: false });
+    expect(pickInbox([other], "Aarav from SAV")).toEqual({ inbox: other, rename: true });
+    expect(pickInbox([other, { ...other, inbox_id: "c" }], "Aarav from SAV")).toBeNull();
+    expect(pickInbox([], "Aarav from SAV")).toBeNull();
+  });
+
+  it("retries the same lead on the next sender when one hits its limit", async () => {
+    const calls: Array<[number, string]> = [];
+    const sent: Array<[string, number]> = [];
+    const r = await runBatch(["a", "b", "c"], 2, async (n, c) => {
+      calls.push([n, c]);
+      if (n === 0 && c === "b") throw new Error(LIMIT);
+      return { message_id: `${c}@${n}` };
+    }, { sent: async (c, n) => { sent.push([c, n]); } });
+    expect(calls).toEqual([[0, "a"], [0, "b"], [1, "b"], [1, "c"]]);
+    expect(sent).toEqual([["a", 0], ["b", 1], ["c", 1]]);
+    expect(r).toEqual({ sent: 3, failed: 0, held: 0, exhausted: [0] });
+  });
+
+  it("holds the rest of the batch when every sender is at its limit", async () => {
+    const calls: Array<[number, string]> = [];
+    let held = 0;
+    const r = await runBatch(["a", "b", "c", "d"], 2, async (n, c) => {
+      calls.push([n, c]);
+      if ((n === 0 && c === "b") || n === 1) throw new Error(LIMIT);
+      return "ok";
+    }, { held: async (count) => { held = count; } });
+    expect(calls).toEqual([[0, "a"], [0, "b"], [1, "b"]]);
+    expect(r).toEqual({ sent: 1, failed: 0, held: 3, exhausted: [0, 1] });
+    expect(held).toBe(3);
+  });
+
+  it("fails only the lead on any other error, and stays on the same sender", async () => {
+    const calls: Array<[number, string]> = [];
+    const r = await runBatch(["a", "b"], 2, async (n, c) => {
+      calls.push([n, c]);
+      if (c === "a") throw new Error("HTTP 400 ValidationError");
+      return "ok";
+    });
+    expect(calls).toEqual([[0, "a"], [0, "b"]]);
+    expect(r).toEqual({ sent: 1, failed: 1, held: 0, exhausted: [] });
+  });
+
+  it("counts an address as mailed if any sender's inbox, the ledger or a CRM note mailed it", () => {
+    const mailed = alreadyMailed(
+      ["Ledger@a.example"],
+      [[{ to: ["Pat <pat@one.example>"] }], [{ to: "sam@two.example" }]],
+      [client("n", { notes: ["OUTREACH SENT: <m@x> to noted@n.example from aaravkothari-sav@agentmail.to\n\nHi"] })],
+    );
+    expect([...mailed].sort()).toEqual(["ledger@a.example", "noted@n.example", "pat@one.example", "sam@two.example"]);
+    const { candidates, skipped } = selectCandidates([client("two", { contact: { name: "Sam", email: "sam@two.example", role: "" } }), client("three")], mailed);
+    expect(candidates.map((c) => c.client.id)).toEqual(["three"]);
+    expect(skipped[0]!.reason).toBe("address already emailed");
+  });
+
+  it("records the sending inbox in the note, and the header still parses", () => {
+    const note = sentNote("<m1@agentmail.to>", "pat@a.example", "Missed calls at A", "Hi Pat,\n\nBody", "aaravkothari-sav@agentmail.to");
+    expect(note).toBe("OUTREACH SENT: <m1@agentmail.to> to pat@a.example from aaravkothari-sav@agentmail.to\n\nSubject: Missed calls at A\n\nHi Pat,\n\nBody");
+    expect(parseSentNote(note)).toEqual({ message_id: "<m1@agentmail.to>", email: "pat@a.example", from: "aaravkothari-sav@agentmail.to" });
+    // Notes filed before multi-sender have no `from`.
+    expect(parseSentNote("OUTREACH SENT: m1 to pat@sent.example")).toEqual({ message_id: "m1", email: "pat@sent.example", from: null });
+    expect(parseSentNote("OUTREACH SENT: a")).toBeNull();
+    expect(parseSentNote("REPLY SENT: m1 to pat@a.example")).toBeNull();
+  });
+
+  it("tells sales which inbox a reply is in, and to write fresh when it is not the first sender's", () => {
+    const c = client("a", { id: "cli_a", name: "Pat's Garage" });
+    expect(wakeMessage(c, inbound(), { email: OWN, primary: true }).split("\n")).toEqual([
+      "SHOP REPLIED: Pat's Garage", "client_id: cli_a", "thread_id: thr_1", "shop email: pat@a.example",
+      "reply: Sure, tell me more. What does it cost?", `inbox: ${OWN}`,
+    ]);
+    const second = wakeMessage(c, inbound(), { email: "aaravkothari-sav@agentmail.to", primary: false }).split("\n");
+    expect(second.slice(5)).toEqual(["inbox: aaravkothari-sav@agentmail.to", "", OTHER_MAILBOX_NOTE]);
+    expect(OTHER_MAILBOX_NOTE).toMatch(/^This thread is in our second mailbox, which your email tools cannot reach: do not reply on the thread\. Write ONE new email with agentmail\.send_message/);
   });
 });
 
