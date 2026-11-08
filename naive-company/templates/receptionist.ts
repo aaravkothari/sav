@@ -289,7 +289,8 @@ export const RESEARCH_CITIES: [string, string][] = [
 ];
 
 /** Shops a research run files at most: small, because the lead agent also imports `pnpm discover` lead files (sav#50). */
-const RUN_SIZE = 8;
+/** Small enough to finish and close the card inside the platform's per-session step limit (a run stops at about 16 tool calls). */
+const RUN_SIZE = 4;
 
 const researchSystem = (s: Sector): string =>
   real([
@@ -301,7 +302,7 @@ const researchSystem = (s: Sector): string =>
     "3. Work the list one business at a time, busiest first, and FILE EACH ONE AS SOON AS YOU HAVE ITS EMAIL, before looking at the next: you have a limited number of steps, and a lead you found but did not file is lost when the session ends.",
     "For each business: web_fetch its homepage once and look for a mailto: link or an address printed on the page; only if none, web_fetch the one contact page its homepage links to. At most two fetches per business. Prefer an owner's or manager's address, else the business's own (info@, service@). Never guess or construct an email; no email means not a lead, so skip it. Only when you have skipped three in a row for no email, try monid.monid_run provider \"hunterio\", endpoint \"/domain-search\", maxCost 0.1, input { body: { domain, limit: 3 } } on the next one. If web_fetch answers 429, skip that business and move on; never sleep or wait.",
     `4. File it: dashboard.create_lead (name, domain, contact_name when known, contact_email, contact_role, source outreach); if it answers already_filed, move on. Otherwise dashboard.add_client_note starting "${NOTES.research}" with: sector, rating and review count, phone, address, hours, where the email came from (homepage, contact page or Hunter), one line on why it fits, and last a line "Opener detail: <one specific, true thing you read on its listing or site>", in second person and phrased to read naturally after "I came across <name> and noticed", with no trailing period, e.g. "you've been family owned in Redwood City since 1989" or "you do same-day brake jobs". The outbound engine pastes it into the first email as is. Set next_action "Outreach engine sends the first email".`,
-    `5. Stop when you have filed ${RUN_SIZE}, or after looking at 15 businesses, whichever comes first, then report.`,
+    `5. Stop when you have filed ${RUN_SIZE}, or after 10 web_fetch calls in total, whichever comes first, then close your card (board_write status done, with the leads you filed) BEFORE anything else: a session that runs out of steps leaves its card open and blocks the next run.`,
     "Never call autoops.provision_demo: demos are built later, on a warm reply. Every monid_run spends the Monid balance: one Maps run per session, Hunter only as the fallback. Report the businesses filed, those skipped for no email, and the Monid cost in your note or reply. Never invent a business, a name, an email, a number or a detail.",
   ].join(" "));
 
@@ -355,9 +356,10 @@ const sales = seat({
     [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_REPLY, ...AUTOOPS_DEMO, ...AUTOOPS_OWNER_PHONE, ...HANDOFF, ...REQUEST_TOOLS],
     OPERATOR,
   ),
-  schedules: [
-    every("0 7-21/2 * * *", "Answer shop replies", `Scheduled inbox pass. Answer every shop that wrote back and has no reply from us yet, as your instructions say. Reply to nobody else.`, 0.25),
-  ],
+  // No timer: the outbound engine watches the inbox every 2 minutes and wakes this seat with
+  // SHOP REPLIED: for each reply. A two-hourly inbox pass only re-read the inbox and paused on its
+  // budget ($0.40 a pass on Sonnet, Nov 8).
+  schedules: [],
 });
 
 const clientManager = seat({

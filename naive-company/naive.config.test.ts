@@ -141,7 +141,7 @@ describe("naive.config.ts", () => {
     } else {
       // The receptionist crew opens no session on apply; its timers are capped per fire, and only the live research sector is armed.
       for (const agent of result.config.agents) expect([agent.name, agent.intake]).toEqual([agent.name, undefined]);
-      expect(result.config.agents.filter((a) => (a.schedules ?? []).length > 0).map((a) => a.name)).toEqual(["research", "sales", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
+      expect(result.config.agents.filter((a) => (a.schedules ?? []).length > 0).map((a) => a.name)).toEqual(["research", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
       // The CEO's board is seeded with the pipeline, every card unassigned, so nothing starts on its own.
       expect(result.config.tasks.map((t) => t.key)).toEqual(["research", "outreach", "onboarding", "test-call", "monitoring", "self-improvement"]);
       expect(result.config.tasks.every((t) => t.assignee === undefined)).toBe(true);
