@@ -4,509 +4,621 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SAV Receptionist</title>
-<meta name="description" content="SAV builds an AI receptionist for your auto repair shop before we ever email you. Call it. Free for a week, no card.">
+<meta name="description" content="Your shop's phone, answered while you're under a car. We already built your receptionist. Call it. Free first week, no card.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif:opsz@12..24&family=Lato:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --cream: #f6f4ec;
-  --cream-2: #efece0;
-  --paper: #fbfaf5;
-  --ink: #14110f;
-  --ink-2: #4a4440;
-  --ink-3: #7a726b;
-  --line: #ddd8c9;
-  --orange: #e2560f;
-  --orange-ink: #b8430a;
-  --orange-soft: #fbe6d8;
-  --console: #0f100d;
-  --console-2: #171914;
-  --console-3: #20231c;
-  --console-line: #2c3027;
-  --c-text: #e9e7df;
-  --c-dim: #9a9a8e;
-  --c-faint: #66675d;
-  --green: #4ade80;
-  --amber: #f5b544;
-  --radius: 14px;
-  --head: "Inter Tight", "Inter", system-ui, sans-serif;
-  --body: "Inter", system-ui, -apple-system, sans-serif;
-  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg: #f3f2e6;
+  --hero: #f1f0e6;
+  --card: #e9e7d8;
+  --card-2: #efeee2;
+  --pill: #e3e1cf;
+  --nav-pill: #e4e3d7;
+  --ink: #0c0a09;
+  --ink-2: #292724;
+  --muted: #57514d;
+  --muted-2: #6f6f6f;
+  --line: #d9d6c3;
+  --teal: #1f3a3d;
+  --teal-2: #114849;
+  --bubble-dark: #292724;
+  --bubble-teal: #1f3a3d;
+  --ok: #2f7a4f;
+  --ok-bg: #e2efe3;
+  --warn: #8a5a1f;
+  --serif: "Hedvig Letters Serif", Georgia, "Times New Roman", serif;
+  --sans: "Lato", "Helvetica Neue", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  background: var(--cream);
   color: var(--ink);
-  font-family: var(--body);
+  font-family: var(--sans);
   font-size: 16px;
   line-height: 1.55;
   overflow-x: hidden;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(60, 56, 40, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60, 56, 40, .035) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 a { color: inherit; }
-h1, h2, h3 { font-family: var(--head); font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; margin: 0; letter-spacing: -0.01em; }
 p { margin: 0; }
-.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
-.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
-@media (max-width: 600px) { .wrap { padding: 0 16px; } }
+.num { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1312px; margin: 0 auto; padding: 0 32px; }
+@media (max-width: 700px) { .wrap { padding: 0 16px; } }
 
-.chip {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
-  color: var(--ink-2); background: var(--paper); border: 1px solid var(--line);
-  padding: 5px 10px; border-radius: 999px;
-}
-.chip .tick { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
-
+.nav { position: sticky; top: 0; z-index: 20; transition: background .2s ease; }
+.nav.scrolled { background: rgba(243, 242, 230, .92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 1px 0 var(--line); }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 76px; gap: 16px; }
+.logo { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-family: var(--sans); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; color: var(--ink); }
+.logo svg { width: 22px; height: 22px; }
+.nav-pill { display: flex; gap: 4px; background: var(--nav-pill); border-radius: 4px; padding: 4px; }
+.nav-pill a { font-size: 15px; color: var(--muted); text-decoration: none; padding: 6px 14px; border-radius: 3px; }
+.nav-pill a:hover { background: var(--bg); color: var(--ink); }
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  font-family: var(--head); font-weight: 600; font-size: 16px;
-  padding: 14px 20px; border-radius: 10px; text-decoration: none; border: 1px solid transparent;
-  transition: transform .15s ease, background .15s ease;
-  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--sans); font-size: 15px; font-weight: 400; line-height: 1;
+  padding: 12px 18px; border-radius: 4px; text-decoration: none; cursor: pointer;
+  border: 1px solid transparent; transition: background .15s ease, color .15s ease;
 }
-.btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--orange); color: #fff; }
-.btn-primary:hover { background: var(--orange-ink); }
-.btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
-.btn-ghost:hover { background: var(--ink); color: var(--cream); }
-.btn svg { width: 18px; height: 18px; }
+.btn svg { width: 16px; height: 16px; }
+.btn-outline { border-color: #cfccb8; background: var(--bg); color: var(--ink-2); }
+.btn-outline:hover { background: #fff; }
+.btn-teal { background: var(--teal); color: #f3f2e6; }
+.btn-teal:hover { background: var(--teal-2); }
+.btn-teal .arr { border-left: 1px solid rgba(243, 242, 230, .25); padding-left: 10px; margin-left: 4px; }
+@media (max-width: 800px) { .nav-pill { display: none; } .nav .btn { padding: 10px 12px; font-size: 14px; } }
 
-/* nav */
-.nav { position: sticky; top: 0; z-index: 10; background: rgba(246,244,236,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid transparent; }
-.nav.scrolled { border-bottom-color: var(--line); }
-.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
-.logo { display: flex; align-items: center; gap: 10px; font-family: var(--head); font-weight: 700; font-size: 20px; letter-spacing: -0.03em; text-decoration: none; }
-.logo-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); display: grid; place-items: center; }
-.logo-mark span { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); display: block; }
-.nav-links { display: flex; gap: 4px; align-items: center; }
-.nav-links a { font-size: 14px; color: var(--ink-2); text-decoration: none; padding: 8px 12px; border-radius: 8px; }
-.nav-links a:hover { background: var(--cream-2); color: var(--ink); }
-.nav-links .btn { padding: 9px 14px; font-size: 14px; margin-left: 6px; }
-.nav-links a.btn-primary { color: #fff; }
-.nav-links a.btn-primary:hover { background: var(--orange-ink); color: #fff; }
-@media (max-width: 760px) { .nav-links a:not(.btn) { display: none; } }
+.label { display: inline-flex; align-items: center; gap: 7px; background: var(--pill); color: var(--ink-2); font-size: 13px; font-weight: 700; padding: 4px 9px; border-radius: 2px; }
+.label::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--teal-2); }
+.tag { display: inline-block; font-size: 12.5px; padding: 3px 8px; border-radius: 2px; }
+.tag.slate { color: #3d5c7a; background: rgba(61, 92, 122, .12); }
+.tag.teal { color: var(--teal-2); background: rgba(17, 72, 73, .12); }
+.tag.sand { color: #7c6224; background: rgba(184, 134, 47, .14); }
 
-/* hero */
-.hero { padding: 64px 0 40px; }
-.hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; }
-.hero h1 { font-size: clamp(38px, 5.6vw, 68px); line-height: 1.04; letter-spacing: -0.03em; margin-top: 20px; }
-.hero h1 em { font-style: normal; color: var(--orange); }
-.hero .lede { font-size: 19px; color: var(--ink-2); max-width: 540px; margin-top: 22px; }
-.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
-.hero-fine { margin-top: 16px; font-size: 14px; color: var(--ink-3); }
-
-.transcript {
-  position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 20px;
-  padding: 22px; box-shadow: 0 30px 60px -30px rgba(40,30,20,.25);
+.hero-shell { padding: 0 12px; }
+.hero {
+  position: relative; overflow: hidden; border-radius: 4px; background-color: var(--hero);
+  background-image:
+    linear-gradient(rgba(60, 56, 40, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(60, 56, 40, .06) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, .55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .55) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: 0 0, 0 0, 0 1px, 1px 0;
+  min-height: 820px; margin-top: -76px; padding-top: 76px;
 }
-.transcript-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 16px; gap: 10px; }
-.transcript-head strong { font-family: var(--head); font-size: 15px; }
-.transcript-head small { font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
-.bubble { max-width: 88%; padding: 11px 14px; border-radius: 12px; font-size: 14.5px; line-height: 1.45; margin-bottom: 10px; }
-.bubble .who { display: block; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; opacity: .65; margin-bottom: 3px; }
-.bubble.caller { background: var(--cream-2); color: var(--ink); }
-.bubble.sav { background: var(--ink); color: #f3f1e8; margin-left: auto; }
-.bubble.sav .who { color: #ffb68c; opacity: 1; }
-.wave { display: flex; align-items: center; gap: 3px; height: 22px; margin-top: 12px; }
-.wave i { width: 3px; border-radius: 2px; background: var(--orange); opacity: .8; animation: wave 1.2s ease-in-out infinite; }
-@keyframes wave { 0%,100% { height: 4px; } 50% { height: 20px; } }
-@media (prefers-reduced-motion: reduce) { .wave i { animation: none; height: 8px; } }
-
-/* demo call */
-.demo { padding: 24px 0 48px; }
-.demo-card {
-  display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 32px; align-items: center;
-  background: var(--ink); color: #f3f1e8; border-radius: 24px; padding: 36px 40px;
+.sketch {
+  position: absolute; left: 47%; top: 128px; transform: translateX(-50%);
+  width: min(1320px, 112%); height: auto;
+  -webkit-mask-image: radial-gradient(ellipse 62% 64% at 42% 46%, #000 52%, transparent 100%);
+  mask-image: radial-gradient(ellipse 62% 64% at 42% 46%, #000 52%, transparent 100%);
+  pointer-events: none;
 }
-.demo-card .label { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #ffb68c; }
-.demo-card h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; margin-top: 10px; }
-.demo-card p { color: #c9c5b9; margin-top: 12px; font-size: 15.5px; }
-.phone-big { font-family: var(--head); font-weight: 600; font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -0.02em; text-decoration: none; display: block; color: #fff; }
-.phone-big.pending { font-size: 20px; color: #c9c5b9; font-weight: 500; }
-.demo-actions { display: flex; flex-direction: column; gap: 12px; }
-.demo-actions .btn { width: 100%; }
-.demo-actions .btn-ghost { color: #f3f1e8; border-color: #5a554f; }
-.demo-actions .btn-ghost:hover { background: #f3f1e8; color: var(--ink); }
-.qr { width: 132px; height: 132px; background: #fff; border-radius: 12px; padding: 10px; display: grid; place-items: center; }
-.qr img, .qr canvas { width: 112px !important; height: 112px !important; }
-.qr.empty { background: transparent; border: 1px dashed #5a554f; color: #9c978d; font-family: var(--mono); font-size: 10.5px; text-align: center; line-height: 1.4; padding: 12px; }
-.qr-cap { font-family: var(--mono); font-size: 11px; color: #9c978d; text-align: center; margin-top: 8px; }
+.bubbles { position: absolute; right: max(32px, calc((100% - 1312px) / 2 + 32px)); top: 132px; width: 360px; display: flex; flex-direction: column; gap: 10px; z-index: 2; }
+.sample { align-self: flex-start; font-size: 12px; color: var(--muted); background: rgba(241, 240, 230, .9); border: 1px solid var(--line); border-radius: 2px; padding: 2px 8px; }
+.bubble { width: 272px; padding: 12px 14px 13px; border-radius: 4px; color: #f1efe6; font-size: 14px; line-height: 1.4; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .45); }
+.bubble .who { display: block; font-size: 11px; opacity: .72; margin-bottom: 5px; }
+.bubble.sav { background: var(--bubble-dark); }
+.bubble.caller { background: var(--bubble-teal); align-self: flex-end; }
+.hero h1 {
+  position: absolute; left: max(32px, calc((100% - 1312px) / 2 + 32px)); bottom: 56px; z-index: 2;
+  font-size: clamp(40px, 4.4vw, 60px); line-height: 1.08; letter-spacing: -0.02em; max-width: 680px;
+}
+@media (max-width: 1000px) {
+  .hero { min-height: 0; padding-bottom: 32px; display: flex; flex-direction: column; }
+  .hero h1 { order: 2; }
+  .bubbles { order: 3; }
+  .sketch { position: relative; left: auto; top: auto; transform: none; width: 150%; margin: 0 0 0 -25%; display: block; }
+  .hero h1 { position: relative; left: auto; bottom: auto; padding: 0 16px; margin-top: -8px; font-size: clamp(34px, 9.4vw, 52px); }
+  .bubbles { position: relative; right: auto; top: auto; width: auto; padding: 0 16px; margin-top: 28px; }
+  .bubble { width: 84%; }
+}
+@media (max-width: 1000px) and (min-width: 701px) { .hero h1, .bubbles { padding: 0 32px; } }
+@media (max-width: 700px) { .bubbles .bubble:nth-of-type(n+4) { display: none; } }
 
-/* counter strip */
-.strip { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); }
-.strip-grid { display: grid; grid-template-columns: repeat(5, 1fr); }
-.stat { padding: 22px 20px; border-right: 1px solid var(--line); min-width: 0; }
-.stat:last-child { border-right: 0; }
-.stat .v { font-family: var(--head); font-weight: 600; font-size: clamp(30px, 3.4vw, 44px); letter-spacing: -0.03em; line-height: 1; }
-.stat .v.muted { color: var(--ink-3); font-size: 20px; letter-spacing: 0; line-height: 1.5; font-weight: 500; }
-.stat .k { font-size: 13.5px; color: var(--ink-2); margin-top: 8px; }
-.strip-meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0 12px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); border-top: 1px solid var(--line); }
+.statement { padding: 112px 0 40px; }
+.statement .wrap { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.statement p.big { font-family: var(--serif); font-size: clamp(28px, 3vw, 40px); line-height: 1.2; letter-spacing: -0.01em; max-width: 1000px; }
+.statement .actions { display: flex; gap: 10px; margin-top: 32px; flex-wrap: wrap; justify-content: flex-end; }
+.statement .fine { color: var(--muted-2); font-size: 14px; margin-top: 12px; }
+@media (max-width: 700px) {
+  .statement { padding: 72px 0 24px; }
+  .statement .wrap { align-items: flex-start; text-align: left; }
+  .statement .actions { justify-content: flex-start; }
+}
+
+.section { padding: 120px 0 0; }
+.sec-head h2 { font-size: clamp(32px, 3.4vw, 44px); line-height: 1.12; margin-top: 18px; max-width: 760px; }
+.sec-head p { color: var(--muted); font-size: 17px; margin-top: 14px; max-width: 620px; }
+@media (max-width: 700px) { .section { padding-top: 80px; } }
+
+.try { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px; align-items: start; }
+.try-list { list-style: none; padding: 0; margin: 0; }
+.try-list li { display: flex; gap: 14px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--line); font-size: 17px; color: var(--ink-2); }
+.try-list li:first-child { border-top: 1px solid var(--line); }
+.try-list .n { font-family: var(--serif); color: var(--teal-2); font-size: 15px; min-width: 22px; }
+.call-card { background: var(--card); border-radius: 24px; padding: 36px; display: flex; gap: 28px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.call-card .lead { font-family: var(--serif); font-size: 28px; line-height: 1.2; max-width: 340px; }
+.call-card .sub { color: var(--muted-2); font-size: 14.5px; margin-top: 10px; }
+.call-card .btn { margin-top: 22px; }
+.qr { width: 128px; height: 128px; border-radius: 12px; background: #fff; padding: 10px; display: grid; place-items: center; flex: none; }
+.qr img, .qr canvas { width: 108px !important; height: 108px !important; }
+.qr.empty { display: none; }
+@media (max-width: 900px) { .try { grid-template-columns: 1fr; } .call-card { padding: 28px 22px; } }
+
+.solutions { position: relative; margin-top: 40px; }
+.rail { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, #b9b7a6 6%, #b9b7a6 94%, transparent); }
+.sol { display: grid; grid-template-columns: 1fr 1fr; gap: 96px; align-items: center; position: relative; padding: 56px 0; }
+.sol .dot { position: absolute; left: 50%; top: 50%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; background: var(--teal-2); box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px #b9b7a6; }
+.sol .dot.dim { background: #8b8f8a; }
+.sol-text h3 { font-size: clamp(30px, 3vw, 40px); line-height: 1.12; margin-top: 16px; }
+.sol-text p { color: var(--muted); font-size: 16.5px; margin-top: 16px; max-width: 520px; }
+.sol.flip .sol-text { order: -1; }
+.caption { color: var(--muted-2); font-size: 12.5px; margin-top: 12px; text-align: center; }
 @media (max-width: 900px) {
-  .strip-grid { grid-template-columns: repeat(2, 1fr); }
-  .stat { border-bottom: 1px solid var(--line); }
-  .stat:nth-child(2n) { border-right: 0; }
-  .stat:last-child { grid-column: 1 / -1; border-bottom: 0; }
+  .rail, .sol .dot { display: none; }
+  .sol { grid-template-columns: 1fr; gap: 28px; padding: 32px 0; }
+  .sol.flip .sol-text { order: 0; }
+  .sol .sol-text.right { grid-column: auto !important; }
 }
 
-/* live dot */
-.live { display: inline-flex; align-items: center; gap: 8px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-faint); position: relative; flex: none; }
-.dot.ok { background: var(--green); }
-.dot.ok::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; animation: pulse 2s ease-out infinite; }
-.dot.wait { background: var(--amber); }
-@keyframes pulse { 0% { transform: scale(.5); opacity: .7; } 100% { transform: scale(1.6); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .dot.ok::after { animation: none; } }
+.frame {
+  position: relative; border-radius: 28px; padding: 44px 36px; overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(120, 160, 150, .22), transparent 55%),
+    linear-gradient(160deg, #1d3a3b 0%, #142a2b 55%, #0f2122 100%);
+  box-shadow: 0 30px 60px -36px rgba(15, 30, 30, .7);
+}
+.frame::before {
+  content: ""; position: absolute; inset: 0; opacity: .14; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48' viewBox='0 0 28 48'%3E%3Cpath d='M14 0 L28 8 L28 24 L14 32 L0 24 L0 8 Z M14 32 L14 48' fill='none' stroke='%23cfe3dc' stroke-width='.6'/%3E%3C/svg%3E");
+}
+.window { position: relative; background: #faf9f4; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, .55); font-family: var(--serif); }
+.win-bar { display: flex; align-items: center; gap: 12px; background: #2d3b39; padding: 10px 14px; color: #e8ece6; font-size: 12px; }
+.win-bar .dots { display: flex; gap: 5px; }
+.win-bar .dots i { width: 7px; height: 7px; border-radius: 50%; background: #7d8a86; display: block; }
+.win-bar .brand { font-family: var(--sans); font-weight: 700; font-size: 12.5px; }
+.win-bar .search { margin-left: auto; background: #3a4a47; border-radius: 4px; padding: 4px 10px; color: #a9b6b1; font-size: 11px; width: 38%; min-width: 90px; }
+.win-body { padding: 18px 18px 20px; }
+.win-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.win-top h4 { font-size: 19px; }
+.win-top small { display: block; color: var(--muted-2); font-size: 11px; margin-top: 2px; }
+.status { display: inline-flex; align-items: center; gap: 6px; background: var(--ok-bg); color: var(--ok); border: 1px solid #c7dfca; font-size: 11px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+.cap { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); margin: 16px 0 8px; }
+.cap.warn { color: var(--warn); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font-size: 11.5px; color: #4f5a55; border: 1px solid #e2e0d4; background: #f3f2ea; border-radius: 999px; padding: 3px 9px; }
+.chips span::before { content: "\2713"; color: var(--ok); margin-right: 5px; font-size: 10px; }
+.chips span.more::before { content: none; }
+.task { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e6e4d8; border-radius: 6px; padding: 11px 12px; margin-top: 8px; }
+.task .ic, .inbox-row .ic { width: 30px; height: 30px; border-radius: 6px; background: #eef0ec; border: 1px solid #dfe3dc; display: grid; place-items: center; flex: none; }
+.task .ic svg, .inbox-row .ic svg { width: 15px; height: 15px; stroke: #3b4a46; }
+.task .t { min-width: 0; flex: 1; }
+.task .t b { font-weight: 400; font-size: 14px; display: block; }
+.task .t span { font-size: 11px; color: var(--ok); }
+.task .go { font-family: var(--sans); font-size: 11.5px; font-weight: 700; background: var(--teal); color: #f3f2e6; border-radius: 4px; padding: 6px 11px; flex: none; }
 
-/* sections, light */
-section.light { padding: 88px 0; }
-.sec-head { max-width: 680px; }
-.sec-head h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.05; margin-top: 16px; }
-.sec-head p { color: var(--ink-2); font-size: 18px; margin-top: 16px; }
-.pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 44px; }
-.pain { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
-.pain .time { font-family: var(--mono); font-size: 12px; color: var(--orange-ink); letter-spacing: .04em; }
-.pain h3 { font-size: 21px; margin-top: 12px; line-height: 1.2; }
-.pain p { color: var(--ink-2); margin-top: 10px; font-size: 15px; }
-
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; border-top: 1px solid var(--ink); }
-.step { padding: 26px 26px 0 0; }
-.step + .step { padding-left: 26px; border-left: 1px solid var(--line); }
-.step .n { font-family: var(--mono); font-size: 13px; color: var(--orange-ink); }
-.step h3 { font-size: 22px; margin-top: 14px; line-height: 1.2; }
-.step p { color: var(--ink-2); margin-top: 10px; font-size: 15.5px; }
-@media (max-width: 860px) {
-  .hero-grid, .demo-card { grid-template-columns: 1fr; }
-  .demo-card { padding: 28px 22px; gap: 24px; }
-  .qr-col { display: flex; align-items: center; gap: 16px; }
-  .qr-cap { text-align: left; margin-top: 0; }
-  .pain-grid, .steps { grid-template-columns: 1fr; }
-  .step, .step + .step { padding: 22px 0; border-left: 0; border-bottom: 1px solid var(--line); }
-  .hero { padding-top: 36px; }
-  section.light { padding: 64px 0; }
+.setup .cap { color: #a8bdb6; margin-top: 0; }
+.setup-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; }
+.setup-row div { border: 1px solid rgba(207, 227, 220, .18); background: rgba(255, 255, 255, .04); border-radius: 6px; padding: 10px; color: #dfe8e4; font-family: var(--serif); font-size: 12.5px; min-width: 0; }
+.setup-row small { display: block; color: #93a8a1; font-size: 11px; margin-top: 3px; }
+.joiner { display: flex; justify-content: center; margin: 14px 0; position: relative; }
+.joiner span { font-family: var(--serif); font-size: 12px; color: #e8efeb; border: 1px solid rgba(207, 227, 220, .35); background: rgba(255, 255, 255, .06); border-radius: 999px; padding: 4px 12px; }
+.inbox-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #eceae0; font-size: 13.5px; }
+.inbox-row:last-child { border-bottom: 0; }
+.inbox-row .r { margin-left: auto; font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.r.booked { background: var(--ok-bg); color: var(--ok); }
+.r.answered { background: #e3ebf3; color: #3d5c7a; }
+.r.sent { background: #f2e8d6; color: var(--warn); }
+@media (max-width: 700px) {
+  .frame { padding: 24px 14px; border-radius: 20px; }
+  .setup-row { grid-template-columns: 1fr; }
 }
 
-/* console */
-.console { background: var(--console); color: var(--c-text); padding: 88px 0 72px; }
-.console .chip { background: var(--console-2); border-color: var(--console-line); color: var(--c-dim); }
-.console .sec-head p { color: var(--c-dim); }
-.console-bar {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-  font-family: var(--mono); font-size: 12px; color: var(--c-dim);
-  border: 1px solid var(--console-line); background: var(--console-2); border-radius: 10px; padding: 10px 14px; margin-top: 36px;
-}
-.console-bar .src { display: flex; gap: 18px; flex-wrap: wrap; }
-.panel { border: 1px solid var(--console-line); background: var(--console-2); border-radius: var(--radius); }
-.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--console-line); font-family: var(--mono); font-size: 12px; color: var(--c-dim); text-transform: uppercase; letter-spacing: .05em; flex-wrap: wrap; }
-.panel-head b { color: var(--c-text); font-weight: 500; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
+.step { background: var(--card-2); border: 1px solid #e3e1d2; border-radius: 20px; padding: 28px; }
+.step .n { font-family: var(--serif); font-size: 15px; color: var(--teal-2); width: 30px; height: 30px; border-radius: 50%; border: 1px solid #b8c6c0; display: grid; place-items: center; }
+.step h3 { font-size: 22px; margin-top: 20px; }
+.step p { color: var(--muted-2); font-size: 15px; margin-top: 10px; }
+@media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
 
-.org { padding: 28px 18px; }
-.org-ceo { display: flex; justify-content: center; }
-.org-lines { position: relative; height: 28px; }
-.org-lines::before { content: ""; position: absolute; left: 50%; top: 0; height: 14px; border-left: 1px solid var(--console-line); }
-.org-lines::after { content: ""; position: absolute; left: 8%; right: 8%; top: 14px; border-top: 1px solid var(--console-line); }
-.org-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-.agent { background: var(--console-3); border: 1px solid var(--console-line); border-radius: 12px; padding: 14px; min-width: 0; position: relative; }
-.agent.ceo { width: min(320px, 100%); }
-.agent .role { font-family: var(--mono); font-size: 11px; color: var(--c-dim); text-transform: uppercase; letter-spacing: .06em; display: flex; justify-content: space-between; gap: 6px; }
-.agent h3 { font-size: 16px; margin-top: 8px; color: var(--c-text); font-weight: 600; letter-spacing: -0.01em; }
-.agent p { font-size: 12.5px; color: var(--c-dim); margin-top: 6px; line-height: 1.45; }
-.agent .metric { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--console-line); }
-.agent .metric .v { font-family: var(--head); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #fff; line-height: 1; }
-.agent .metric .v.muted { font-size: 13px; color: var(--c-faint); font-weight: 500; letter-spacing: 0; line-height: 1.6; font-family: var(--mono); }
-.agent .metric small { display: block; font-size: 11.5px; color: var(--c-dim); margin-top: 4px; }
-.human { margin-top: 14px; display: flex; gap: 12px; align-items: center; border: 1px dashed #6b4a32; background: rgba(226,86,15,.07); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: #f1c6a8; }
-.human .tag { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; background: var(--orange); color: #fff; padding: 3px 8px; border-radius: 6px; flex: none; }
-@media (max-width: 1020px) { .org-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 600px) { .org-grid { grid-template-columns: 1fr 1fr; } .org-lines::after { left: 25%; right: 25%; } }
+.numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
+.numbers + .numbers { margin-top: 24px; }
+.numbers[hidden] { display: none; }
+.ncard { background: var(--card); border-radius: 24px; padding: 28px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.stat .v { font-family: var(--serif); font-size: clamp(36px, 3.4vw, 46px); line-height: 1; letter-spacing: -0.02em; }
+.stat .v.wait { color: #a9a698; }
+.stat .k { color: var(--muted-2); font-size: 14.5px; line-height: 1.3; margin-top: 8px; }
+.live-note { display: flex; align-items: center; gap: 8px; color: var(--muted-2); font-size: 13.5px; margin-top: 18px; }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: #a9a698; position: relative; flex: none; }
+.pulse.ok { background: var(--teal-2); }
+.pulse.ok::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--teal-2); opacity: 0; animation: pulse 2.2s ease-out infinite; }
+@keyframes pulse { 0% { transform: scale(.5); opacity: .7; } 100% { transform: scale(1.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pulse.ok::after { animation: none; } }
+@media (max-width: 1000px) { .numbers { grid-template-columns: 1fr; } }
 
-.two { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; margin-top: 16px; }
-@media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+.closing { padding: 160px 0 120px; text-align: center; }
+.closing .mark { width: 28px; height: 28px; margin: 0 auto 26px; display: block; }
+.closing h2 { font-size: clamp(36px, 4vw, 54px); line-height: 1.08; }
+.closing p { color: var(--muted); font-size: 16.5px; margin: 16px auto 0; max-width: 460px; }
+.closing .btn { margin-top: 28px; }
+@media (max-width: 700px) { .closing { padding: 100px 0 80px; } }
 
-.feed { list-style: none; margin: 0; padding: 0; }
-.feed li { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: baseline; padding: 12px 18px; border-bottom: 1px solid var(--console-line); font-size: 14px; }
-.feed li:last-child { border-bottom: 0; }
-.feed .who { font-family: var(--mono); font-size: 11.5px; color: var(--orange); text-transform: uppercase; letter-spacing: .05em; }
-.feed .when { font-family: var(--mono); font-size: 11.5px; color: var(--c-faint); white-space: nowrap; }
-.feed li.new { animation: flash 2.4s ease-out; }
-@keyframes flash { from { background: rgba(226,86,15,.18); } to { background: transparent; } }
-.empty { padding: 26px 18px; color: var(--c-dim); font-size: 14px; }
-.empty b { color: var(--c-text); font-weight: 500; }
-@media (max-width: 600px) { .feed li { grid-template-columns: 1fr auto; } .feed .who { grid-column: 1 / -1; } }
-
-.voice-list { padding: 6px 18px 14px; }
-.voice-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--console-line); font-size: 14px; color: var(--c-dim); }
-.voice-row:last-child { border-bottom: 0; }
-.voice-row b { font-family: var(--head); color: #fff; font-size: 18px; font-weight: 600; }
-
-/* trace */
-.trace { margin-top: 16px; padding: 22px 18px; }
-.trace-steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; counter-reset: s; }
-.tstep { position: relative; background: var(--console-3); border: 1px solid var(--console-line); border-radius: 10px; padding: 12px; min-width: 0; }
-.tstep .a { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--c-dim); }
-.tstep h4 { font-family: var(--head); font-size: 14.5px; font-weight: 600; margin: 6px 0 0; color: var(--c-text); line-height: 1.25; }
-.tstep .c { font-family: var(--head); font-size: 20px; font-weight: 600; color: #fff; margin-top: 10px; }
-.tstep .c.muted { font-family: var(--mono); font-size: 11.5px; color: var(--c-faint); font-weight: 400; }
-.tstep.gate { border: 1px dashed var(--orange); background: rgba(226,86,15,.08); }
-.tstep.gate .a { color: var(--orange); }
-@media (max-width: 1020px) { .trace-steps { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width: 600px) { .trace-steps { grid-template-columns: 1fr; } .tstep { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 12px; } .tstep .c { margin-top: 0; grid-row: 1 / span 2; grid-column: 2; } }
-
-/* improvement log */
-.log { margin-top: 16px; }
-.stages { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--console-line); }
-.stage { padding: 16px 18px; border-right: 1px solid var(--console-line); }
-.stage:last-child { border-right: 0; }
-.stage .s { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
-.stage .s i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
-.stage p { font-size: 13px; color: var(--c-dim); margin-top: 8px; line-height: 1.45; }
-.st-obs i { background: #8ab4f8; } .st-pro i { background: var(--amber); } .st-shi i { background: var(--orange); } .st-res i { background: var(--green); }
-@media (max-width: 760px) { .stages { grid-template-columns: 1fr 1fr; } .stage:nth-child(2n) { border-right: 0; } .stage:nth-child(-n+2) { border-bottom: 1px solid var(--console-line); } }
-.entry { display: grid; grid-template-columns: 130px 110px 1fr; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--console-line); font-size: 14px; }
-.entry:last-child { border-bottom: 0; }
-.entry .t { font-family: var(--mono); font-size: 12px; color: var(--c-faint); }
-.entry .sg { font-family: var(--mono); font-size: 12px; text-transform: uppercase; }
-@media (max-width: 600px) { .entry { grid-template-columns: 1fr auto; } .entry .txt { grid-column: 1 / -1; } }
-
-/* cta */
-.cta { background: var(--cream); padding: 96px 0; }
-.cta-card { background: var(--paper); border: 1px solid var(--line); border-radius: 28px; padding: 56px 48px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
-.cta-card h2 { font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; }
-.cta-card p { color: var(--ink-2); font-size: 18px; margin-top: 16px; }
-.cta-list { list-style: none; padding: 0; margin: 0 0 24px; }
-.cta-list li { padding: 12px 0; border-bottom: 1px solid var(--line); display: flex; gap: 12px; font-size: 15.5px; }
-.cta-list li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); margin-top: 8px; flex: none; }
-.cta-actions { display: flex; flex-direction: column; gap: 10px; }
-@media (max-width: 860px) { .cta-card { grid-template-columns: 1fr; padding: 32px 22px; } .cta { padding: 64px 0; } }
-
-footer { background: var(--console); color: var(--c-dim); padding: 40px 0; font-size: 14px; border-top: 1px solid var(--console-line); }
-footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
-footer .logo { color: var(--c-text); }
-footer .logo-mark { background: var(--c-text); }
-footer b { color: var(--c-text); font-weight: 500; }
+footer { border-top: 1px solid var(--line); padding: 28px 0 36px; color: var(--muted-2); font-size: 13.5px; }
+footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+footer .logo { font-size: 18px; }
+footer .logo svg { width: 17px; height: 17px; }
 </style>
 </head>
 <body>
 
 <header class="nav" id="nav">
   <div class="wrap">
-    <a class="logo" href="#top" aria-label="SAV home"><span class="logo-mark"><span></span></span>SAV</a>
-    <nav class="nav-links">
+    <a class="logo" href="#top" aria-label="SAV home">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke="#1f3a3d" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#1f3a3d"/></svg>
+      sav
+    </a>
+    <nav class="nav-pill" aria-label="Sections">
+      <a href="#demo">Try it</a>
+      <a href="#handles">What it handles</a>
       <a href="#how">How it works</a>
-      <a href="#company">The company</a>
-      <a href="#log">Self-improvement</a>
-      <a class="btn btn-primary js-demo" href="#demo">Call the demo</a>
     </nav>
+    <a class="btn btn-outline js-demo" href="#demo">Call your receptionist</a>
   </div>
 </header>
 
 <main id="top">
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <span class="chip"><span class="tick"></span>AI receptionist for independent repair shops</span>
-        <h1>Your shop misses calls. <em>We built you a receptionist</em> before we ever emailed you.</h1>
-        <p class="lede">SAV answers when your techs are under a car. It knows your hours, your services and how to book a drop-off, and it was built from your public listing before we ever reached out.</p>
-        <div class="hero-ctas">
-          <a class="btn btn-primary js-demo" href="#demo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
-            Call your receptionist
-          </a>
-          <a class="btn btn-ghost" href="#company">Watch the company work</a>
-        </div>
-        <p class="hero-fine">Free for the first week. No card.</p>
-      </div>
-      <div class="transcript" aria-label="Sample call">
-        <div class="transcript-head">
-          <strong>Incoming call, 2:14 pm</strong>
-          <small>Sample transcript</small>
-        </div>
-        <div class="bubble sav"><span class="who">SAV receptionist</span>Thanks for calling. Everyone's out in the bay right now, but I can help. What's going on with the car?</div>
-        <div class="bubble caller"><span class="who">Caller</span>Brakes are grinding on my Civic. Can you look at it this week?</div>
-        <div class="bubble sav"><span class="who">SAV receptionist</span>We can. I have Thursday at 8 am for a drop-off. Want me to put you down and text you a confirmation?</div>
-        <div class="bubble caller"><span class="who">Caller</span>Thursday works.</div>
-        <div class="wave" aria-hidden="true"><i style="animation-delay:0s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.5s"></i><i style="animation-delay:.6s"></i><i style="animation-delay:.7s"></i><i style="animation-delay:.8s"></i><i style="animation-delay:.9s"></i><i style="animation-delay:1s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.35s"></i><i style="animation-delay:.55s"></i></div>
-      </div>
-    </div>
-  </section>
+  <div class="hero-shell">
+    <section class="hero" aria-label="Introduction">
+      <svg class="sketch" viewBox="40 150 1140 470" role="img" aria-label="Pencil sketch of an independent auto repair shop with a car on a lift and a tow truck out front">
+        <defs>
+          <filter id="pencil" x="-2%" y="-2%" width="104%" height="104%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="2.8" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <filter id="pencil2" x="-2%" y="-2%" width="104%" height="104%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="21" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="G" yChannelSelector="R"/>
+          </filter>
+          <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#8a887c" stroke-width=".6"/>
+          </pattern>
+          <pattern id="hatch2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-52)">
+            <line x1="0" y1="0" x2="0" y2="4" stroke="#8a887c" stroke-width=".55"/>
+          </pattern>
+          <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6f6d62" stop-opacity=".2"/>
+            <stop offset="1" stop-color="#6f6d62" stop-opacity=".04"/>
+          </linearGradient>
+        </defs>
 
-  <section class="demo" id="demo">
-    <div class="wrap">
-      <div class="demo-card">
-        <div>
-          <span class="label">Demo line</span>
-          <h2>We already built one for your shop. Call it.</h2>
-          <p>Your email has a number that rings a receptionist trained on your shop. Call it like a customer would: ask for a quote, try to book a slot, ask if you're open Saturday.</p>
-        </div>
-        <div class="demo-actions">
-          <a class="phone-big pending js-phone" href="#demo">Your shop's number is in our email to you</a>
-          <a class="btn btn-primary js-demo" href="#demo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-            Call from your browser
-          </a>
-        </div>
-        <div class="qr-col">
-          <div class="qr empty" id="qr">QR appears when the demo link is live</div>
-          <div class="qr-cap">Scan to call from your phone</div>
-        </div>
-      </div>
-    </div>
-  </section>
+        <g id="drawing" filter="url(#pencil)" fill="none" stroke="#77756a" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M0 300 C 80 280, 140 292, 210 276 S 330 262, 380 270" stroke-opacity=".35"/>
+          <path d="M820 268 C 880 256, 960 262, 1020 250 S 1140 246, 1200 258" stroke-opacity=".35"/>
+          <g stroke-opacity=".55">
+            <path d="M70 330 C 50 300, 60 262, 88 252 C 92 226, 128 220, 140 240 C 166 236, 178 268, 162 288 C 176 306, 160 334, 136 330 Z"/>
+            <path d="M84 300 c 10 -8, 26 -6, 34 4 M100 270 c 8 -6, 22 -4, 28 6 M112 330 L 112 372 M108 372 L 116 372"/>
+            <path d="M1060 300 C 1040 272, 1052 236, 1080 228 C 1088 204, 1124 202, 1132 222 C 1158 222, 1168 254, 1150 270 C 1164 292, 1144 314, 1120 306 C 1110 318, 1078 318, 1060 300 Z"/>
+            <path d="M1100 306 L 1100 360 M1078 262 c 10 -6, 24 -4, 30 6 M1096 240 c 8 -5, 20 -3, 24 5"/>
+            <path d="M1010 120 L 1010 380 M992 136 L 1028 136 M996 150 L 1024 150"/>
+            <path d="M1010 136 C 1080 160, 1140 160, 1200 150" stroke-opacity=".5"/>
+            <path d="M1010 136 C 960 156, 900 160, 860 152" stroke-opacity=".5"/>
+          </g>
 
-  <div class="strip" aria-label="Company totals">
-    <div class="wrap">
-      <div class="strip-grid">
-        <div class="stat"><div class="v num" data-field="leads_found">--</div><div class="k">Shops found</div></div>
-        <div class="stat"><div class="v num" data-field="demos_built">--</div><div class="k">Receptionists built</div></div>
-        <div class="stat"><div class="v num" data-field="drafts_written">--</div><div class="k">Emails drafted</div></div>
-        <div class="stat"><div class="v num" data-field="free_week_yes">--</div><div class="k">Free weeks started</div></div>
-        <div class="stat"><div class="v num" data-voice="calls">--</div><div class="k">Calls answered</div></div>
+          <path d="M150 232 L 300 232 L 300 432 L 150 432 Z" fill="url(#shade)"/>
+          <path d="M146 226 L 304 226 M146 232 L 304 232"/>
+          <path d="M172 268 L 236 268 L 236 330 L 172 330 Z" fill="url(#hatch2)" fill-opacity=".5"/>
+          <path d="M204 268 L 204 330 M172 299 L 236 299" stroke-width=".8"/>
+          <path d="M252 300 L 286 300 L 286 432 L 252 432 Z"/>
+          <path d="M258 308 L 280 308 L 280 360 L 258 360 Z" stroke-width=".8"/>
+          <circle cx="281" cy="372" r="1.6"/>
+          <path d="M240 236 L 296 236 L 296 252 L 240 252 Z" stroke-width=".8"/>
+          <text x="268" y="248" font-family="Lato, sans-serif" font-size="9" letter-spacing="1.2" text-anchor="middle" fill="#77756a" stroke="none">OFFICE</text>
+
+          <path d="M300 196 L 1000 196 L 1000 432 L 300 432" fill="url(#shade)"/>
+          <path d="M296 186 L 1004 186 L 1004 196 L 296 196 Z"/>
+          <path d="M300 186 L 300 432"/>
+          <path d="M420 202 L 880 202 L 880 228 L 420 228 Z" fill="#f1f0e6"/>
+          <text x="650" y="221" font-family="Hedvig Letters Serif, Georgia, serif" font-size="17" letter-spacing="5" text-anchor="middle" fill="#6f6d62" stroke="none">AUTO REPAIR</text>
+          <path d="M312 236 L 988 236" stroke-width=".7" stroke-opacity=".7"/>
+
+          <path d="M324 246 L 528 246 L 528 432 L 324 432 Z"/>
+          <path d="M324 246 L 528 246 L 528 262 L 324 262 Z" fill="url(#hatch2)"/>
+          <path d="M324 254 L 528 254" stroke-width=".7"/>
+          <path d="M328 264 L 524 264 L 524 432 L 328 432 Z" fill="url(#hatch)" stroke="none" opacity=".55"/>
+          <path d="M346 300 L 346 432 M356 300 L 356 432 M496 300 L 496 432 M506 300 L 506 432"/>
+          <path d="M342 432 L 360 432 M492 432 L 510 432" stroke-width="1.4"/>
+          <path d="M356 352 L 392 360 M496 352 L 460 360" stroke-width="1.2"/>
+          <path d="M366 356 C 362 334, 376 322, 394 318 L 420 300 C 432 292, 462 292, 474 300 L 490 316 C 498 320, 500 340, 494 356 Z" fill="#f1f0e6"/>
+          <path d="M424 304 L 418 318 M446 298 L 446 316 M398 320 L 486 320" stroke-width=".8"/>
+          <path d="M366 356 L 494 356" stroke-width=".8"/>
+          <circle cx="390" cy="358" r="15" fill="#f1f0e6"/><circle cx="390" cy="358" r="7"/>
+          <circle cx="470" cy="358" r="15" fill="#f1f0e6"/><circle cx="470" cy="358" r="7"/>
+          <path d="M400 392 L 400 432 M396 392 L 404 392" stroke-width=".8"/>
+          <path d="M388 432 L 412 432 L 412 424 L 388 424 Z" stroke-width=".8"/>
+
+          <path d="M548 246 L 752 246 L 752 432 L 548 432 Z"/>
+          <path d="M548 246 L 752 246 L 752 262 L 548 262 Z" fill="url(#hatch2)"/>
+          <path d="M548 254 L 752 254" stroke-width=".7"/>
+          <path d="M552 264 L 748 264 L 748 432 L 552 432 Z" fill="url(#hatch)" stroke="none" opacity=".5"/>
+          <path d="M572 412 C 570 396, 580 388, 596 386 L 618 370 C 632 362, 670 362, 684 372 L 704 386 C 722 388, 734 398, 732 412 Z" fill="#f1f0e6"/>
+          <path d="M704 386 L 744 352 L 748 360 L 712 392" fill="#f1f0e6"/>
+          <path d="M622 372 L 616 386 M650 366 L 650 386 M596 388 L 704 388" stroke-width=".8"/>
+          <circle cx="602" cy="414" r="14" fill="#f1f0e6"/><circle cx="602" cy="414" r="6"/>
+          <circle cx="702" cy="414" r="14" fill="#f1f0e6"/><circle cx="702" cy="414" r="6"/>
+          <circle cx="728" cy="330" r="8" fill="#f1f0e6"/>
+          <path d="M722 338 C 716 352, 716 366, 722 378 L 726 392"/>
+          <path d="M734 338 C 740 350, 742 364, 736 378 L 738 392"/>
+          <path d="M722 346 C 714 356, 712 364, 716 372 M734 346 L 724 368"/>
+          <path d="M726 392 L 724 430 M738 392 L 742 430 M720 430 L 728 430 M738 430 L 748 430"/>
+          <path d="M760 360 L 800 360 L 800 424 L 760 424 Z" fill="#f1f0e6"/>
+          <path d="M760 374 L 800 374 M760 388 L 800 388 M760 404 L 800 404 M776 367 L 784 367 M776 381 L 784 381 M776 396 L 784 396" stroke-width=".7"/>
+          <circle cx="766" cy="428" r="3"/><circle cx="794" cy="428" r="3"/>
+
+          <path d="M812 246 L 984 246 L 984 432 L 812 432 Z"/>
+          <path d="M816 262 L 980 262 M816 278 L 980 278 M816 294 L 980 294 M816 310 L 980 310 M816 326 L 980 326 M816 342 L 980 342 M816 358 L 980 358 M816 374 L 980 374 M816 390 L 980 390 M816 406 L 980 406 M816 422 L 980 422" stroke-width=".6" stroke-opacity=".8"/>
+          <path d="M832 284 L 864 284 L 864 292 L 832 292 Z M880 284 L 912 284 L 912 292 L 880 292 Z M928 284 L 960 284 L 960 292 L 928 292 Z" stroke-width=".7"/>
+          <path d="M1000 196 L 1000 432"/>
+
+          <ellipse cx="538" cy="424" rx="12" ry="4.5" fill="#f1f0e6"/><ellipse cx="538" cy="414" rx="12" ry="4.5" fill="#f1f0e6"/><ellipse cx="538" cy="404" rx="12" ry="4.5" fill="#f1f0e6"/>
+
+          <path d="M60 432 L 1150 432" stroke-width="1.1"/>
+          <path d="M20 470 C 300 466, 900 466, 1180 472" stroke-opacity=".45"/>
+          <path d="M330 432 L 250 600 M540 432 L 520 600 M760 432 L 800 600 M990 432 L 1080 600" stroke-opacity=".3" stroke-width=".8"/>
+          <path d="M120 560 C 400 552, 820 552, 1100 562" stroke-opacity=".25"/>
+
+          <g transform="translate(440 6)">
+          <path d="M92 520 C 88 498, 100 486, 124 482 L 168 452 C 186 440, 252 438, 278 448 L 318 476 C 346 478, 362 492, 360 516 L 352 524 L 98 524 Z" fill="#f1f0e6"/>
+          <path d="M176 456 L 168 480 L 302 480 L 278 454 C 254 444, 194 444, 176 456 Z" fill="url(#hatch2)" stroke-width=".9"/>
+          <path d="M232 448 L 236 480" stroke-width=".9"/>
+          <path d="M104 500 L 124 498 M340 498 L 356 500 M124 482 L 340 486" stroke-width=".8"/>
+          <path d="M200 492 L 214 492 M262 492 L 276 492" stroke-width=".8"/>
+          <circle cx="148" cy="522" r="21" fill="#f1f0e6"/><circle cx="148" cy="522" r="10"/><circle cx="148" cy="522" r="3"/>
+          <circle cx="306" cy="522" r="21" fill="#f1f0e6"/><circle cx="306" cy="522" r="10"/><circle cx="306" cy="522" r="3"/>
+          <path d="M100 546 C 180 552, 300 552, 360 546" stroke-opacity=".35"/>
+          </g>
+
+          <path d="M846 506 L 846 470 L 1000 470 L 1000 506 Z" fill="#f1f0e6"/>
+          <path d="M846 480 L 1000 480 M870 470 L 870 506 M970 470 L 970 506" stroke-width=".8"/>
+          <path d="M890 470 L 856 420 L 838 414 L 834 422 L 850 430 L 872 470" fill="#f1f0e6"/>
+          <path d="M862 432 L 848 470 M836 422 C 830 440, 834 452, 842 456 L 846 456" stroke-width=".9"/>
+          <path d="M1000 506 L 1000 440 C 1000 432, 1006 426, 1014 426 L 1068 426 C 1080 426, 1088 432, 1094 442 L 1112 470 C 1126 474, 1134 484, 1134 496 L 1134 506 Z" fill="#f1f0e6"/>
+          <path d="M1016 436 L 1062 436 C 1072 436, 1078 440, 1082 448 L 1092 466 L 1016 466 Z" fill="url(#hatch2)" stroke-width=".9"/>
+          <path d="M1026 418 L 1060 418 L 1060 426 L 1026 426 Z" stroke-width=".9"/>
+          <path d="M1100 484 L 1130 484 M1040 476 L 1052 476" stroke-width=".8"/>
+          <circle cx="900" cy="510" r="21" fill="#f1f0e6"/><circle cx="900" cy="510" r="10"/><circle cx="900" cy="510" r="3"/>
+          <circle cx="1090" cy="510" r="21" fill="#f1f0e6"/><circle cx="1090" cy="510" r="10"/><circle cx="1090" cy="510" r="3"/>
+          <path d="M846 534 C 940 540, 1060 540, 1136 534" stroke-opacity=".35"/>
+
+          <circle cx="214" cy="402" r="7" fill="#f1f0e6"/>
+          <path d="M220 400 L 224 392 L 226 402" stroke-width=".9"/>
+          <path d="M208 410 C 204 424, 204 438, 208 450 L 220 450 C 224 438, 224 424, 220 410 Z" fill="#f1f0e6"/>
+          <path d="M210 450 L 208 478 M218 450 L 222 478 M204 478 L 212 478 M218 478 L 228 478"/>
+          <path d="M220 414 L 228 404"/>
+        </g>
+        <use href="#drawing" transform="translate(1.3 .9)" opacity=".28" filter="url(#pencil2)"/>
+      </svg>
+
+      <div class="bubbles" aria-label="Sample call">
+        <span class="sample">Sample call</span>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>Thanks for calling. The techs are in the bay, but I can help. What's going on with the car?</div>
+        <div class="bubble caller"><span class="who">Caller</span>My brakes started grinding this morning. Can you take a look?</div>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>We can. I have a drop-off open tomorrow at 8. Want me to hold it for you?</div>
+        <div class="bubble caller"><span class="who">Caller</span>Yes please. I'll bring it in before work.</div>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>Done. You're booked for 8:00 AM tomorrow. I'll text you a confirmation.</div>
       </div>
-      <div class="strip-meta">
-        <span class="live"><span class="dot js-dot-company"></span><span class="js-status-company">Connecting to the company</span></span>
-        <span>Refreshes every 30s</span>
-      </div>
-    </div>
+
+      <h1>Your phone, answered while you're under a car.</h1>
+    </section>
   </div>
 
-  <section class="light" id="pain">
+  <section class="statement">
+    <div class="wrap">
+      <p class="big">We already built a receptionist for your shop. Your number is in our email to you. Call it like a customer would.</p>
+      <div class="actions">
+        <a class="btn btn-teal js-demo" href="#demo">Call your receptionist <span class="arr">&rarr;</span></a>
+        <a class="btn btn-outline js-demo" href="#demo">Start your free week</a>
+      </div>
+      <p class="fine">Free first week. No card.</p>
+    </div>
+  </section>
+
+  <section class="section" id="demo">
     <div class="wrap">
       <div class="sec-head">
-        <span class="chip"><span class="tick"></span>The problem</span>
-        <h2>The phone rings while everyone is under a car.</h2>
-        <p>Independent shops run lean. The people who could answer are the people turning wrenches, and a caller with a check-engine light does not leave a voicemail.</p>
+        <span class="label">Try it</span>
+        <h2>Call it like a customer would</h2>
+        <p>It already knows your hours, your services and how you book work. Nothing is connected to your real line until you say so.</p>
       </div>
-      <div class="pain-grid">
-        <div class="pain"><div class="time">10:42 am</div><h3>Your tech is mid brake job.</h3><p>Gloves on, wheel off. The phone rings out on the counter.</p></div>
-        <div class="pain"><div class="time">10:43 am</div><h3>The caller tries the next shop.</h3><p>They searched "auto repair near me". You were first on the list. Now you're not.</p></div>
-        <div class="pain"><div class="time">10:44 am</div><h3>That job is gone.</h3><p>Nobody calls back a voicemail they never left. You never even learn it happened.</p></div>
+      <div class="try">
+        <ul class="try-list">
+          <li><span class="n">1</span>Ask for a quote on a brake job.</li>
+          <li><span class="n">2</span>Book a drop-off for tomorrow morning.</li>
+          <li><span class="n">3</span>Ask if you're open Saturday.</li>
+          <li><span class="n">4</span>Ask for a tow at 9 pm.</li>
+        </ul>
+        <div class="call-card">
+          <div>
+            <p class="lead">Your shop's number is in our email to you.</p>
+            <p class="sub">No phone handy? Call it from this page.</p>
+            <a class="btn btn-teal js-demo" href="#demo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+              Call from your browser
+            </a>
+          </div>
+          <div class="qr empty" id="qr" aria-label="QR code to the demo page"></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="light" id="how" style="padding-top:0">
+  <section class="section" id="handles">
     <div class="wrap">
       <div class="sec-head">
-        <span class="chip"><span class="tick"></span>How it works</span>
-        <h2>Built first. Emailed second. Yours if you like it.</h2>
+        <span class="label">What it handles</span>
+        <h2>The calls you miss, handled. The ones that need you, flagged.</h2>
+      </div>
+      <div class="solutions">
+        <div class="rail" aria-hidden="true"></div>
+
+        <div class="sol" id="mock-frontdesk">
+          <div>
+            <div class="frame">
+              <div class="window">
+                <div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="brand">sav</span><span class="search">Search calls</span></div>
+                <div class="win-body">
+                  <div class="win-top">
+                    <div><h4>Front desk</h4><small>Tuesday, 10:42 AM</small></div>
+                    <span class="status">Answering on</span>
+                  </div>
+                  <div class="cap">Handled on its own</div>
+                  <div class="chips">
+                    <span>Call answered</span><span>Drop-off booked</span><span>Hours given</span><span>Status call handled</span><span>Directions sent</span><span class="more">and more</span>
+                  </div>
+                  <div class="cap warn">Needs you &middot; 2</div>
+                  <div class="task">
+                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>
+                    <span class="t"><b>Call back: quote over $1,500</b><span>Transmission, caller waiting on a price</span></span>
+                    <span class="go">Review</span>
+                  </div>
+                  <div class="task">
+                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h2m14 0h2M5 17V9h9l4 4v4M14 9v4h4"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/></svg></span>
+                    <span class="t"><b>Tow request after hours</b><span>Location and car details taken</span></span>
+                    <span class="go">Open</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="caption">Illustration of the owner's view.</p>
+          </div>
+          <span class="dot dim" aria-hidden="true"></span>
+          <div class="sol-text">
+            <span class="tag slate">Front desk</span>
+            <h3>Answers every call</h3>
+            <p>It picks up on the first ring, books drop-offs, gives your hours and answers "is my car ready?". Anything that needs a person, like a big quote or a late tow, comes to you with the details already taken.</p>
+          </div>
+        </div>
+
+        <div class="sol flip">
+          <div>
+            <div class="frame">
+              <div class="setup">
+                <div class="cap">Your phones today</div>
+                <div class="setup-row">
+                  <div>Shop line<small>Rings out while you're in the bay</small></div>
+                  <div>Voicemail<small>Callers hang up instead</small></div>
+                  <div>After hours<small>Nobody picks up</small></div>
+                </div>
+                <div class="joiner"><span>SAV picks up all of it</span></div>
+                <div class="window">
+                  <div class="win-body">
+                    <div class="win-top"><h4>Every call in one place</h4><span class="status">Answering</span></div>
+                    <div style="margin-top:10px">
+                      <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span>Brakes grinding<span class="r booked">Drop-off booked</span></div>
+                      <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Open Saturday?<span class="r answered">Answered</span></div>
+                      <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h2m14 0h2M5 17V9h9l4 4v4M14 9v4h4"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/></svg></span>Tow after hours<span class="r sent">Sent to you</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="caption">Illustration.</p>
+          </div>
+          <span class="dot" aria-hidden="true"></span>
+          <div class="sol-text">
+            <span class="tag teal">Phones</span>
+            <h3>No new system to learn</h3>
+            <p>Forward the calls you miss to your receptionist. Keep your number, your shop software and your way of booking. You get a text when something needs you.</p>
+          </div>
+        </div>
+
+        <div class="sol">
+          <div aria-hidden="true"></div>
+          <span class="dot dim" aria-hidden="true"></span>
+          <div class="sol-text">
+            <span class="tag sand">Every call reviewed</span>
+            <h3>It gets better every week</h3>
+            <p>Every call is reviewed. When the receptionist gets something wrong, a fix is written and tested on practice calls. A person approves it before your callers ever hear it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">How it works</span>
+        <h2>Built first. Yours if you like it.</h2>
       </div>
       <div class="steps">
-        <div class="step"><div class="n">01</div><h3>We build your receptionist</h3><p>Before we contact you, we read your public listing and website and set up a receptionist that knows your hours, services and how you book work.</p></div>
-        <div class="step"><div class="n">02</div><h3>You call it</h3><p>We email you its number. Call it like a customer. Try to stump it. Nothing is connected to your real line yet.</p></div>
-        <div class="step"><div class="n">03</div><h3>Turn it on for a week</h3><p>Like it? Forward your missed calls to it. The first week is free and needs no card. Every call is reviewed and the receptionist keeps getting better.</p></div>
+        <div class="step"><span class="n">1</span><h3>We built it already</h3><p>From your public listing and website: your hours, your services, how you book.</p></div>
+        <div class="step"><span class="n">2</span><h3>You call it</h3><p>Use the number in our email. Try to stump it.</p></div>
+        <div class="step"><span class="n">3</span><h3>Keep it for a week, free</h3><p>Forward your missed calls to it. No card. Stop any time.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="console" id="company">
+  <section class="section" id="numbers">
     <div class="wrap">
       <div class="sec-head">
-        <span class="chip"><span class="dot js-dot-company"></span>Live company</span>
-        <h2>SAV is run by AI agents. Here is the company, live.</h2>
-        <p>A CEO agent hands out work. Each agent below files what it does, and the counts come straight from those filings. A person approves every email before it leaves.</p>
+        <span class="label">So far</span>
+        <h2>Run by a small team and a lot of automation</h2>
+        <p>These numbers come straight from our receptionists and update on their own. A person approves every email we send and every change to what callers hear.</p>
       </div>
-
-      <div class="console-bar">
-        <div class="src">
-          <span class="live"><span class="dot js-dot-company"></span><span>company: <span class="js-status-company">connecting</span></span></span>
-          <span class="live"><span class="dot js-dot-voice"></span><span>voice line: <span class="js-status-voice">connecting</span></span></span>
+      <div class="numbers">
+        <div class="ncard">
+          <div class="stat"><div class="v num wait" data-voice="calls_handled">&middot;&middot;&middot;</div><div class="k">calls handled</div></div>
+          <div class="stat"><div class="v num wait" data-voice="minutes_on_the_phone">&middot;&middot;&middot;</div><div class="k">minutes on the phone</div></div>
         </div>
-        <span>refreshes every 30s</span>
-      </div>
-
-      <div class="panel" style="margin-top:16px">
-        <div class="panel-head"><b>Org chart</b><span>one card per agent</span></div>
-        <div class="org">
-          <div class="org-ceo">
-            <div class="agent ceo">
-              <div class="role"><span>CEO</span><span>Naive</span></div>
-              <h3>CEO agent</h3>
-              <p>Reads the board, hands each card to the right agent, and hears back when a card is done or blocked.</p>
-            </div>
-          </div>
-          <div class="org-lines" aria-hidden="true"></div>
-          <div class="org-grid">
-            <div class="agent"><div class="role"><span>Research</span></div><h3>Finds shops</h3><p>Busy independent shops on Google Maps. Skips chains and dealers.</p><div class="metric"><div class="v num" data-field="leads_found">--</div><small>shops filed</small></div></div>
-            <div class="agent"><div class="role"><span>Receptionists</span></div><h3>One per shop</h3><p>Built before first contact from the shop's own listing. Answers its calls by voice.</p><div class="metric"><div class="v num" data-field="demos_built">--</div><small>receptionists built</small></div></div>
-            <div class="agent"><div class="role"><span>Outreach</span></div><h3>Drafts emails</h3><p>One personal email per owner. Drafts only. A person sends.</p><div class="metric"><div class="v num" data-field="drafts_written">--</div><small>drafts written</small></div></div>
-            <div class="agent"><div class="role"><span>Onboarding</span></div><h3>Starts free weeks</h3><p>Sets up the shop when an owner says yes on their demo page.</p><div class="metric"><div class="v num" data-field="free_week_yes">--</div><small>owners said yes</small></div></div>
-            <div class="agent"><div class="role"><span>Monitoring</span></div><h3>Reviews every call</h3><p>Reads each transcript and flags anything a receptionist got wrong.</p><div class="metric"><div class="v num" data-field="calls_reviewed">--</div><small>calls reviewed</small></div></div>
-            <div class="agent"><div class="role"><span>Improve</span></div><h3>Proposes fixes</h3><p>Writes a prompt fix, tests it on simulated calls, never applies it alone.</p><div class="metric"><div class="v num" data-field="self_improvement_proposals">--</div><small>proposals</small></div></div>
-          </div>
-          <div class="human"><span class="tag">Human</span><span>A person approves every email before it is sent, and every change to what callers hear.</span></div>
+        <div class="ncard">
+          <div class="stat"><div class="v num wait" data-voice="appointment_requests">&middot;&middot;&middot;</div><div class="k">appointment requests</div></div>
+          <div class="stat"><div class="v num wait" data-voice="requests_confirmed">&middot;&middot;&middot;</div><div class="k">appointments confirmed</div></div>
+        </div>
+        <div class="ncard">
+          <div class="stat"><div class="v num wait" data-voice="receptionists_built">&middot;&middot;&middot;</div><div class="k">receptionists built</div></div>
+          <div class="stat"><div class="v num wait" data-voice="free_week_signups">&middot;&middot;&middot;</div><div class="k">free weeks started</div></div>
         </div>
       </div>
-
-      <div class="two">
-        <div class="panel" id="feed">
-          <div class="panel-head"><b>Activity</b><span class="live"><span class="dot js-dot-company"></span>refreshes every 30s</span></div>
-          <ul class="feed" id="feed-list"></ul>
-          <div class="empty" id="feed-empty"><b>Watching for changes.</b> A row appears here the moment an agent files new work. Nothing is shown until something actually happens.</div>
+      <div class="numbers" id="company-numbers" hidden>
+        <div class="ncard">
+          <div class="stat"><div class="v num wait" data-field="leads_found">&middot;&middot;&middot;</div><div class="k">shops found</div></div>
+          <div class="stat"><div class="v num wait" data-field="demos_built">&middot;&middot;&middot;</div><div class="k">receptionists built ahead</div></div>
         </div>
-        <div class="panel">
-          <div class="panel-head"><b>Voice line</b><span class="live"><span class="dot js-dot-voice"></span><span class="js-status-voice">connecting</span></span></div>
-          <div class="voice-list" id="voice-list"></div>
-          <div class="empty" id="voice-empty"><b>Connecting to the voice service.</b> Call counts from the receptionists show here once it responds.</div>
+        <div class="ncard">
+          <div class="stat"><div class="v num wait" data-field="drafts_written">&middot;&middot;&middot;</div><div class="k">emails drafted</div></div>
+          <div class="stat"><div class="v num wait" data-field="free_week_yes">&middot;&middot;&middot;</div><div class="k">owners said yes</div></div>
         </div>
-      </div>
-
-      <div class="panel trace" id="trace">
-        <div class="panel-head" style="margin:-22px -18px 18px"><b>One shop, end to end</b><span>count of shops at each step</span></div>
-        <div class="trace-steps">
-          <div class="tstep"><div class="a">Research</div><h4>Shop found and filed</h4><div class="c num" data-field="leads_found">--</div></div>
-          <div class="tstep"><div class="a">Research</div><h4>Receptionist built for it</h4><div class="c num" data-field="demos_built">--</div></div>
-          <div class="tstep"><div class="a">Outreach</div><h4>Email drafted</h4><div class="c num" data-field="drafts_written">--</div></div>
-          <div class="tstep gate"><div class="a">Human</div><h4>Person approves and sends</h4><div class="c num" data-field="emails_sent">--</div></div>
-          <div class="tstep"><div class="a">Owner</div><h4>Calls the demo, says yes</h4><div class="c num" data-field="free_week_yes">--</div></div>
-          <div class="tstep"><div class="a">Receptionist</div><h4>Answers calls</h4><div class="c num muted" data-voice="calls">--</div></div>
-          <div class="tstep"><div class="a">Monitoring</div><h4>Every call reviewed</h4><div class="c num" data-field="calls_reviewed">--</div></div>
+        <div class="ncard">
+          <div class="stat"><div class="v num wait" data-field="calls_reviewed">&middot;&middot;&middot;</div><div class="k">calls reviewed</div></div>
         </div>
       </div>
-
-      <div class="panel log" id="log">
-        <div class="panel-head"><b>Self-improvement log</b><span>nothing ships without a person</span></div>
-        <div class="stages">
-          <div class="stage st-obs"><div class="s"><i></i>Observed</div><p>Monitoring flags a call the receptionist handled badly.</p></div>
-          <div class="stage st-pro"><div class="s"><i></i>Proposed</div><p>The improve agent writes a prompt fix and tests it on simulated calls.</p></div>
-          <div class="stage st-shi"><div class="s"><i></i>Shipped</div><p>A person reviews the test results and approves the change.</p></div>
-          <div class="stage st-res"><div class="s"><i></i>Result</div><p>The next real calls show whether the fix worked.</p></div>
-        </div>
-        <div id="log-list"></div>
-        <div class="empty" id="log-empty"><b>No entries published yet.</b> Proposals live on the CEO's board today. Entries will appear here with timestamps once the log is exposed.</div>
-      </div>
+      <p class="live-note"><span class="pulse" id="pulse"></span><span id="live-text">Connecting to our receptionists</span></p>
     </div>
   </section>
 
-  <section class="cta" id="start">
+  <section class="closing">
     <div class="wrap">
-      <div class="cta-card">
-        <div>
-          <span class="chip"><span class="tick"></span>Free first week</span>
-          <h2>Call it. If it sounds like your shop, keep it.</h2>
-          <p>Your receptionist is already built. Try it on your own phone, then let it pick up the calls you miss for a week, free.</p>
-        </div>
-        <div>
-          <ul class="cta-list">
-            <li>First week free, no card</li>
-            <li>Nothing changes on your line until you say so</li>
-            <li>Every call reviewed, every fix approved by a person</li>
-          </ul>
-          <div class="cta-actions">
-            <a class="btn btn-primary js-demo" href="#demo">Call your receptionist</a>
-            <a class="btn btn-ghost js-demo" href="#demo">Start my free week</a>
-          </div>
-        </div>
-      </div>
+      <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke="#1f3a3d" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="#1f3a3d"/></svg>
+      <h2>Hear it answer your phone</h2>
+      <p>Your shop's number is in our email to you. Free first week, no card.</p>
+      <a class="btn btn-teal js-demo" href="#demo">Call your receptionist <span class="arr">&rarr;</span></a>
     </div>
   </section>
 </main>
 
 <footer>
   <div class="wrap">
-    <a class="logo" href="#top"><span class="logo-mark"><span></span></span>SAV</a>
-    <span><b>Every number above is live.</b> Nothing on this page is made up.</span>
+    <a class="logo" href="#top"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke="#1f3a3d" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#1f3a3d"/></svg>sav</a>
+    <span>Every number on this page is live.</span>
     <span>Built at the Naive x YC hackathon, Nov 7-8 2026.</span>
   </div>
 </footer>
@@ -516,63 +628,17 @@ footer b { color: var(--c-text); font-weight: 500; }
 const CONFIG = {
   STATS_URL: "https://dashboard-wfcawtyqg9ge.vercel.app/api/stats",
   VOICE_STATS_URL: "https://submit-yoga-thoughts-similar.trycloudflare.com/stats.json",
-  DEMO_URL: "#demo",
-  DEMO_PHONE: "",
   VOICE_FALLBACK: {"receptionists_built":2,"previews_live":2,"free_week_signups":0,"active_customers":0,"calls_handled":4,"minutes_on_the_phone":6,"appointment_requests":3,"requests_confirmed":2,"updated_at":"2026-11-08T01:02:14.548Z"},
+  DEMO_URL: "#demo",
   POLL_MS: 30000,
   TIMEOUT_MS: 10000
 };
 
-const FEED_TEXT = {
-  leads_found: ["Research", n => `found ${n} new shop${n === 1 ? "" : "s"} and filed ${n === 1 ? "it" : "them"}`],
-  demos_built: ["Research", n => `built ${n} receptionist${n === 1 ? "" : "s"} for shops we have not contacted yet`],
-  drafts_written: ["Outreach", n => `drafted ${n} email${n === 1 ? "" : "s"}, waiting for a person to approve`],
-  free_week_yes: ["Onboarding", n => `${n} owner${n === 1 ? "" : "s"} started a free week`],
-  calls_reviewed: ["Monitoring", n => `reviewed ${n} call${n === 1 ? "" : "s"}`],
-  emails_sent: ["Human", n => `approved and sent ${n} email${n === 1 ? "" : "s"}`],
-  self_improvement_proposals: ["Improve", n => `proposed ${n} fix${n === 1 ? "" : "es"}`]
-};
-
-const NULL_TEXT = {
-  emails_sent: "sent by a person, not counted here",
-  self_improvement_proposals: "not tracked yet"
-};
-
-const VOICE_LABELS = {
-  receptionists_built: "Receptionists built",
-  previews_live: "Demo lines live",
-  free_week_signups: "Free week signups",
-  active_customers: "Shops live on real calls",
-  minutes_on_the_phone: "Minutes on the phone",
-  appointment_requests: "Appointment requests taken",
-  requests_confirmed: "Appointments confirmed",
-  calls: "Calls answered",
-  calls_total: "Calls answered",
-  calls_handled: "Calls answered",
-  total_calls: "Calls answered",
-  calls_today: "Calls today",
-  receptionists: "Receptionists live",
-  receptionists_live: "Receptionists live",
-  shops: "Shops on the line",
-  bookings: "Bookings made",
-  appointments_booked: "Appointments booked",
-  transfers: "Calls passed to a person"
-};
-const VOICE_CALL_KEYS = ["calls_handled", "calls_total", "total_calls", "calls"];
-
-const VOICE_FEED_TEXT = {
-  calls_handled: ["Receptionist", n => `answered ${n} call${n === 1 ? "" : "s"}`],
-  appointment_requests: ["Receptionist", n => `took ${n} appointment request${n === 1 ? "" : "s"}`],
-  requests_confirmed: ["Receptionist", n => `confirmed ${n} appointment${n === 1 ? "" : "s"}`],
-  previews_live: ["Research", n => `put ${n} new demo line${n === 1 ? "" : "s"} live`]
-};
-
 const sources = {
   company: { url: CONFIG.STATS_URL, data: null, okAt: 0, failing: false },
-  voice: { url: CONFIG.VOICE_STATS_URL, data: null, okAt: 0, failing: false, snapshot: false, fallback: CONFIG.VOICE_FALLBACK }
+  voice: { url: CONFIG.VOICE_STATS_URL, data: null, okAt: 0, failing: false, snapshot: false }
 };
-const feed = [];
-const shown = new Map();
+const shown = new WeakMap();
 
 async function getJSON(url) {
   const ctl = new AbortController();
@@ -598,203 +664,81 @@ function ago(ms) {
   return `${Math.round(h / 24)} d ago`;
 }
 
-function fmt(n) { return Number(n).toLocaleString("en-US"); }
+const fmt = n => Number(n).toLocaleString("en-US");
 
 function tick(el, to) {
-  const key = el;
-  const from = shown.get(key);
-  shown.set(key, to);
-  el.classList.remove("muted");
-  if (typeof from !== "number" || from === to || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const from = shown.get(el);
+  shown.set(el, to);
+  el.classList.remove("wait");
+  if (typeof from !== "number" || from === to || matchMedia("(prefers-reduced-motion: reduce)").matches) {
     el.textContent = fmt(to);
     return;
   }
   const start = performance.now(), dur = 700;
   const step = now => {
     const p = Math.min(1, (now - start) / dur);
-    const e = 1 - Math.pow(1 - p, 3);
-    el.textContent = fmt(Math.round(from + (to - from) * e));
+    el.textContent = fmt(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
     if (p < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
 }
 
-function setMuted(el, text) {
-  shown.delete(el);
-  el.textContent = text;
-  el.classList.add("muted");
-}
-
-function renderCompany() {
-  const src = sources.company;
-  document.querySelectorAll("[data-field]").forEach(el => {
-    const f = el.dataset.field;
-    if (!src.data) { setMuted(el, src.failing ? "connecting" : "--"); return; }
-    const v = src.data[f];
+function fill(selector, attr, data) {
+  document.querySelectorAll(selector).forEach(el => {
+    const v = data ? data[el.dataset[attr]] : undefined;
     if (typeof v === "number" && isFinite(v)) tick(el, v);
-    else if (v === null && NULL_TEXT[f]) setMuted(el, NULL_TEXT[f]);
-    else setMuted(el, "not reported");
+    else if (!shown.has(el)) { el.textContent = "···"; el.classList.add("wait"); }
   });
 }
 
-function voiceCalls(d) {
-  for (const k of VOICE_CALL_KEYS) if (typeof d[k] === "number") return d[k];
-  return null;
-}
+function render() {
+  fill("[data-voice]", "voice", sources.voice.data);
+  const c = sources.company;
+  document.getElementById("company-numbers").hidden = !c.data;
+  fill("[data-field]", "field", c.data);
 
-function humanize(k) { return k.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase()); }
-
-function renderVoice() {
-  const src = sources.voice;
-  const list = document.getElementById("voice-list");
-  const empty = document.getElementById("voice-empty");
-  const callEls = document.querySelectorAll("[data-voice='calls']");
-  if (!src.data) {
-    list.innerHTML = "";
-    empty.style.display = "";
-    callEls.forEach(el => setMuted(el, src.failing ? "connecting" : "--"));
-    return;
+  const v = sources.voice;
+  const pulse = document.getElementById("pulse");
+  const text = document.getElementById("live-text");
+  if (v.snapshot) {
+    pulse.className = "pulse";
+    text.textContent = `Reconnecting. Showing saved counts from ${ago(Date.parse(v.data.updated_at))}.`;
+  } else if (v.okAt && !v.failing) {
+    pulse.className = "pulse ok";
+    text.textContent = `Live from our receptionists, updated ${ago(v.okAt)}. Refreshes every 30 seconds.`;
+  } else if (v.okAt) {
+    pulse.className = "pulse";
+    text.textContent = `Reconnecting. Showing counts from ${ago(v.okAt)}.`;
+  } else {
+    pulse.className = "pulse";
+    text.textContent = "Connecting to our receptionists";
   }
-  const rows = Object.entries(src.data).filter(([, v]) => typeof v === "number" && isFinite(v));
-  empty.style.display = rows.length ? "none" : "";
-  if (!rows.length) empty.innerHTML = "<b>Voice service is up.</b> It has not reported any counts yet.";
-  const seen = new Set();
-  list.innerHTML = "";
-  rows.forEach(([k, v]) => {
-    const label = VOICE_LABELS[k] || humanize(k);
-    if (seen.has(label)) return;
-    seen.add(label);
-    const row = document.createElement("div");
-    row.className = "voice-row";
-    const span = document.createElement("span");
-    span.textContent = label;
-    const b = document.createElement("b");
-    b.className = "num";
-    b.textContent = fmt(v);
-    row.append(span, b);
-    list.append(row);
-  });
-  const calls = voiceCalls(src.data);
-  callEls.forEach(el => { if (calls === null) setMuted(el, "not reported"); else tick(el, calls); });
-}
-
-function renderStatus() {
-  for (const name of ["company", "voice"]) {
-    const src = sources[name];
-    let cls = "", text;
-    if (src.snapshot) { cls = "wait"; text = `Reconnecting, showing saved counts from ${ago(Date.parse(src.data.updated_at))}`; }
-    else if (src.okAt && !src.failing) { cls = "ok"; text = `Live, updated ${ago(src.okAt)}`; }
-    else if (src.okAt && src.failing) { cls = "wait"; text = `Reconnecting, showing values from ${ago(src.okAt)}`; }
-    else { cls = "wait"; text = name === "company" ? "Connecting to the company" : "Connecting to the voice line"; }
-    document.querySelectorAll(".js-dot-" + name).forEach(d => { d.className = "dot js-dot-" + name + (cls ? " " + cls : ""); });
-    document.querySelectorAll(".js-status-" + name).forEach(s => { s.textContent = text; });
-  }
-}
-
-function diffIntoFeed(prev, next, texts) {
-  if (!prev) return;
-  const at = Date.parse(next.updated_at) || Date.now();
-  for (const [field, [who, say]] of Object.entries(texts)) {
-    const a = prev[field], b = next[field];
-    if (typeof a === "number" && typeof b === "number" && b > a) {
-      feed.unshift({ who, text: say(b - a), at, fresh: true });
-    }
-  }
-  feed.splice(12);
-}
-
-function serverFeed(d) {
-  const list = Array.isArray(d.activity) ? d.activity : null;
-  if (!list) return false;
-  feed.length = 0;
-  list.slice(0, 12).forEach(r => {
-    if (r && typeof r.text === "string") feed.push({ who: String(r.agent || r.who || "Agent"), text: r.text, at: Date.parse(r.at || r.created_at) || null });
-  });
-  return true;
-}
-
-function renderFeed() {
-  const ul = document.getElementById("feed-list");
-  document.getElementById("feed-empty").style.display = feed.length ? "none" : "";
-  ul.innerHTML = "";
-  feed.forEach(r => {
-    const li = document.createElement("li");
-    if (r.fresh) { li.className = "new"; r.fresh = false; }
-    const who = document.createElement("span"); who.className = "who"; who.textContent = r.who;
-    const txt = document.createElement("span"); txt.textContent = r.text;
-    const when = document.createElement("span"); when.className = "when"; when.textContent = r.at ? ago(r.at) : "";
-    li.append(who, txt, when);
-    ul.append(li);
-  });
-}
-
-const STAGE_CLASS = { observed: "st-obs", proposed: "st-pro", shipped: "st-shi", result: "st-res" };
-function renderLog() {
-  const d = sources.company.data;
-  const list = d && Array.isArray(d.self_improvement_log) ? d.self_improvement_log : null;
-  const box = document.getElementById("log-list");
-  document.getElementById("log-empty").style.display = list && list.length ? "none" : "";
-  box.innerHTML = "";
-  if (!list) return;
-  list.slice(0, 20).forEach(e => {
-    if (!e || typeof e.text !== "string") return;
-    const stage = String(e.stage || "").toLowerCase();
-    const row = document.createElement("div"); row.className = "entry";
-    const t = document.createElement("span"); t.className = "t";
-    const ts = Date.parse(e.at || e.created_at);
-    t.textContent = ts ? new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
-    const sg = document.createElement("span"); sg.className = "sg " + (STAGE_CLASS[stage] || "");
-    sg.style.color = { observed: "#8ab4f8", proposed: "#f5b544", shipped: "#e2560f", result: "#4ade80" }[stage] || "";
-    sg.textContent = stage || "entry";
-    const txt = document.createElement("span"); txt.className = "txt"; txt.textContent = e.text;
-    row.append(t, sg, txt);
-    box.append(row);
-  });
 }
 
 async function pollOne(name) {
   const src = sources[name];
   try {
-    const data = await getJSON(src.url);
-    if (name === "company") {
-      if (!serverFeed(data)) diffIntoFeed(src.data, data, FEED_TEXT);
-    } else if (!src.snapshot) {
-      diffIntoFeed(src.data, data, VOICE_FEED_TEXT);
-    }
-    src.data = data;
-    src.snapshot = false;
+    src.data = await getJSON(src.url);
     src.okAt = Date.now();
     src.failing = false;
+    src.snapshot = false;
   } catch (err) {
     src.failing = true;
-    if (!src.data && src.fallback) { src.data = src.fallback; src.snapshot = true; }
+    if (name === "voice" && !src.data && CONFIG.VOICE_FALLBACK) { src.data = CONFIG.VOICE_FALLBACK; src.snapshot = true; }
   }
 }
 
 async function poll() {
   await Promise.allSettled([pollOne("company"), pollOne("voice")]);
-  renderCompany();
-  renderVoice();
-  renderFeed();
-  renderLog();
-  renderStatus();
+  render();
 }
 
 function setupDemo() {
   document.querySelectorAll(".js-demo").forEach(a => { a.href = CONFIG.DEMO_URL; });
-  const phone = document.querySelector(".js-phone");
-  if (CONFIG.DEMO_PHONE) {
-    phone.textContent = CONFIG.DEMO_PHONE;
-    phone.href = "tel:" + CONFIG.DEMO_PHONE.replace(/[^\d+]/g, "");
-    phone.classList.remove("pending");
-  } else {
-    phone.href = CONFIG.DEMO_URL;
-  }
   const qr = document.getElementById("qr");
   if (/^https?:\/\//.test(CONFIG.DEMO_URL) && window.QRCode) {
-    qr.textContent = "";
     qr.classList.remove("empty");
-    new QRCode(qr, { text: CONFIG.DEMO_URL, width: 112, height: 112, colorDark: "#14110f", colorLight: "#ffffff" });
+    new QRCode(qr, { text: CONFIG.DEMO_URL, width: 108, height: 108, colorDark: "#1f3a3d", colorLight: "#ffffff" });
   }
 }
 
@@ -802,13 +746,10 @@ const nav = document.getElementById("nav");
 addEventListener("scroll", () => nav.classList.toggle("scrolled", scrollY > 8), { passive: true });
 
 setupDemo();
-renderCompany();
-renderVoice();
-renderFeed();
-renderStatus();
+render();
 poll();
 setInterval(poll, CONFIG.POLL_MS);
-setInterval(() => { renderStatus(); renderFeed(); }, 15000);
+setInterval(render, 15000);
 </script>
 </body>
 </html>
