@@ -107,7 +107,7 @@ export const MONID_RUN = via(MONID, "monid_run");
  * `get_claim` (owner name, phone, email) is never offered to an agent: reading it would hold the
  * session. Deny-by-default keeps it out; nothing below names it.
  */
-export const AUTOOPS = { name: "autoops", url: "https://advert-medications-distances-laws.trycloudflare.com/mcp" } as const;
+export const AUTOOPS = { name: "autoops", url: "https://roads-promotion-however-biol.trycloudflare.com/mcp" } as const;
 /** Reads and free text-mode test calls. `list_call_summaries` is PII-free, so it comes first. */
 export const AUTOOPS_READ = via(AUTOOPS, "get_receptionist", "list_call_summaries", "list_calls", "get_call", "list_shops", "simulate_call");
 /** Forces preview mode, never attaches a number, spends nothing. */
