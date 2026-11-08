@@ -15,7 +15,7 @@ import { TEMPLATES } from "./active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE, REFERRAL_ASK, roster } from "./agents.ts";
 import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
-import { BOARD, BOOKING_URL, GOOGLE_CALENDAR, MODELS, PIPELINE, placeholderBudget, placeholderModel, RESEARCH_CITIES, SECTORS } from "./receptionist.ts";
+import { BOARD, BOOKING_URL, DEMO_LINE, GOOGLE_CALENDAR, MODELS, PIPELINE, placeholderBudget, placeholderModel, RESEARCH_CITIES, SECTORS } from "./receptionist.ts";
 import { productDesign, STUDIO_NOTE } from "./product-design.ts";
 import { seoGeo } from "./seo-geo.ts";
 
@@ -384,7 +384,9 @@ describe("blank", () => {
       expect(system.indexOf("web_fetch the business's own homepage")).toBeLessThan(system.indexOf('provider "hunterio"'));
       expect(system).toMatch(/Only if both pages show none/);
       expect(system).toMatch(/A business with no email found is not a lead: skip it/);
-      expect(system).toMatch(/"Detail: <one specific, true thing.*I came across <name> and noticed/);
+      expect(system).toMatch(/"Opener detail: <one specific, true thing.*in second person.*I came across <name> and noticed.*no trailing period/);
+      expect(system).toMatch(/Never call autoops\.provision_demo/);
+      expect(seatOf(sector.seat).tools?.configs["autoops.provision_demo"]).toBeUndefined();
       expect(system).toMatch(/never guess or construct an email/i);
       expect(system).toMatch(/Never invent a business, a name, an email, a number or a detail/);
       expect(seatOf(sector.seat).tools?.configs["web_fetch"]?.permission).toBe("allow");
@@ -412,7 +414,10 @@ describe("blank", () => {
     expect(sales.system).toMatch(/\(c\) Not interested.*"UNSUBSCRIBED:"/);
     expect(sales.system).toMatch(/note "REPLY SENT: <message id>" followed by the reply in full/);
     expect(sales.system).toMatch(/Write as Aarav/);
-    expect(sales.system).toMatch(/Never put a preview phone number in an email/);
+    expect(sales.system).toMatch(/autoops\.update_receptionist\(\{ shop_id, notify_phone \}\) with only those two fields/);
+    expect(sales.system).toMatch(/autoops\.add_caller/);
+    expect(sales.system).toContain(`call ${DEMO_LINE} from that phone, or use the demo page`);
+    expect(sales.system).toMatch(/is the only phone number you ever put in an email/);
     expect(sales.system).toMatch(/do nothing if its latest message is already ours/);
   });
 
@@ -445,7 +450,9 @@ describe("blank", () => {
     const payments = seatOf("payments");
     for (const tool of ["autoops.create_trial_checkout", "autoops.activate_shop", "autoops.list_shops"]) expect([tool, payments.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
     expect(payments.system).toMatch(/autoops\.create_trial_checkout\(\{ shop_id, owner_email \}\)/);
-    expect(payments.system).toMatch(/autoops\.list_shops\(\{ status: "active" \}\).*autoops\.activate_shop\(\{ shop_id \}\) once and note "PAID:"/);
+    expect(payments.system).toMatch(/a completed Stripe checkout activates the shop server-side/);
+    expect(payments.system).toMatch(/Call autoops\.activate_shop\(\{ shop_id \}\) only to repair/);
+    expect(payments.system).toMatch(/phone_error, that is not a failure.*We'll text your dedicated number within a day/);
     expect(payments.system).toMatch(/TEST mode/);
   });
 
@@ -458,11 +465,12 @@ describe("blank", () => {
     expect(monitoring).toMatch(/"MONITOR FLAG:"/);
   });
 
-  it("lets only self-improvement and a shop's own booking seat change a receptionist, self-improvement only after a simulated call, and never the stage demos", () => {
+  it("lets only self-improvement, sales (an owner's notify_phone) and a shop's own booking seat change a receptionist, self-improvement only after a simulated call, and never the stage demos", () => {
     for (const agent of [...blank.agents, ...blank.crew]) {
       const c = agent.tools?.configs ?? {};
       const writes = ["autoops.provision_receptionist", "autoops.update_receptionist"].filter((tool) => c[tool]);
-      const expected = agent.name === "booking" ? ["autoops.provision_receptionist", "autoops.update_receptionist"] : agent.name === "self-improvement" ? ["autoops.update_receptionist"] : [];
+      // sales holds update_receptionist only to set an owner's notify_phone (its prompt says so).
+      const expected = agent.name === "booking" ? ["autoops.provision_receptionist", "autoops.update_receptionist"] : ["self-improvement", "sales"].includes(agent.name) ? ["autoops.update_receptionist"] : [];
       expect([agent.name, writes]).toEqual([agent.name, expected]);
       if (agent.tools?.configs["autoops.get_receptionist"]) {
         expect(agent.system).toMatch(/Never call update_receptionist or provision_receptionist for "axl-roadside" or "demo-shop"/);
@@ -472,7 +480,7 @@ describe("blank", () => {
     expect(fixer).toMatch(/your rollback/);
     expect(fixer.indexOf("2. Reproduce it with autoops.simulate_call")).toBeLessThan(fixer.indexOf("3. Make the smallest change with autoops.update_receptionist"));
     expect(fixer).toMatch(/If it fails, put the saved values back with update_receptionist at once/);
-    expect(fixer).toMatch(/vehicle_unclear/);
+    expect(fixer).toMatch(/vehicle_unclear on a call with no vehicle_corrected after it is a prompt problem/);
   });
 
   it("asks no permission except a question, and the public site, which a person approves", () => {

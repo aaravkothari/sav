@@ -13,14 +13,14 @@ All seats are in `templates/receptionist.ts`. Budgets are per day (#34); a sched
 | Seat | Role | Model | Budget (cap, per task) | Schedule | Woken by |
 | --- | --- | --- | --- | --- | --- |
 | **CEO** | Hands each board card to a seat | platform default | Naïve default ($50/month, $5/task) | none (platform-owned) | a run from the dashboard |
-| `research` | Auto repair leads: one Maps run, email from the shop's own site, Hunter as fallback | `z-ai/glm-5.3-flash` | $2.00/day, $0.75 | 06:00 and 13:00 daily, a new pair of Bay Area cities each weekday, $0.75/fire | a research card |
+| `research` | Auto repair leads: one Maps run, email from the shop's own site, Hunter as fallback | `z-ai/glm-5.3-flash` | $1.50/day, $0.50 | 06:00 and 13:00 daily, a new pair of Bay Area cities each weekday, at most 8 leads and $0.50 a fire | a research card |
 | `research-salon` | Salon leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until the sector is live (`SECTORS[].live`) | a research card |
 | `research-drycleaner` | Dry cleaner leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until live | a research card |
 | `research-pt` | Physical therapy leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until live | a research card |
 | `research-home` | Plumbing and HVAC leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until live | a research card |
 | `sales` | Answers shops that replied (demo link, honest answer, or polite close). First emails are the outbound engine's. | `anthropic/claude-sonnet-5` | $3.00/day, $0.50 | every 2 h 07:00 to 21:00, $0.25/fire | `SHOP REPLIED:` |
 | `client-manager` | Onboarding questions, the call booking (Google Calendar when connected), `MEETING SCRIPT:` for Aarav | `anthropic/claude-haiku-5.5` | $2.00/day, $0.50 | every 3 h 08:30 to 20:30, $0.25/fire | `FREE WEEK STARTED:`, `BOOK CALL:` |
-| `payments` | Stripe checkout link (TEST mode), then `activate_shop` once the subscription is active | `z-ai/glm-5.3-flash` | $1.00/day, $0.25 | every 2 h at :45, 08:45 to 20:45, $0.10/fire | `CHECKOUT NEEDED:` |
+| `payments` | Stripe checkout link (TEST mode); checkout activates the shop server-side, `activate_shop` only repairs | `z-ai/glm-5.3-flash` | $1.00/day, $0.25 | every 2 h at :45, 08:45 to 20:45, $0.10/fire | `CHECKOUT NEEDED:` |
 | `monitoring` | Every call against the guardrails, PII-free summaries first; uptime of the voice MCP | `z-ai/glm-5.3-flash` | $1.50/day, $0.40 | uptime every 3 h at :15 ($0.08), digest 21:00 ($0.40) | `A receptionist call just ended` |
 | `self-improvement` | Fixes flagged calls: simulate, smallest change, simulate again, roll back on a fail | `anthropic/claude-haiku-5.5` | $1.50/day, $0.75 | 22:00 daily, $0.75 | a card |
 | `seo` | SAV's own site copy, proposed through `update_site` (a person approves) | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | Mon and Thu 10:00, $0.50 | a card |
@@ -28,7 +28,7 @@ All seats are in `templates/receptionist.ts`. Budgets are per day (#34); a sched
 | `coding-liaison` | Collects every seat's `INFRA REQUEST:` notes into one list for the human coding agents | `z-ai/glm-5.3-flash` | $0.50/day, $0.25 | 19:00 daily, $0.20 | a card |
 | `booking--<shop>` | One receptionist per active shop (per-shop crew) | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none | moving a shop to active |
 
-The live seats' caps add up to $13.50/day; their scheduled fires to about $8/day.
+The live seats' caps add up to $13.00/day; their scheduled fires to about $7.50/day.
 
 How Naïve's built-in pieces are used:
 

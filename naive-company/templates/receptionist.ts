@@ -57,7 +57,7 @@ const perDay = (cap: number, task: number) => ({ cap_micro_usd: usd(cap), max_ta
  * about $8/day (see the PR). Against ~$249 of credits that is weeks, not days, at full burn.
  */
 export const BUDGETS = {
-  research: perDay(2, 0.75),
+  research: perDay(1.5, 0.5),
   sector: perDay(1, 0.5),
   sales: perDay(3, 0.5),
   "client-manager": perDay(2, 0.5),
@@ -116,6 +116,10 @@ export const AUTOOPS_DEMO = via(AUTOOPS, "provision_demo");
 export const AUTOOPS_WRITE = via(AUTOOPS, "provision_receptionist", "update_receptionist");
 /** Stripe (TEST mode tonight): a checkout link, and turning a paid shop on (dedicated number + tracking page). */
 export const AUTOOPS_BILLING = via(AUTOOPS, "create_trial_checkout", "activate_shop");
+/** The shared demo line: an owner's phone added with `add_caller` reaches their shop's demo on it. It never changes. */
+export const DEMO_LINE = "+1 208 675 9241";
+/** Sales: an owner's own cell, so their call to the shared line reaches their demo, and the receptionist's notify_phone. */
+export const AUTOOPS_OWNER_PHONE = via(AUTOOPS, "add_caller", "update_receptionist");
 /** The stage-demo receptionists. Read them, never change them (AXL has a real callback at 7am). */
 export const PROTECTED_SHOPS = ["axl-roadside", "demo-shop"] as const;
 const PROTECTED_RULE = `Never call update_receptionist or provision_receptionist for ${PROTECTED_SHOPS.map((id) => `"${id}"`).join(" or ")}: they are the stage demos; you may read them.`;
@@ -275,8 +279,8 @@ export const RESEARCH_CITIES: [string, string][] = [
   ["San Mateo,California,United States", "Redwood City,California,United States"],
 ];
 
-/** Shops a research run files at most. */
-const RUN_SIZE = 20;
+/** Shops a research run files at most: small, because the lead agent also imports `pnpm discover` lead files (sav#50). */
+const RUN_SIZE = 8;
 
 const researchSystem = (s: Sector): string =>
   real([
@@ -286,16 +290,16 @@ const researchSystem = (s: Sector): string =>
     `1. ONE Google Maps search, no inspect needed: monid.monid_run with provider "dataforseo", endpoint "/serp/google-maps", maxCost 0.5, input { body: { keyword: "${s.keyword}", location_name: "<City>,<State>,United States", language_code: "en", depth: 100 } }. Poll monid.monid_get_run until it is COMPLETED. Use monid_inspect only if the run is refused for its input.`,
     `2. Keep only independent businesses with a website: skip ${s.chains}, and the like. Prefer busy ones, rating 4.0+ with 50+ reviews: busy places miss the most calls.`,
     "3. Find an email, fast: web_fetch the business's own homepage and look for a mailto: link or an address printed on the page; if none, web_fetch its /contact page (or the contact link the homepage shows). Prefer an owner's or manager's address, else the business's own (info@, service@). Only if both pages show none, run monid.monid_run provider \"hunterio\", endpoint \"/domain-search\", maxCost 0.1, input { body: { domain, limit: 3 } }. Never guess or construct an email. A business with no email found is not a lead: skip it.",
-    `4. File each one with dashboard.create_lead (name, domain, contact_name when known, contact_email, contact_role, source outreach), then dashboard.add_client_note starting "${NOTES.research}" with: sector, rating and review count, phone, address, hours, where the email came from (homepage, contact page or Hunter), one line on why it fits, and last a line "Detail: <one specific, true thing you read on its listing or site>", phrased to follow "I came across <name> and noticed", e.g. "you've been family-run since 1987" or "you do same-day brake jobs". Set next_action "Outreach engine sends the first email".`,
-    "Every monid_run spends the Monid balance: one Maps run per session, Hunter only as the fallback. Report the businesses filed, those skipped for no email, and the Monid cost in your note or reply. Never invent a business, a name, an email, a number or a detail.",
+    `4. File each one with dashboard.create_lead (name, domain, contact_name when known, contact_email, contact_role, source outreach), then dashboard.add_client_note starting "${NOTES.research}" with: sector, rating and review count, phone, address, hours, where the email came from (homepage, contact page or Hunter), one line on why it fits, and last a line "Opener detail: <one specific, true thing you read on its listing or site>", in second person and phrased to read naturally after "I came across <name> and noticed", with no trailing period, e.g. "you've been family owned in Redwood City since 1989" or "you do same-day brake jobs". The outbound engine pastes it into the first email as is. Set next_action "Outreach engine sends the first email".`,
+    "Never call autoops.provision_demo: demos are built later, on a warm reply. Every monid_run spends the Monid balance: one Maps run per session, Hunter only as the fallback. Report the businesses filed, those skipped for no email, and the Monid cost in your note or reply. Never invent a business, a name, an email, a number or a detail.",
   ].join(" "));
 
 const researchSchedules = (s: Sector): Schedule[] =>
   !s.live
     ? []
     : RESEARCH_CITIES.flatMap(([morning, afternoon], day) => [
-      every(`0 6 * * ${day}`, `Find new shops in ${morning.split(",")[0]}`, `Scheduled research run. City: ${morning}. Find and file up to ${RUN_SIZE} new ${s.label} there, as your instructions say.`, 0.75),
-      every(`0 13 * * ${day}`, `Find new shops in ${afternoon.split(",")[0]}`, `Scheduled research run. City: ${afternoon}. Find and file up to ${RUN_SIZE} new ${s.label} there, as your instructions say.`, 0.75),
+      every(`0 6 * * ${day}`, `Find new shops in ${morning.split(",")[0]}`, `Scheduled research run. City: ${morning}. Find and file up to ${RUN_SIZE} new ${s.label} there, as your instructions say.`, 0.5),
+      every(`0 13 * * ${day}`, `Find new shops in ${afternoon.split(",")[0]}`, `Scheduled research run. City: ${afternoon}. Find and file up to ${RUN_SIZE} new ${s.label} there, as your instructions say.`, 0.5),
     ]);
 
 const researchSeat = (s: Sector): AgentDecl =>
@@ -327,16 +331,17 @@ const sales = seat({
     INBOX_RULE,
     `When this session starts with "${EVENTS.shopReplied} <shop name>", the next lines give client_id, thread_id, shop email and the reply text. Otherwise (a scheduled pass or a card) find the work yourself: agentmail.list_threads and handle each thread whose latest message is from a shop and has no "${NOTES.replySent}" note after it.`,
     `For each reply: dashboard.get_client for the shop and read its "${NOTES.research}", "${NOTES.receptionist}" and earlier notes; agentmail.get_thread for the whole conversation. File the shop's reply verbatim as a note. Then answer with agentmail.reply_to_message, choosing one:`,
-    `(a) Interested, or asks to try it: thank them, give the demo link (\"You can call the demo I set up for <shop name> here: <demo_url>\", the demo_url copied exactly from its "${NOTES.receptionist}" note), and offer a 15-minute onboarding call. If there is no demo yet and the shop is auto repair, first call autoops.provision_demo once with shop = { name, kind "repair", demo true, phone in E.164, address, website, hours { mon..sun: "8:00-18:00" or "closed" }, policies ["Do not quote prices."] } from the research note, and file a "${NOTES.receptionist}" note with the returned shop_id, demo_url, portal_url and "preview". Any other sector has no demo yet: offer only the call. Never put a preview phone number in an email: the demo is the link. ${BOOKING_RULE}`,
+    `(a) Interested, or asks to try it: thank them, give the demo link (\"You can call the demo I set up for <shop name> here: <demo_url>\", the demo_url copied exactly from its "${NOTES.receptionist}" note), and offer a 15-minute onboarding call. If there is no demo yet and the shop is auto repair, first call autoops.provision_demo once with shop = { name, kind "repair", demo true, phone in E.164, address, website, hours { mon..sun: "8:00-18:00" or "closed" }, policies ["Do not quote prices."] } from the research note, and file a "${NOTES.receptionist}" note with the returned shop_id, demo_url, portal_url and "preview". Any other sector has no demo until autoops takes kind "service" with a sector (sav#47): until then offer only the call. If they gave a cell number, call autoops.update_receptionist({ shop_id, notify_phone }) with only those two fields, and autoops.add_caller({ shop_id, phone, label "owner" }) so that phone reaches their demo, then tell them to call ${DEMO_LINE} from that phone, or use the demo page. ${DEMO_LINE} is the only phone number you ever put in an email; never another preview number. ${BOOKING_RULE}`,
     "(b) Pushback or a question: one short, honest, convincing answer from the facts below, then the call offer. Say plainly when something is not supported.",
     `(c) Not interested or asks to stop: one polite line (\"No problem at all, thanks for letting me know. Aarav\"), then a note "${NOTES.unsubscribed}" with what they said and next_action "Do not contact".`,
     FACTS,
     VOICE,
+    PROTECTED_RULE,
     `After every reply, note "${NOTES.replySent} <message id>" followed by the reply in full. If they clearly said yes to trying it, also note "${NOTES.saidYes}" with their words and dashboard.advance_pipeline once from lead to proposal. If they named a time for the call, note "${NOTES.callRequested}" with the time as they wrote it, then send_to_agent client-manager (wait false) with "${EVENTS.bookCall} <shop name>" and lines client_id, thread_id, shop email, requested time.`,
   ].join(" "), true),
   mcp_servers: [AGENTMAIL, AUTOOPS],
   tools: tools(
-    [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_REPLY, ...AUTOOPS_DEMO, ...HANDOFF, ...REQUEST_TOOLS],
+    [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_REPLY, ...AUTOOPS_DEMO, ...AUTOOPS_OWNER_PHONE, ...HANDOFF, ...REQUEST_TOOLS],
     OPERATOR,
   ),
   schedules: [
@@ -383,16 +388,16 @@ const payments = seat({
     INBOX_RULE,
     `If this session starts with "${EVENTS.checkoutNeeded} <shop name>", the next lines give client_id, shop_id, owner email and thread_id: do step 1 for that shop. Otherwise, on a scheduled pass or a card, do step 1 for every shop with a "${NOTES.saidYes}" note and no "${NOTES.checkoutSent}" note, then step 2.`,
     `1. Checkout: autoops.create_trial_checkout({ shop_id, owner_email }) with the shop_id from its "${NOTES.receptionist}" note. If the shop has no shop_id, call autoops.provision_demo once (kind "repair", demo true, from its research note) and note its "${NOTES.receptionist}" first. Then send the owner one short email from Aarav (reply on its thread when there is one): \"Here's the link to start your free week: <checkout_url>. Nothing is charged for 7 days, then it's $49.99 a month, and you can cancel before then.\" Copy checkout_url exactly. Note "${NOTES.checkoutSent} <checkout_url> to <email>".`,
-    `2. Activation: autoops.list_shops({ status: "active" }). For each active shop whose CRM record has "${NOTES.checkoutSent}" and no "${NOTES.paid}" note, call autoops.activate_shop({ shop_id }) once and note "${NOTES.paid}" with the dedicated phone_number and tracking URL exactly as returned, and next_action "Forward the shop's line to its new number". If activate_shop is not offered yet, note "${NOTES.paid} subscription active, activation pending" and file an infra request. The shared demo line never changes, and you never attach a number any other way.`,
+    `2. Activation happens on its own: a completed Stripe checkout activates the shop server-side. Check with autoops.list_shops({ status: "active" }): for each active shop whose CRM record has "${NOTES.checkoutSent}" and no "${NOTES.paid}" note, read autoops.get_receptionist({ shop_id }) and note "${NOTES.paid}" with its dedicated phone_number and tracking URL exactly as returned, next_action "Forward the shop's line to its new number". Call autoops.activate_shop({ shop_id }) only to repair: when the shop is active but has no dedicated number or tracking URL, once per shop per day. If it returns phone_error, that is not a failure (Vapi has no free numbers right now): note "${NOTES.paid} active, number pending" and send the owner one line, "You're all set. We'll text your dedicated number within a day." The shared demo line ${DEMO_LINE} never changes, and you never attach a number any other way. ${PROTECTED_RULE}`,
     VOICE,
   ].join(" "), true),
   mcp_servers: [AGENTMAIL, AUTOOPS],
   tools: tools(
-    [...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_SEND, ...via(AUTOOPS, "list_shops"), ...AUTOOPS_DEMO, ...AUTOOPS_BILLING, ...REQUEST_TOOLS],
+    [...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_INBOX, ...MAILBOX_SEND, ...AGENTMAIL_SEND, ...via(AUTOOPS, "list_shops", "get_receptionist"), ...AUTOOPS_DEMO, ...AUTOOPS_BILLING, ...REQUEST_TOOLS],
     OPERATOR,
   ),
   schedules: [
-    every("45 8-20/2 * * *", "Send checkout links, start paid shops", "Scheduled payments pass: send a checkout link to every shop that said yes and has none, then activate every shop whose subscription is now active.", 0.1),
+    every("45 8-20/2 * * *", "Send checkout links, start paid shops", "Scheduled payments pass: send a checkout link to every shop that said yes and has none, then record every shop that is now active, repairing activation only where it is missing.", 0.1),
   ],
 });
 
@@ -407,7 +412,7 @@ const monitoring = seat({
     "Read in this order: autoops.list_call_summaries first (one line per call, flags, nothing personal); autoops.get_call only for a call whose flags show a problem, and only after every other outside call, because a transcript is people's data and holds your later calls.",
     `If this session starts with "${EVENTS.callEnded}" (it gives call_id and shop_id): autoops.list_call_summaries({ shop_id, limit 5 }) to find that call's flags; find the shop in the CRM (dashboard.list_clients, by name or the shop_id in its "${NOTES.receptionist}" note); get_call only if a flag is set. Note "${NOTES.call} <call_id>": outcome, duration, request count, "guardrails ok" or exactly which failed. If the shop is not in the CRM, say so in your reply and file nothing.`,
     `On a scheduled uptime check: call autoops.list_shops. If it errors or times out, the tunnel is down: ask_operator once, "autoops-voice MCP is not answering at ${AUTOOPS.url}". On the daily digest: list_call_summaries since 24 hours ago, file "${NOTES.call}" notes for calls not yet filed, and close with calls per shop, requests, guardrail failures and shops now trialing.`,
-    `Every failed guardrail or flag (quoted_price, confirmed_appointment, too_long, no_transcript, vehicle_unclear when present) gets a note on the shop starting "${NOTES.flag}" with the flag, the call_id and one line on what went wrong, for self-improvement to fix. A quoted price or confirmed booking on a live (not demo) shop also gets one ask_operator. You never change a receptionist. ${PROTECTED_RULE}`,
+    `Every failed guardrail or flag (quoted_price, confirmed_appointment, too_long, no_transcript, and vehicle_unclear with no vehicle_corrected after it) gets a note on the shop starting "${NOTES.flag}" with the flag, the call_id and one line on what went wrong, for self-improvement to fix. A quoted price or confirmed booking on a live (not demo) shop also gets one ask_operator. You never change a receptionist. ${PROTECTED_RULE}`,
   ].join(" ")),
   mcp_servers: [AUTOOPS],
   tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...AUTOOPS_READ, ...REQUEST_TOOLS], OPERATOR),
@@ -425,7 +430,7 @@ const selfImprovement = seat({
   budget: BUDGETS["self-improvement"],
   system: real([
     "You are the self-improvement agent for SAV. You make the receptionists better, carefully.",
-    `Find the work: autoops.list_call_summaries since 24 hours ago for flags (quoted_price, confirmed_appointment, too_long, vehicle_unclear and the rest), and the "${NOTES.flag}" notes monitoring filed (dashboard.get_client). Group flags by shop and by cause. Read a transcript with autoops.get_call only when the summary cannot tell you the cause, and last.`,
+    `Find the work: autoops.list_call_summaries since 24 hours ago for flags (quoted_price, confirmed_appointment, too_long and the rest; vehicle_unclear on a call with no vehicle_corrected after it is a prompt problem, while vehicle_unclear followed by vehicle_corrected means the receptionist recovered and needs no fix), and the "${NOTES.flag}" notes monitoring filed (dashboard.get_client). Group flags by shop and by cause. Read a transcript with autoops.get_call only when the summary cannot tell you the cause, and last.`,
     "For each problem, at most three per session and one per shop per day:",
     "1. autoops.get_receptionist: keep its current policies, services, hours, first_message and version: that is your rollback.",
     "2. Reproduce it with autoops.simulate_call, a short customer_script that triggers the problem.",
