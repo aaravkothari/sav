@@ -16,9 +16,9 @@
 import type { Client } from "../seed/clients.ts";
 import { feedbackLines, type CallFeedback } from "../src/bookings.ts";
 import { shopName } from "../src/leads.ts";
-import { EVENTS, NOTES } from "../templates/receptionist.ts";
+import { EVENTS, NOTES, PROTECTED_SHOPS } from "../templates/receptionist.ts";
 import { proxyFetch, type ProxyConfig } from "./proxy.ts";
-import { shopIdOf } from "./shop-routes.ts";
+import { callAutoops, shopIdOf } from "./shop-routes.ts";
 
 /** `client-manager`'s platform id (AGENTS.md, integration contract). `CLIENT_MANAGER_AGENT_ID` overrides it. */
 export const CLIENT_MANAGER_ID = "agt_wnnf7kyvhcj6v9nbsbnw9pt4dp";
@@ -32,6 +32,8 @@ export interface FeedbackDeps {
   paused?: boolean;
   agentId?: string;
   fetchImpl?: typeof fetch;
+  /** The voice server's fetch (separate from the platform's). */
+  voiceFetchImpl?: typeof fetch;
   now?: Date;
 }
 
@@ -92,22 +94,48 @@ export interface FeedbackResult {
   client: Client;
   /** (b): whether client-manager was woken. */
   onboarding: WakeResult;
-  /** (c): the voice server's feedback endpoint. `not_connected` until BeigeElk's contract lands. */
+  /** (c): the shop's call_instructions on the voice server. `not_connected` until autoops-voice #13 is live. */
   voice: "sent" | "not_connected" | "failed";
 }
 
+/** The voice server caps a shop's call_instructions at this many characters (autoops-voice #13). */
+export const CALL_INSTRUCTIONS_MAX = 1500;
+
 /**
- * The voice server's own feedback endpoint (autoops-voice, BeigeElk), which Swayam's agent is
- * building now.
- *
- * TODO(BeigeElk, autoops-voice feedback): once the endpoint and its contract are posted on Agent
- * Mail, send `feedback` for `voiceShopId` here, with the same base URL and bearer `server/
- * shop-routes.ts` uses (`autoopsUrl`, `AUTOOPS_VOICE_TOKEN`), and answer "sent" or "failed". It
- * must never send the owner's contact details or the portal token. Until then this slot is a no-op
- * and the feedback reaches the receptionist only through the `RECEPTIONIST CONFIG:` note.
+ * What the owner told us on the call, in their words, merged into the shop's existing
+ * call_instructions: the newest call goes last, and when the total passes the cap the oldest text
+ * goes first. Plain lines, no markdown headings (the voice server strips `#`).
  */
-export async function sendFeedbackToVoice(_voiceShopId: string | null, _feedback: CallFeedback, _deps: Pick<FeedbackDeps, "fetchImpl">): Promise<FeedbackResult["voice"]> {
-  return "not_connected";
+export function mergeCallInstructions(existing: string | null | undefined, lines: readonly string[], now: Date): string {
+  const block = [`From the onboarding call on ${now.toISOString().slice(0, 10)}:`, ...lines].join("\n");
+  const merged = [(existing ?? "").trim(), block].filter((x) => x !== "").join("\n\n");
+  return merged.length <= CALL_INSTRUCTIONS_MAX ? merged : merged.slice(merged.length - CALL_INSTRUCTIONS_MAX).replace(/^[^\n]*\n/, "");
+}
+
+/**
+ * (c) The voice server's per-business call instructions (autoops-voice #13, BeigeElk): free text,
+ * at most 1500 characters, rendered last in the receptionist's prompt under a fence that keeps the
+ * fixed rules on top, live on the next call. The operator submits this form, so the dashboard writes
+ * it as a person, server-side, with update_receptionist({ shop_id, call_instructions }). No crew seat
+ * writes call_instructions on its own: the approval sweep parks those calls.
+ *
+ * Feature-detected: until #13 is live, get_receptionist has no call_instructions field and this
+ * answers "not_connected", so only (a) and (b) happen. Never for the frozen stage demos.
+ */
+export async function sendFeedbackToVoice(voiceShopId: string | null, feedback: CallFeedback, deps: Pick<FeedbackDeps, "voiceFetchImpl" | "now">): Promise<FeedbackResult["voice"]> {
+  if (voiceShopId === null || (PROTECTED_SHOPS as readonly string[]).includes(voiceShopId)) return "not_connected";
+  const lines = feedbackLines(feedback);
+  if (lines.length === 0) return "not_connected";
+  try {
+    const current = (await callAutoops("get_receptionist", { shop_id: voiceShopId }, undefined, deps.voiceFetchImpl)) as { call_instructions?: string | null } | null;
+    if (current === null || typeof current !== "object" || !("call_instructions" in current)) return "not_connected";
+    const call_instructions = mergeCallInstructions(current.call_instructions, lines, deps.now ?? new Date());
+    await callAutoops("update_receptionist", { shop_id: voiceShopId, call_instructions }, undefined, deps.voiceFetchImpl);
+    return "sent";
+  } catch (e) {
+    // No voice token on this server: the voice side is simply not connected here.
+    return /not configured/.test(String((e as Error)?.message)) ? "not_connected" : "failed";
+  }
 }
 
 /**
@@ -119,8 +147,8 @@ export async function submitCallFeedback(shop: Client, feedback: CallFeedback, d
   const client = deps.addNote(shop.id, feedbackNote(shop, feedback, now), "Onboarding turns the call notes into the receptionist's setup");
   if (client === null) return null;
   const onboarding = await wakeClientManager(feedbackMessage(shop, feedback), deps);
-  // (c) The voice server's feedback endpoint: see the TODO on `sendFeedbackToVoice`.
-  const voice = await sendFeedbackToVoice(shopIdOf(shop), feedback, deps);
+  // (c) The shop's call_instructions, written as the operator (see `sendFeedbackToVoice`).
+  const voice = await sendFeedbackToVoice(shopIdOf(shop), feedback, { voiceFetchImpl: deps.voiceFetchImpl, now });
   return { client, onboarding, voice };
 }
 
