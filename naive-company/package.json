@@ -18,7 +18,8 @@
     "live:run": "node --env-file-if-exists=.env scripts/live-run.ts",
     "naive": "node --env-file-if-exists=.env node_modules/@usenaive-sdk/cli/dist/index.js",
     "ceo:guard": "node --env-file-if-exists=.env --experimental-strip-types scripts/ceo-guard.ts",
-    "worker": "node --env-file-if-exists=.env --experimental-strip-types scripts/worker.ts"
+    "worker": "node --env-file-if-exists=.env --experimental-strip-types scripts/worker.ts",
+    "crm-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/crm-import.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.10",

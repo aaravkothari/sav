@@ -42,6 +42,7 @@ export interface ShopInput {
 export interface Lead {
   name: string;
   domain?: string | null;
+  note?: string | null;
   priority: Priority;
   shop_input: ShopInput;
 }
