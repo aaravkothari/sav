@@ -10,7 +10,7 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { companyStats } from "./stats.ts";
-import { findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused, UpstreamError } from "./runs.ts";
+import { cancelRun, cleanBoard, findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused, UpstreamError } from "./runs.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
 import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
@@ -624,10 +624,15 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
       if (req.method === "POST" && req.path === "/api/company/resume") return { status: 200, body: await resumeCompany(config, store, new Date()) };
       return NO_ROUTE;
     }
-    if (req.path === "/api/runs") {
+    if (req.path === "/api/runs" || req.path.startsWith("/api/runs/")) {
       const ceo = await findCeo(config);
       if (ceo === "unavailable") return { status: 502, body: { error: "upstream unavailable" } };
       if (ceo === null) return { status: 503, body: { error: "no CEO in this organization yet: the company has not been applied (naive up)" } };
+      // Closing old work: one run, or every open card on the CEO's board.
+      if (req.method === "POST" && req.path === "/api/runs/cleanup") return { status: 200, body: await cleanBoard(config, ceo.id) };
+      const cancel = /^\/api\/runs\/(run-\d{12})\/cancel$/.exec(req.path);
+      if (req.method === "POST" && cancel) return { status: 200, body: await cancelRun(config, ceo.id, cancel[1]!) };
+      if (req.path !== "/api/runs") return NO_ROUTE;
       if (req.method === "GET") {
         const runs = await listRuns(config, ceo.id);
         return runs === null ? { status: 502, body: { error: "upstream unavailable" } } : { status: 200, body: { ceo_id: ceo.id, runs } };
