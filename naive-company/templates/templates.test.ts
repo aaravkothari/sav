@@ -382,8 +382,11 @@ describe("blank", () => {
       expect(system).toMatch(/ONE Google Maps search/);
       expect(system).toMatch(/depth: 100/);
       expect(system.indexOf("web_fetch the business's own homepage")).toBeLessThan(system.indexOf('provider "hunterio"'));
-      expect(system).toMatch(/Only if both pages show none/);
-      expect(system).toMatch(/A business with no email found is not a lead: skip it/);
+      expect(system).toMatch(/FILE EACH ONE AS SOON AS YOU HAVE ITS EMAIL/);
+      expect(system).toMatch(/At most two fetches per business/);
+      expect(system).toMatch(/no email means not a lead, so skip it/);
+      expect(system).toMatch(/never sleep or wait/);
+      expect(system).toMatch(/Stop when you have filed \d+, or after looking at 15 businesses/);
       expect(system).toMatch(/"Opener detail: <one specific, true thing.*in second person.*I came across <name> and noticed.*no trailing period/);
       expect(system).toMatch(/Never call autoops\.provision_demo/);
       expect(seatOf(sector.seat).tools?.configs["autoops.provision_demo"]).toBeUndefined();
