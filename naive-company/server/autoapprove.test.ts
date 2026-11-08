@@ -47,6 +47,12 @@ describe("review of #52: allowlist, not approve-everything", () => {
     expect(ruleFor(tool("agentmail.forward_message", { to: "x@y.z" }), session, crm)).toBeNull();
   });
 
+  it("treats a board_write with no card_id as a write to the session's own card", () => {
+    expect(ruleFor(tool("board_write", { op: "update", status: "done" }), session, crm)).toBe("note on its own card");
+    expect(ruleFor(tool("board_write", { op: "update", status: "done" }), { ...session, metadata: null }, crm)).toBeNull();
+    expect(ruleFor(tool("board_write", { op: "assign" }), session, crm)).toBeNull();
+  });
+
   it("approves what the crew needs", () => {
     expect(ruleFor(tool("monid.monid_run", { provider: "anyapi", endpoint: "/maps.contacts" }), session, crm)).toBe("Maps contacts search");
     expect(ruleFor(tool("autoops.create_trial_checkout", { shop_id: "x" }), session, crm)).not.toBeNull();
