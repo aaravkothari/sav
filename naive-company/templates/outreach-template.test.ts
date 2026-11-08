@@ -86,3 +86,15 @@ describe("the general template (non-auto sectors)", () => {
     expect(placeWord("plumbing")).toBe("business");
   });
 });
+
+import { emailShopName } from "./outreach-template.ts";
+describe("emailShopName", () => {
+  it("writes the name a person would, not the listing title", () => {
+    expect(emailShopName("Michael & Company Auto Body And Auto Repair Shop in San Jose, Ca.")).toBe("Michael & Company");
+    expect(emailShopName("A-1 Imports Autoworks - Auto Repair Shop In San Rafael")).toBe("A-1 Imports Autoworks");
+    expect(emailShopName("JR Automotive - San Francisco Auto Repair Services")).toBe("JR Automotive");
+    expect(emailShopName("Akins Auto Repair")).toBe("Akins Auto Repair");
+    expect(emailShopName("Chestnut Auto Repairs & Towing")).toBe("Chestnut Auto Repairs & Towing");
+    expect(emailShopName("Felix's Auto Service")).toBe("Felix's Auto Service");
+  });
+});

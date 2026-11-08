@@ -111,9 +111,28 @@ const fill = (template: string, values: Record<string, string>) =>
     return value;
   });
 
+/**
+ * The shop's name as a person would write it, not its Google listing title: "Michael & Company Auto
+ * Body And Auto Repair Shop in San Jose, Ca." -> "Michael & Company". The part before a dash or bar,
+ * no "…, Complete Auto Repair" tail, no trailing "in <City>"; and on a long name (6+ words) a trailing
+ * run of trade words. A short name like "Akins Auto Repair" is kept whole.
+ */
+export function emailShopName(name: string): string {
+  let n = name.trim();
+  const parts = n.split(/\s+[-–—|]\s+/);
+  if (parts.length > 1 && parts[0]!.length >= 3) n = parts[0]!;
+  n = n.replace(/,\s+(?:complete\s+|full[- ]service\s+)?(?:auto(?:motive)?|car)\b[^,]*$/i, "");
+  n = n.replace(/\s+(?:shop\s+)?in\s+[A-Z][A-Za-z .'-]+?(?:,\s*(?:CA|Ca|California)\.?)?\.?$/i, "");
+  if (n.split(/\s+/).length >= 6) {
+    const trimmed = n.replace(/(?:\s+(?:auto|automotive|body|repair|shop|and|&|service|services|center|care|tires?|smog))+$/i, "");
+    if (trimmed.split(/\s+/).length >= 2 && trimmed.length >= 6) n = trimmed;
+  }
+  return n.trim() || name.trim();
+}
+
 /** The cold email for one shop: the template exactly, filled in. Null when there is no detail to fill. */
 export function renderColdEmail(lead: ColdEmailLead): { subject: string; text: string } | null {
-  const shop = lead.shop_name.trim();
+  const shop = emailShopName(lead.shop_name);
   const detail = lead.personalized_detail.trim().replace(/[\s.]+$/, "");
   if (shop === "" || detail === "") return null;
   const values = { first_name: firstName(lead.contact_name), shop_name: shop, personalized_detail: detail, place: placeWord(lead.sector) };
