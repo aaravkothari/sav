@@ -1,18 +1,21 @@
-import { ArrowRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { apiMessage, apiSend, useApi } from "../api";
-import { PageHeader, STAGE_LABEL } from "../components/kit";
-import { STAGE_ORDER, TEMPLATE, nextStage, type Client } from "../data";
+import { apiMessage, apiSend } from "../api";
+import { PageHead, useLeads } from "../components/sav";
+import type { Client } from "../data";
+import { ago, STATUS_LABEL, STATUSES, type Lead, type LeadStatus } from "../leads";
 
-/** The pipeline: lead → proposal → active → churned. Every column is the CRM's own rows — the
- * same rows the sales agent writes over MCP — so a board with nothing on it means nobody has
- * filed a lead yet. Advancing waits for the server and takes the row it answers with; a refused
- * move says so instead of moving on screen and reverting on the next load. */
+/**
+ * The pipeline as a board: one column per step a shop takes, from researched to paying, each shop
+ * a card that says where it is, who to talk to and what happens next. The columns are derived from
+ * the crew's notes (`src/leads.ts`), so a shop moves on its own the moment an agent files the next
+ * step. A card opens the shop; adding a shop by hand files it as a lead.
+ */
 
 const BLANK = { name: "", domain: "", contactName: "", contactEmail: "", contactRole: "" };
 
-/** How a lead's source reads on its row: the provenance chip, as `via email` does elsewhere. */
+/** How a lead's source reads on its card. */
 const SOURCE_LABEL: Record<NonNullable<Client["source"]>, string> = {
   site: "via website",
   manual: "added by you",
@@ -22,57 +25,52 @@ const SOURCE_LABEL: Record<NonNullable<Client["source"]>, string> = {
 };
 
 function sourceText(c: Client, clients: readonly Client[]): string | null {
-  if (!c.source) return null;
+  if (!c.source || c.source === "outreach") return null;
   const referrer = c.source === "referral" ? clients.find((row) => row.id === c.referredBy)?.name : undefined;
   return referrer ? `referred by ${referrer}` : SOURCE_LABEL[c.source];
 }
 
+function Tile({ lead, clients }: { lead: Lead; clients: readonly Client[] }) {
+  const c = lead.client;
+  const source = sourceText(c, clients);
+  return (
+    <Link to={`/leads/${c.id}`} className="sav-tile">
+      <div className="name">{c.name}</div>
+      <div className="meta">{[lead.city, lead.sector].filter(Boolean).join(" · ")}</div>
+      {c.contact.name || c.contact.email ? <div className="meta">{c.contact.name || c.contact.email}</div> : null}
+      {source || (lead.demoReady && lead.rank < 3) ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {source ? <span className="sav-tag slate">{source}</span> : null}
+          {lead.demoReady && lead.rank < 3 ? <span className="sav-tag plain">demo ready</span> : null}
+        </div>
+      ) : null}
+      {c.nextAction ? <div className="next line-clamp-3">{c.nextAction}</div> : null}
+      {lead.lastAt ? <div className="mt-2 sav-fine">{ago(lead.lastAt)}</div> : null}
+    </Link>
+  );
+}
+
 export function Crm() {
-  const { data: clients, error, setData, setError } = useApi<Client[]>("/clients");
+  const { leads, clients, error, setClients } = useLeads();
   const [form, setForm] = useState<typeof BLANK | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const advance = async (c: Client) => {
-    const to = nextStage(c.stage);
-    if (to === null) return;
-    try {
-      // Graduating into active is onboarding: the server also provisions the client's agents.
-      const updated = to === "active"
-        ? (await apiSend<{ client: Client }>("POST", `/clients/${c.id}/onboard`)).client
-        : await apiSend<Client>("POST", `/clients/${c.id}/advance`);
-      setData((clients ?? []).map((row) => (row.id === c.id ? updated : row)));
-    } catch (err: unknown) {
-      setError(apiMessage(err));
-    }
-  };
-
-  /**
-   * The door into an empty CRM.
-   *
-   * The route has always existed — it is the one the public site's contact form posts a lead
-   * through — and no screen an operator could reach ever offered it, so a new agency opened on an
-   * empty board with nothing to press: the first client could only be created by an agent that had
-   * no reason to run yet, or by hand over HTTP.
-   */
   const create = async (fields: typeof BLANK) => {
     setSaving(true);
-    setError(null);
+    setFormError(null);
     try {
       const created = await apiSend<Client>("POST", "/leads", {
         name: fields.name.trim(),
         domain: fields.domain.trim(),
-        contact: {
-          name: fields.contactName.trim(),
-          email: fields.contactEmail.trim(),
-          role: fields.contactRole.trim(),
-        },
+        contact: { name: fields.contactName.trim(), email: fields.contactEmail.trim(), role: fields.contactRole.trim() },
         // The server takes this only from a signed-in operator; the public form's leads are `site`.
         source: "manual",
       });
-      setData([...(clients ?? []), created]);
+      setClients([...(clients ?? []), created]);
       setForm(null);
     } catch (err: unknown) {
-      setError(apiMessage(err));
+      setFormError(apiMessage(err));
     } finally {
       setSaving(false);
     }
@@ -82,118 +80,76 @@ export function Crm() {
     && form.name.trim() !== "" && form.domain.trim() !== ""
     && form.contactName.trim() !== "" && form.contactEmail.trim() !== "";
 
+  const columns: LeadStatus[] = [...STATUSES, ...((leads ?? []).some((l) => l.status === "bounced") ? ["bounced" as const] : [])];
+
   return (
-    <div className="pane-in">
-      <PageHeader
-        title="CRM"
-        subtitle={TEMPLATE.words.crmSubtitle}
+    <div className="pane-in" style={{ maxWidth: "96rem" }}>
+      <PageHead
+        title="Pipeline"
+        sub="Every shop by the step it has reached. Cards move on their own as the crew files each step."
         actions={
-          <div className="flex items-center gap-3">
-            {error ? <span className="text-xs text-fail">{error}</span> : null}
-            <button type="button" className="btn btn-primary btn-sm shrink-0" onClick={() => setForm(form === null ? BLANK : null)}>
-              <Plus size={14} strokeWidth={1.75} /> {form === null ? "Add a client" : "Cancel"}
+          <>
+            {formError ? <span className="text-[13px] text-fail">{formError}</span> : null}
+            <button type="button" className="btn btn-ghost" onClick={() => setForm(form === null ? BLANK : null)}>
+              <Plus size={15} strokeWidth={1.6} /> {form === null ? "Add a shop" : "Cancel"}
             </button>
-          </div>
+          </>
         }
       />
 
       {form !== null ? (
         <form
-          className="panel mb-4 p-4"
+          className="sav-card mb-5"
           onSubmit={(e) => {
             e.preventDefault();
             if (ready && !saving) void create(form);
           }}
         >
-          <div className="grid grid-cols-2 gap-3">
+          <h2 className="sav-h3 mb-3">Add a shop by hand</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
             {([
-              ["name", "Company", "Acme Dental"],
-              ["domain", "Domain", "acmedental.example"],
+              ["name", "Shop", "Acme Dental"],
+              ["domain", "Website", "acmedental.example"],
               ["contactName", "Contact", "Jordan Lee"],
               ["contactEmail", "Contact email", "jordan@acmedental.example"],
               ["contactRole", "Role (optional)", "Owner"],
             ] as const).map(([key, label, placeholder]) => (
               <label key={key} className="block">
                 <span className="field-label">{label}</span>
-                <input
-                  className="input"
-                  placeholder={placeholder}
-                  value={form[key]}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                />
+                <input className="input" placeholder={placeholder} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
               </label>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-3">
-            <button type="submit" className="btn btn-primary btn-sm" disabled={!ready || saving}>
-              {saving ? "Filing…" : "File as a lead"}
-            </button>
-            <span className="field-hint">
-              They start as a lead. Move them along the board yourself, or let the sales agent work them.
-            </span>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button type="submit" className="btn btn-primary" disabled={!ready || saving}>{saving ? "Filing…" : "File as a lead"}</button>
+            <span className="sav-fine">It starts as researched. The sales agent picks it up from there.</span>
           </div>
         </form>
       ) : null}
 
-      <p className="absence mb-4">{TEMPLATE.words.onboarding}</p>
-
-      {clients === null ? (
-        <div className="absence">{error ? "The pipeline could not be read, so this is not the answer — retry once the error above is resolved." : "Loading the pipeline…"}</div>
-      ) : clients.length === 0 && form === null ? (
-        <div className="panel p-6 text-center">
-          <p className="font-medium">No clients yet.</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-ink-2">
-            Nothing has been filed here — not by you, not by the public site's contact form, not by the sales agent. Add the
-            first one and the rest of the agency has something to work on.
-          </p>
-          <button type="button" className="btn btn-primary btn-sm mt-4" onClick={() => setForm(BLANK)}>
-            <Plus size={14} strokeWidth={1.75} /> Add your first client
+      {leads === null ? (
+        <p className="sav-sub">{error ? `The pipeline could not be read: ${error}.` : "Loading the pipeline…"}</p>
+      ) : leads.length === 0 && form === null ? (
+        <div className="sav-card text-center">
+          <p className="sav-h3">No shops yet.</p>
+          <p className="mx-auto mt-2 max-w-md sav-sub">Research files shops here as it finds them. You can also add one you already know.</p>
+          <button type="button" className="btn btn-primary mt-4" onClick={() => setForm(BLANK)}>
+            <Plus size={15} strokeWidth={1.6} /> Add your first client
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-3">
-          {STAGE_ORDER.map((stage) => {
-            const rows = clients.filter((c) => c.stage === stage);
+        <div className="sav-board">
+          {columns.map((status) => {
+            const rows = leads.filter((l) => l.status === status).sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? "") || a.client.name.localeCompare(b.client.name));
             return (
-              <section key={stage}>
-                <div className="eyebrow mb-2">
-                  {STAGE_LABEL[stage]}
-                  <span className="eyebrow-aside">{rows.length}</span>
+              <section key={status} className="sav-col" aria-label={STATUS_LABEL[status]}>
+                <div className="sav-col-head">
+                  <h2 className="sav-h3">{STATUS_LABEL[status]}</h2>
+                  <span className="n">{rows.length}</span>
                 </div>
-                {rows.length === 0 ? (
-                  <div className="absence">Nobody here.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {rows.map((c) => (
-                      <div key={c.id} className="panel p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          {c.stage === "active" ? (
-                            <Link to={`/clients/${c.id}`} className="truncate font-medium underline-offset-2 hover:underline">{c.name}</Link>
-                          ) : (
-                            <span className="truncate font-medium">{c.name}</span>
-                          )}
-                          <span className="font-mono text-xs text-ink-3">{c.domain}</span>
-                        </div>
-                        <div className="mt-0.5 text-xs text-ink-2">
-                          {c.contact.name} · {c.contact.role} · <span className="font-mono">{c.contact.email}</span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-1.5">
-                          {sourceText(c, clients) ? <span className="chip chip-via">{sourceText(c, clients)}</span> : null}
-                          {c.services.map((s) => (
-                            <span key={s} className="chip chip-plain">{s}</span>
-                          ))}
-                        </div>
-                        {c.notes.length > 0 ? <p className="mt-2 text-xs text-ink-2">{c.notes[0]}</p> : null}
-                        {c.nextAction ? <p className="mt-1 text-xs text-ink-3">Next: {c.nextAction}</p> : null}
-                        {nextStage(c.stage) !== null ? (
-                          <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={() => void advance(c)}>
-                            <ArrowRight size={14} strokeWidth={1.75} /> Move to {STAGE_LABEL[nextStage(c.stage)!].toLowerCase()}
-                          </button>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="sav-col-body max-h-[72vh] overflow-y-auto">
+                  {rows.length === 0 ? <div className="sav-empty">No shop here yet.</div> : rows.map((l) => <Tile key={l.client.id} lead={l} clients={clients ?? []} />)}
+                </div>
               </section>
             );
           })}

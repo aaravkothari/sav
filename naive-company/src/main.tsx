@@ -1,5 +1,5 @@
-import "@fontsource-variable/inter";
 import "./app.css";
+import "./sav.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
@@ -16,6 +16,9 @@ import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Clients } from "./screens/Clients";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
+import { Leads } from "./screens/Leads";
+import { Overview } from "./screens/Overview";
+import { Shop } from "./screens/Shop";
 import { LaunchReview } from "./screens/LaunchReview";
 import { Runs } from "./screens/Runs";
 import { ProductAudit } from "./screens/ProductAudit";
@@ -30,7 +33,10 @@ const router = createBrowserRouter([
     path: "/",
     Component: Shell,
     children: [
-      { index: true, Component: Home },
+      { index: true, Component: Overview },
+      { path: "leads", Component: Leads },
+      { path: "leads/:id", Component: Shop },
+      { path: "setup", Component: Home },
       { path: "runs", Component: Runs },
       { path: "launch-review", Component: LaunchReview },
       { path: "product-audit", Component: ProductAudit },

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "AI receptionist company for independent auto repair shops, on the Na\u00efve agency blueprint (blank template). Public site at /, operator dashboard under /app, a placeholder crew coordinated by the CEO.",
+  "description": "AI receptionist company for independent auto repair shops, on the Naïve agency blueprint (blank template). Public site at /, operator dashboard under /app, a placeholder crew coordinated by the CEO.",
   "scripts": {
     "dev": "vite",
     "build": "vite build && pnpm api:build",
@@ -19,7 +19,10 @@
     "naive": "node --env-file-if-exists=.env node_modules/@usenaive-sdk/cli/dist/index.js",
     "ceo:guard": "node --env-file-if-exists=.env --experimental-strip-types scripts/ceo-guard.ts",
     "worker": "node --env-file-if-exists=.env --experimental-strip-types scripts/worker.ts",
-    "crm-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/crm-import.ts"
+    "crm-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/crm-import.ts",
+    "engine": "node --env-file-if-exists=.env --experimental-strip-types scripts/engine.ts",
+    "lead-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/lead-import.ts",
+    "discover": "node --env-file-if-exists=.env --experimental-strip-types scripts/discover.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.10",

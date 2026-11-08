@@ -19,6 +19,10 @@ export interface CompanyStats {
   free_week_yes: number;
   calls_reviewed: number;
   emails_sent: number;
+  /** `BOUNCED:` notes: emails that came back undelivered (the engine's ramp steps down on them). */
+  bounces: number;
+  /** `REPLY RECEIVED:` notes: replies shops sent us. */
+  replies: number;
   self_improvement_proposals: null;
   updated_at: string;
 }
@@ -31,6 +35,8 @@ const PREFIX = {
   replied: "REPLY SENT",
   yes: "SAID YES:",
   call: "CALL:",
+  bounced: "BOUNCED:",
+  received: "REPLY RECEIVED",
 } as const;
 
 const notesOf = (client: Client) => client.notes.map((note) => note.trimStart());
@@ -47,6 +53,8 @@ export function companyStats(clients: readonly Client[], now: Date): CompanyStat
     free_week_yes: shopsWith(clients, PREFIX.yes),
     calls_reviewed: notesWith(clients, PREFIX.call),
     emails_sent: notesWith(clients, PREFIX.sent) + notesWith(clients, PREFIX.replied),
+    bounces: notesWith(clients, PREFIX.bounced),
+    replies: notesWith(clients, PREFIX.received),
     self_improvement_proposals: null,
     updated_at: now.toISOString(),
   };

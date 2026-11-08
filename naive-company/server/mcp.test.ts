@@ -121,6 +121,23 @@ describe("mcp tools", () => {
     expect(JSON.stringify(body)).not.toContain("Pat Owner");
   });
 
+  it("create_lead skips a shop whose phone (last 10 digits) is already filed, and keeps the phone on a new one", async () => {
+    const store = freshStore();
+    const first = (await handleMcp(call("create_lead", { name: "Jim Davis Automotive", domain: "jimdavis.example", phone: "(650) 493-0433" }), store, null)) as CallResult;
+    const filed = JSON.parse(first.result.content[0]!.text) as { id: string; phone?: string };
+    expect(filed.phone).toBe("(650) 493-0433");
+    const before = store.read().clients.length;
+    const again = (await handleMcp(call("create_lead", { name: "Jim Davis Auto (Yelp)", domain: "yelp-listing.example", phone: "+1 650.493.0433" }), store, null)) as CallResult;
+    expect(JSON.parse(again.result.content[0]!.text)).toMatchObject({ id: filed.id, already_filed: true });
+    expect(store.read().clients.length).toBe(before);
+    // A short number is not a key, and a phone-only lead is a lead, not the agency's own record.
+    const other = (await handleMcp(call("create_lead", { name: "Corner Garage", phone: "493-0433" }), store, null)) as CallResult;
+    const corner = JSON.parse(other.result.content[0]!.text) as { id: string; already_filed?: boolean; name: string };
+    expect(corner.already_filed).toBeUndefined();
+    expect(corner.name).toBe("Corner Garage");
+    expect(store.read().clients.length).toBe(before + 1);
+  });
+
   it("create_lead needs only a name: the agency's own record is filed without a contact to ask for", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio" }), store, null)) as CallResult;

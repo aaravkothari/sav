@@ -9,7 +9,7 @@
  * Nothing here touches a socket, a file or a database: the store arrives through `ctx.store()`,
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
-import { autoApprove } from "./autoapprove.ts";
+import { autoApprove, HARD_LIMITS } from "./autoapprove.ts";
 import { companyStats } from "./stats.ts";
 import { cancelRun, cleanBoard, findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused, UpstreamError } from "./runs.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
@@ -19,6 +19,7 @@ import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 import { FILE_ID } from "../seed/posts.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
 import { articlePath, publishedArticle, renderArticle, renderHome } from "./public-site.ts";
+import { shopRoutes } from "./shop-routes.ts";
 
 export interface ApiRequest {
   /** Upper-case. */
@@ -78,6 +79,8 @@ export interface ApiContext {
   local: boolean;
   /** The built public shell, used to serve crawlable metadata and permanent article pages. */
   publicShell?: () => Promise<string>;
+  /** SAV's own public page (`landing/index.html`). When set, `/` serves it instead of the blueprint's site. */
+  landingPage?: () => Promise<string>;
 }
 
 /**
@@ -244,7 +247,12 @@ async function mcpRoute(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   // unreachable: it is what the platform dials to decide the endpoint can serve its tools.
   const store = await ctx.store();
   if (req.method !== "POST") return { status: 405, body: { error: "POST only" } };
-  if (!authorized(store, req.headers.authorization, ctx.mcpToken)) {
+  // The operator's `DASHBOARD_TOKEN` also opens `/mcp`, so the operator's own scripts (the outbound
+  // engine, crm-import) can file leads and notes on a deployment, where minting is local-only. One
+  // way only: the agents' `VETTA_MCP_TOKEN` still never opens `/api/*`.
+  const bearer = bearerOf(req.headers.authorization);
+  const operator = !!ctx.dashboardToken && bearer !== null && sameSecret(bearer, ctx.dashboardToken);
+  if (!operator && !authorized(store, req.headers.authorization, ctx.mcpToken)) {
     return { status: 401, body: { error: "missing or invalid bearer token" } };
   }
   // The public site and `/mcp` are one app, so this request's host is the site a referral link names.
@@ -318,6 +326,9 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   const articles = store === null ? [] : store.read().posts.filter((post) => publishedArticle(post));
   if (path === "/") {
     if (method !== "GET") return NOT_ALLOWED;
+    if (ctx.landingPage !== undefined) {
+      return { status: 200, text: await ctx.landingPage(), headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } };
+    }
     if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
     return {
       status: 200,
@@ -632,7 +643,7 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
     if (req.path === "/api/approvals/auto") {
       const store = await ctx.store();
       if (req.method === "POST") return { status: 200, body: await autoApprove(config, store, new Date()) };
-      if (req.method === "GET") return { status: 200, body: { log: [...(store.read().auto_approvals ?? [])].reverse() } };
+      if (req.method === "GET") return { status: 200, body: { log: [...(store.read().auto_approvals ?? [])].reverse(), hard_limits: HARD_LIMITS } };
       return NOT_ALLOWED;
     }
     if (req.path === "/api/runs" || req.path.startsWith("/api/runs/")) {
@@ -764,7 +775,7 @@ export const isLoopback = (remoteAddress: string | undefined): boolean =>
  *     `isLoopback` on the request's own socket; the deployed entry hard-codes it false, so no
  *     header, host or proxy hop a caller controls can claim it.
  *
- * `/mcp` never reaches here: the agents' bearer is its own credential and is unchanged.
+ * `/mcp` never reaches here: it takes the agents' bearer, and the operator's `DASHBOARD_TOKEN` too.
  */
 function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
   if (!ctx.dashboardToken) return ctx.local ? null : NO_GATE;
@@ -827,5 +838,5 @@ export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<A
   // Before the route table, so an unauthenticated caller cannot even map which routes exist.
   const denied = apiGate(req, ctx);
   if (denied !== null) return denied;
-  return (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
+  return (await shopRoutes(req, ctx)) ?? (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
 }

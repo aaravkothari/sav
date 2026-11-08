@@ -1,0 +1,90 @@
+/**
+ * The first cold email, verbatim from Aarav (Nov 7). The outbound engine (`scripts/engine.ts`)
+ * fills it in code; no AI writes it. Nothing comes after the signature: no footer, no links.
+ *
+ * `{{personalized_detail}}` comes only from the shop's `RESEARCH:` note. A shop with no usable
+ * detail is skipped, never given an invented one.
+ */
+
+export const OUTREACH_TEMPLATE = `Hi {{first_name}},
+
+I came across {{shop_name}} and noticed {{personalized_detail}}.
+
+The Automotive Service Association reportedly found that nearly 1 in 4 calls to auto repair shops go unanswered when staff are busy. How many potential customers are you losing when nobody picks up or your shop is closed?
+
+We're building SAV to answer those calls and book appointments 24/7.
+
+Would you be open to trying it for free?
+
+Best,
+Aarav`;
+
+export const OUTREACH_SUBJECT = "Missed calls at {{shop_name}}";
+
+export interface ColdEmailLead {
+  shop_name: string;
+  /** The CRM contact's name, as filed; anything that is not a person's name reads as "there". */
+  contact_name?: string | null;
+  /** The detail from the RESEARCH note, already cleaned by `personalizedDetail`. */
+  personalized_detail: string;
+}
+
+/** Mailbox words people file as a contact's name that are not a name. */
+const NOT_A_NAME = new Set([
+  "info", "service", "services", "office", "admin", "administrator", "team", "contact", "sales", "support", "hello", "hi",
+  "front", "desk", "frontdesk", "manager", "owner", "shop", "mail", "email", "booking", "bookings", "appointments", "parts",
+  "general", "customer", "customers", "reception", "receptionist", "staff", "the", "dear", "service-desk", "noreply", "no-reply",
+  "unknown", "n/a", "na", "none", "null", "auto", "repair", "garage", "accounts", "billing", "careers", "jobs", "marketing",
+]);
+
+/** The contact's first name, or "there" when there is none or it is not a person's name. */
+export function firstName(contactName: string | null | undefined): string {
+  const first = (contactName ?? "").trim().split(/\s+/)[0] ?? "";
+  if (first.length < 2 || first.includes("@") || NOT_A_NAME.has(first.toLowerCase())) return "there";
+  if (!/^[\p{L}][\p{L}'’-]*$/u.test(first)) return "there";
+  return first === first.toLowerCase() || first === first.toUpperCase() ? first[0]!.toUpperCase() + first.slice(1).toLowerCase() : first;
+}
+
+/** Labels a research note may put the opener detail under, most specific first. */
+const DETAIL_LABELS = [/personali[sz]ed detail\s*:\s*/i, /opener detail\s*:\s*/i, /\bdetail\s*:\s*/i];
+
+/** Words that make a "detail" an instruction to the writer rather than a fact about the shop. */
+const NOT_A_DETAIL = /@|https?:\/\/|\bhunter\b|\bopener\b|\breference\b|\baddress (him|her|them|\w+) as\b|\bcontact (them|by)\b|\bmention\b|\bnatural\b|\bno email\b|\bverified\b/i;
+
+/** The first word keeps its capital when it is an acronym, a brand with an inner capital, or a proper noun people always capitalise. */
+const KEEP_CAPITAL = /^(?:[A-Z0-9]{2,}|[A-Z][a-z]+[A-Z]\w*|I|Google|Yelp|Facebook|Instagram|ASE|AAA|BMW|Toyota|Honda|Ford|Tesla|Subaru|Mercedes|Audi|Lexus|Nissan|Volvo|Porsche)\b/;
+
+/**
+ * The opener detail from a RESEARCH note, ready for "noticed {{…}}.": first letter lowered, no
+ * trailing period. Null when the note has no detail, or the detail is an instruction (an email
+ * address, "Hunter found…", "a natural opener") rather than something observed about the shop.
+ */
+export function personalizedDetail(researchNote: string | null | undefined): string | null {
+  const note = researchNote ?? "";
+  for (const label of DETAIL_LABELS) {
+    const m = label.exec(note);
+    if (!m) continue;
+    let detail = note.slice(m.index + m[0].length).split(/\r?\n/)[0]!.trim();
+    detail = detail.replace(/[\s.]+$/, "").trim();
+    if (detail.length < 8 || detail.length > 220 || NOT_A_DETAIL.test(detail)) return null;
+    if (!KEEP_CAPITAL.test(detail)) detail = detail[0]!.toLowerCase() + detail.slice(1);
+    return detail;
+  }
+  return null;
+}
+
+const fill = (template: string, values: Record<string, string>) =>
+  template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
+    const value = values[key];
+    if (value === undefined) throw new Error(`no value for {{${key}}}`);
+    return value;
+  });
+
+/** The cold email for one shop: the template exactly, filled in. Null when there is no detail to fill. */
+export function renderColdEmail(lead: ColdEmailLead): { subject: string; text: string } | null {
+  const shop = lead.shop_name.trim();
+  const detail = lead.personalized_detail.trim().replace(/[\s.]+$/, "");
+  if (shop === "" || detail === "") return null;
+  const values = { first_name: firstName(lead.contact_name), shop_name: shop, personalized_detail: detail };
+  return { subject: fill(OUTREACH_SUBJECT, values), text: fill(OUTREACH_TEMPLATE, values) };
+}

@@ -92,6 +92,10 @@ pnpm build && pnpm serve     # site at http://localhost:8789/, dashboard at /app
 
 The CRM and the work queue are the app's own store. Locally it starts with the plainly-fake demo shops (`data/` is git-ignored; delete it to reseed). Screens that need the platform say *not configured* until `NAIVE_API_KEY` is in `.env`.
 
+## The outbound engine (`pnpm engine`)
+
+`scripts/engine.ts` runs three jobs with no LLM: the cold-email sender (every 30 min, Aarav's template in `templates/outreach-template.ts`, ramp 25 → 50 → 100 a tick, 2,500 a day), the inbox watcher (every 2 min: files `REPLY RECEIVED:` / `BOUNCED:` / `AUTO-REPLY:` notes, wakes `client-manager` with `SHOP REPLIED:`), and the approval sweep (every 15 s, `POST /api/approvals/auto`, whose hard limits live in `server/autoapprove.ts`). Dry run by default; `--once` runs one tick of each; `--execute` sends. State and the sent ledger live in `data/` (git-ignored). The header comment of the script has the details and env vars.
+
 ## Deploy to Naïve
 
 This creates real resources, and agents spend real USD from prepaid credits once they run. These steps follow https://usenaive.ai/skill.md.

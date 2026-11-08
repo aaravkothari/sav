@@ -84,40 +84,40 @@
      app set `--card` equal to the ground and then reached for `bg-white` by hand
      on the surfaces it wanted lifted — the composer, the menus, the cards. This
      names that white once, so a card is a token rather than a habit. */
-  --ground: #fafaf8;
-  --surface: #ffffff;
-  --surface-sunken: #f2f2f0;
-  --surface-hover: #f5f5f3;
-  --surface-active: #ebebe7;
+  --ground: #f3f2e6;
+  --surface: #faf9f1;
+  --surface-sunken: #e9e7d8;
+  --surface-hover: #ecebdd;
+  --surface-active: #e3e1cf;
   /* Selected: a 5% ink wash. No card, no line, no lift. */
-  --surface-selected: rgba(0, 0, 0, 0.05);
+  --surface-selected: rgba(31, 58, 61, 0.08);
 
   /* NEAR-BLACK, THE DOCS' OWN PRIMARY. The docs.json sets `primary: #111114`;
      the studio shipped `#0a0a0a`. This mock is meant to feel like the same
      product as the docs, so the ink is the docs' value. */
-  --ink: #111114;
-  --ink-2: #666666;
-  --ink-3: #8e8a83;
-  --ink-inverse: #fafaf8;
+  --ink: #0c0a09;
+  --ink-2: #57514d;
+  --ink-3: #7c766e;
+  --ink-inverse: #f3f2e6;
 
-  --line: rgba(0, 0, 0, 0.1);
-  --line-strong: rgba(0, 0, 0, 0.18);
+  --line: #d9d6c3;
+  --line-strong: #c3bfa8;
 
   /* ── 2. TONE. The whole colour budget, and every one of them is a fact. ── */
 
   /* CREDIT. A sealed check, observed passing, outside the agent's reach. */
-  --tone-credit: #11724a;
-  --tone-credit-soft: #e7f3ec;
+  --tone-credit: #2f7a4f;
+  --tone-credit-soft: #e2efe3;
 
   /* SPENT. Observed passing, and it credits nothing. Deliberately colourless:
      a workspace check may debit and can never credit, so it may never wear the
      colour that means credit. */
-  --tone-spent: #6c675e;
-  --tone-spent-soft: #f0eeea;
+  --tone-spent: #6f6a60;
+  --tone-spent-soft: #e9e7d8;
 
   /* FAILED. An exit code that was not zero. */
-  --tone-fail: #b3261e;
-  --tone-fail-soft: #fbeceb;
+  --tone-fail: #9b3a26;
+  --tone-fail-soft: #f3e1d8;
 
   /* WAITING, AND THE RUNNER FAULTING. Two states, one colour, and the colour is
      YELLOW: somebody has to look at this, and nothing has failed.
@@ -130,21 +130,21 @@
      IT IS NEVER TEXT. At this chroma yellow is illegible on the ground, so the
      hue lives on MARKS and the words beside them are ink. A count that had to be
      brown to be legible was a colour choice pretending to be a state. */
-  --tone-fault: #eab308;
-  --tone-fault-soft: #fbeec2;
+  --tone-fault: #b8862f;
+  --tone-fault-soft: #efe3c6;
 
   /* ABSENT. Never ran, never sent, never measured. NO HUE, EVER. */
-  --tone-absent: #a19c92;
+  --tone-absent: #a19c8a;
 
   /* The one action colour: ink on the page, page on the ink. */
-  --action: #111114;
-  --on-action: #fafaf8;
+  --action: #1f3a3d;
+  --on-action: #f3f2e6;
 
   /* Focus is a real, visible, keyboard-first affordance — AND IT IS INK.
      It was `#0a63c9`, a blue, which was the last hue on this page that meant
      nothing: the palette is black, white, and three status colours, and a focus
      ring is not a status. */
-  --focus: #111114;
+  --focus: #1f3a3d;
 
   /* ── 3a. RADIUS. THE OLD STUDIO'S LADDER, TAKEN FROM ITS OWN FILE.
          `--radius: 0.625rem` was its card, `--radius-sm: 0.375rem` and
@@ -159,13 +159,13 @@
          stack of cards rather than as a conversation. `--r-tail` is the ONE
          corner a speech bubble does not round, and it is what stops a rounded
          rectangle from being a lozenge. ── */
-  --r-xs: 4px;
-  --r-sm: 6px;
-  --r-md: 8px;
-  --r-lg: 10px;
-  --r-xl: 14px;
-  --r-2xl: 18px;
-  --r-3xl: 24px;
+  --r-xs: 2px;
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 4px;
+  --r-xl: 6px;
+  --r-2xl: 8px;
+  --r-3xl: 16px;
   --r-pill: 999px;
   --r-tail: 6px;
 
@@ -218,8 +218,8 @@
      (imported in `root.tsx`), so there is no render-blocking third-party
      request. Identifiers — ids, digests, commands, counts — stay in the mono
      face, which is a system stack and costs nothing. */
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Lato", "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Hedvig Letters Serif", Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   /* The ladder. Sentence-case headings with real size, not 10px uppercase
@@ -290,7 +290,7 @@ body:has(dialog[open]) {
 }
 
 ::selection {
-  background: #0a0a0a1a;
+  background: rgba(31, 58, 61, 0.16);
 }
 
 /* THE NATIVE TICK IS INK, NOT THE BROWSER'S BLUE.

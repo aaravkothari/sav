@@ -31,6 +31,8 @@ export interface StoreState {
   company?: CompanyState;
   /** Held calls the dashboard approved by rule (`server/autoapprove.ts`), newest last, capped. */
   auto_approvals?: { at: string; session_id: string; agent_id: string; tool: string; rule: string }[];
+  /** Emails sent on one Pacific day, counted from `OUTREACH SENT:` / `REPLY SENT:` notes; the daily cap reads it. */
+  sends?: { day: string; count: number };
 }
 
 /** The company's on/off switch, and what pausing it stopped, so resuming can wake exactly those. */
@@ -64,6 +66,20 @@ const newReferralCode = (): string => randomBytes(9).toString("base64url");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** `YYYY-MM-DD` of `now` in America/Los_Angeles: the day the daily send cap counts. */
+export function pacificDay(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/** Whether a CRM note records an email that went out. */
+export const isSendNote = (note: string): boolean => /^(OUTREACH SENT|REPLY SENT):/.test(note.trimStart());
+
+/** Last 10 digits of a phone number, or null when it has fewer: the key `create_lead` dedupes on. */
+export function phoneKey(phone: string | null | undefined): string | null {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  return digits.length >= 10 ? digits.slice(-10) : null;
+}
+
 /**
  * Why a client may not be asked for a referral at `now`, or null when it may (`REFERRAL_READY`).
  * Recent work is judged by its calendar slot, the one date every post carries as an ISO day.
@@ -92,6 +108,8 @@ export interface LeadInput {
   name: string;
   domain: string;
   contact: { name: string; email: string; role: string };
+  /** The shop's public phone; optional. */
+  phone?: string;
   services?: string[];
   note?: string;
   source?: LeadSource;
@@ -156,6 +174,8 @@ export interface Store {
   setCompany(next: CompanyState): CompanyState;
   /** Appends to the auto-approval log, keeping the newest `cap` rows. */
   logAutoApprovals(rows: NonNullable<StoreState["auto_approvals"]>, cap: number): void;
+  /** Emails recorded as sent on the Pacific day of `now`. */
+  sendsOn(now: Date): number;
 }
 
 /**
@@ -206,7 +226,7 @@ export function openStore(file: string): Store {
  */
 export function openStoreOver(state: StoreState, persist: (state: StoreState) => void): Store {
   const save = () => persist(state);
-  const nameOnly = (row: { domain: string; contact: { email: string } }) => row.domain === "" && row.contact.email === "";
+  const nameOnly = (row: { domain: string; contact: { email: string }; phone?: string }) => row.domain === "" && row.contact.email === "" && !row.phone;
 
   // Older installs allowed each intake to choose a different label for the agency itself. The CRM
   // has clients; it has exactly one internal workspace. Consolidate those legacy rows under the
@@ -247,6 +267,7 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         stage: "lead",
         services: input.services ?? [],
         contact: input.contact,
+        ...(input.phone ? { phone: input.phone } : {}),
         notes: input.note === undefined ? [] : [input.note],
         // The agency's own name-only record is not a lead, so it has no source.
         ...(input.source && !nameOnly(input) ? { source: input.source } : {}),
@@ -304,6 +325,10 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const client = state.clients.find((c) => c.id === id);
       if (!client) return null;
       client.notes.push(note);
+      if (isSendNote(note)) {
+        const day = pacificDay(new Date());
+        state.sends = { day, count: (state.sends?.day === day ? state.sends.count : 0) + 1 };
+      }
       if (nextAction !== undefined) client.nextAction = nextAction;
       save();
       return client;
@@ -366,6 +391,9 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
     },
     site: () => state.site_profile ?? site,
     company: () => state.company ?? { paused: false, changed_at: "", interrupted: [], deployments: [] },
+    sendsOn(now) {
+      return state.sends?.day === pacificDay(now) ? state.sends.count : 0;
+    },
     logAutoApprovals(rows, cap) {
       state.auto_approvals = [...(state.auto_approvals ?? []), ...rows].slice(-cap);
       save();
