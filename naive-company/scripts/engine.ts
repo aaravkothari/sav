@@ -10,7 +10,7 @@
  *    `REPLY RECEIVED` / `BOUNCED` note get Aarav's cold email (`templates/outreach-template.ts`)
  *    from the AgentMail inbox "Aarav from SAV". Volume ramps by wall clock (America/Los_Angeles):
  *    25 a tick for the first 2 h after the engine first started, 50 until the next 04:00 PT, then
- *    100; one level lower when bounces plus failed sends in the last tick exceed 10%. At most
+ *    100; one level lower when bounces plus failed sends in the last tick exceed 3%; capped at 50 tonight (MAX_LEVEL). At most
  *    2,500 a Pacific day. Never the same address twice: a local ledger (`data/engine-sent.jsonl`),
  *    the inbox's own sent mail, and the CRM note all count, and each send carries an idempotency key.
  *    After each send: note `OUTREACH SENT: <message id> to <email>` plus the full email.
@@ -100,10 +100,19 @@ export function next4amPacific(start: Date): Date {
   return new Date(start.getTime() + 86_400_000);
 }
 
-/** The wall-clock ramp level: 0 (25) for 2 h after the first start, 1 (50) until the next 04:00 PT, then 2 (100). */
-export function baseLevel(startedAt: Date, now: Date): number {
+/**
+ * The highest ramp level allowed. Tonight it is 1 (50 per tick): Vedant capped the ramp at 50 and
+ * Aarav planned 100 from 04:00 PT, so the stricter one holds until the humans settle it (sav#9).
+ * `ENGINE_MAX_LEVEL=2` restores the step to 100.
+ */
+export const MAX_LEVEL = Math.min(RAMP.length - 1, Math.max(0, Number(process.env["ENGINE_MAX_LEVEL"] ?? 1) || 0));
+/** Bounces plus failures above this share of a tick drop the next tick one level (Vedant: under 3%). */
+export const BAD_RATE = 0.03;
+
+/** The wall-clock ramp level: 0 (25) for 2 h after the first start, 1 (50) until the next 04:00 PT, then 2 (100); never above `maxLevel`. */
+export function baseLevel(startedAt: Date, now: Date, maxLevel: number = MAX_LEVEL): number {
   if (now.getTime() - startedAt.getTime() < 2 * 3_600_000) return 0;
-  return now.getTime() < next4amPacific(startedAt).getTime() ? 1 : 2;
+  return Math.min(maxLevel, now.getTime() < next4amPacific(startedAt).getTime() ? 1 : 2);
 }
 
 /** Bounces plus failed sends over attempts in the last tick. */
@@ -114,9 +123,9 @@ export function badRate(tick: LastTick | null): number {
 }
 
 /** How many to send this tick: the ramp, a level lower after a bad tick, never past the day's cap. */
-export function batchSize(startedAt: Date, now: Date, lastTick: LastTick | null, sentToday: number): { size: number; level: number; stepped_down: boolean } {
-  const base = baseLevel(startedAt, now);
-  const stepped = badRate(lastTick) > 0.1;
+export function batchSize(startedAt: Date, now: Date, lastTick: LastTick | null, sentToday: number, maxLevel: number = MAX_LEVEL): { size: number; level: number; stepped_down: boolean } {
+  const base = baseLevel(startedAt, now, maxLevel);
+  const stepped = badRate(lastTick) > BAD_RATE;
   const level = Math.max(0, base - (stepped ? 1 : 0));
   return { size: Math.max(0, Math.min(RAMP[level]!, DAILY_SEND_CAP - sentToday)), level, stepped_down: stepped && base > 0 };
 }

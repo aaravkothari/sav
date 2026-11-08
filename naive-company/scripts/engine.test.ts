@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -15,30 +15,35 @@ describe("the ramp", () => {
   const start = new Date("2026-11-08T07:30:00Z");
   const at = (h: number) => new Date(start.getTime() + h * 3_600_000);
 
-  it("is 25 for 2 h after the first start, 50 until 04:00 PT, then 100", () => {
+  it("is 25 for 2 h after the first start, 50 until 04:00 PT, then 100 when the cap allows it", () => {
     expect(next4amPacific(start).toISOString()).toBe("2026-11-08T12:00:00.000Z");
-    expect(baseLevel(start, at(0))).toBe(0);
-    expect(baseLevel(start, at(1.99))).toBe(0);
-    expect(baseLevel(start, at(2))).toBe(1);
-    expect(baseLevel(start, at(4.49))).toBe(1);
-    expect(baseLevel(start, at(4.5))).toBe(2);
+    expect(baseLevel(start, at(0), 2)).toBe(0);
+    expect(baseLevel(start, at(1.99), 2)).toBe(0);
+    expect(baseLevel(start, at(2), 2)).toBe(1);
+    expect(baseLevel(start, at(4.49), 2)).toBe(1);
+    expect(baseLevel(start, at(4.5), 2)).toBe(2);
+    expect(batchSize(start, at(6), null, 0, 2).size).toBe(100);
+  });
+
+  it("tops out at 50 tonight by default (Vedant's cap, the stricter one)", () => {
+    expect(MAX_LEVEL).toBe(1);
     expect(batchSize(start, at(0), null, 0).size).toBe(25);
     expect(batchSize(start, at(3), null, 0).size).toBe(50);
-    expect(batchSize(start, at(6), null, 0).size).toBe(100);
+    expect(batchSize(start, at(6), null, 0).size).toBe(50);
   });
 
-  it("skips straight to 100 when the 2 h end after 04:00 PT", () => {
+  it("skips straight to 100 when the 2 h end after 04:00 PT and the cap allows it", () => {
     const late = new Date("2026-11-08T11:00:00Z"); // 03:00 PT
-    expect(baseLevel(late, new Date("2026-11-08T13:00:01Z"))).toBe(2);
+    expect(baseLevel(late, new Date("2026-11-08T13:00:01Z"), 2)).toBe(2);
   });
 
-  it("steps down one level when bounces plus failures exceed 10% of the last tick", () => {
-    const ok = { at: "", sent: 50, failed: 2, bounced: 3 }; // 5/52
-    const bad = { at: "", sent: 50, failed: 2, bounced: 4 }; // 6/52
-    expect(badRate(ok)).toBeLessThanOrEqual(0.1);
-    expect(batchSize(start, at(6), ok, 0)).toMatchObject({ size: 100, level: 2 });
-    expect(batchSize(start, at(6), bad, 0)).toMatchObject({ size: 50, level: 1, stepped_down: true });
-    expect(batchSize(start, at(3), bad, 0)).toMatchObject({ size: 25, level: 0 });
+  it("steps down one level when bounces plus failures exceed 3% of the last tick", () => {
+    const ok = { at: "", sent: 50, failed: 0, bounced: 1 }; // 1/50
+    const bad = { at: "", sent: 50, failed: 1, bounced: 1 }; // 2/51
+    expect(badRate(ok)).toBeLessThanOrEqual(BAD_RATE);
+    expect(batchSize(start, at(6), ok, 0)).toMatchObject({ size: 50, level: 1 });
+    expect(batchSize(start, at(6), bad, 0)).toMatchObject({ size: 25, level: 0, stepped_down: true });
+    expect(batchSize(start, at(6), bad, 0, 2)).toMatchObject({ size: 50, level: 1, stepped_down: true });
     expect(batchSize(start, at(0), bad, 0)).toMatchObject({ size: 25, level: 0 });
     expect(badRate({ at: "", sent: 0, failed: 0, bounced: 0 })).toBe(0);
   });
