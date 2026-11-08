@@ -28,7 +28,7 @@ import { BLUEPRINTS, defineProject } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
-import { AGENTMAIL, MONID, PIPELINE } from "./templates/receptionist.ts";
+import { AGENTMAIL, AUTOOPS, MONID, PIPELINE } from "./templates/receptionist.ts";
 
 /**
  * Every template this repo carries that the installed engine admits. `defineProject` refuses a repo
@@ -98,7 +98,7 @@ export default defineProject({
 
   /**
    * The agency identity's credential vault: the API keys for the third-party MCP servers the crew
-   * uses (AgentMail for email, Monid for lead data). Each value is read from `.env` at apply time
+   * uses (AgentMail for email, Monid for lead data, autoops-voice for the receptionist). Each value is read from `.env` at apply time
    * and sealed write-once; the platform injects it as a bearer token when an agent's session
    * connects to that server URL, so no prompt, transcript or sandbox ever holds it. Rotating a key
    * is create-new, delete-old on the platform: changing `.env` and re-running `up` changes nothing.
@@ -110,6 +110,7 @@ export default defineProject({
       credentials: [
         { kind: "static_bearer", key: "AgentMail", mcp_server_url: AGENTMAIL.url, value: { from_env: "AGENTMAIL_API_KEY" } },
         { kind: "static_bearer", key: "Monid", mcp_server_url: MONID.url, value: { from_env: "MONID_API_KEY" } },
+        { kind: "static_bearer", key: "autoops-voice", mcp_server_url: AUTOOPS.url, value: { from_env: "AUTOOPS_VOICE_TOKEN" } },
       ],
     },
   ],

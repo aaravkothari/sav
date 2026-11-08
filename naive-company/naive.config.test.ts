@@ -100,7 +100,9 @@ describe("naive.config.ts", () => {
         };
         // blank: research reaches Monid's catalogue; reads run, a paid run waits for the operator.
         const receptionist: Record<string, string[]> = {
-          research: ["monid.monid_discover", "monid.monid_inspect", "monid.monid_get_run", "monid.monid_list_runs", "monid.monid_balance", "monid.monid_run"],
+          research: ["monid.monid_discover", "monid.monid_inspect", "monid.monid_get_run", "monid.monid_list_runs", "monid.monid_balance", "autoops.provision_demo", "monid.monid_run"],
+          monitoring: ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call", "autoops.provision_receptionist", "autoops.update_receptionist"],
+          "self-improvement": ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call", "autoops.provision_receptionist", "autoops.update_receptionist"],
         };
         expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO ? measurement[agent.name] : receptionist[agent.name]) || []]);
         if (!SEO && agent.name === "research") expect(agent.tools?.configs["monid.monid_run"]?.permission).toBe("ask");
@@ -174,7 +176,7 @@ describe("the agency persona", () => {
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
     expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual([
-      ...(SEO ? [] : ["research"]), "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : []),
+      ...(SEO ? [] : ["research"]), "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : ["monitoring", "self-improvement"]),
     ]);
   }, 30_000);
 
