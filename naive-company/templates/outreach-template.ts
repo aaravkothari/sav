@@ -19,6 +19,35 @@ Would you be open to trying it for free?
 Best,
 Aarav`;
 
+/**
+ * The same email for a business outside auto repair (salons, dry cleaners, physical therapy…).
+ * The Automotive Service Association figure is about auto repair shops, so it is dropped, with no
+ * substitute statistic (Vedant's review of #52), and "your shop" names the kind of place it is.
+ * Everything else is Aarav's text, word for word.
+ */
+export const OUTREACH_TEMPLATE_GENERAL = `Hi {{first_name}},
+
+I came across {{shop_name}} and noticed {{personalized_detail}}.
+
+How many potential customers are you losing when nobody picks up or your {{place}} is closed?
+
+We're building SAV to answer those calls and book appointments 24/7.
+
+Would you be open to trying it for free?
+
+Best,
+Aarav`;
+
+/** What "your … is closed" calls the place, by sector. */
+export function placeWord(sector: string | null | undefined): string {
+  const s = (sector ?? "").toLowerCase();
+  if (/salon|barber|hair|nail|spa|beauty/.test(s)) return /barber/.test(s) ? "shop" : "salon";
+  if (/physical therap|physio|chiropract|clinic|dental|dentist|medical|massage/.test(s)) return "clinic";
+  if (/studio|gym|fitness|yoga|pilates/.test(s)) return "studio";
+  if (/dry clean|laundr|tailor|cleaner/.test(s)) return "shop";
+  return "business";
+}
+
 export const OUTREACH_SUBJECT = "Missed calls at {{shop_name}}";
 
 export interface ColdEmailLead {
@@ -27,6 +56,8 @@ export interface ColdEmailLead {
   contact_name?: string | null;
   /** The detail from the RESEARCH note, already cleaned by `personalizedDetail`. */
   personalized_detail: string;
+  /** The business's sector, when it is not auto repair (null or absent means auto repair: Aarav's exact template). */
+  sector?: string | null;
 }
 
 /** Mailbox words people file as a contact's name that are not a name. */
@@ -85,6 +116,7 @@ export function renderColdEmail(lead: ColdEmailLead): { subject: string; text: s
   const shop = lead.shop_name.trim();
   const detail = lead.personalized_detail.trim().replace(/[\s.]+$/, "");
   if (shop === "" || detail === "") return null;
-  const values = { first_name: firstName(lead.contact_name), shop_name: shop, personalized_detail: detail };
-  return { subject: fill(OUTREACH_SUBJECT, values), text: fill(OUTREACH_TEMPLATE, values) };
+  const values = { first_name: firstName(lead.contact_name), shop_name: shop, personalized_detail: detail, place: placeWord(lead.sector) };
+  const template = lead.sector ? OUTREACH_TEMPLATE_GENERAL : OUTREACH_TEMPLATE;
+  return { subject: fill(OUTREACH_SUBJECT, values), text: fill(template, values) };
 }

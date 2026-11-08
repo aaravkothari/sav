@@ -72,3 +72,17 @@ describe("firstName", () => {
     expect(firstName("123")).toBe("there");
   });
 });
+
+import { OUTREACH_TEMPLATE_GENERAL, placeWord } from "./outreach-template.ts";
+describe("the general template (non-auto sectors)", () => {
+  it("is Aarav's email without the auto statistic", () => {
+    const auto = OUTREACH_TEMPLATE.replace(/The Automotive Service Association[^\n]*? go unanswered when staff are busy\. /, "").replace("your shop is closed", "your {{place}} is closed");
+    expect(OUTREACH_TEMPLATE_GENERAL).toBe(auto);
+  });
+  it("names the place by sector", () => {
+    expect(placeWord("salon")).toBe("salon");
+    expect(placeWord("physical therapy")).toBe("clinic");
+    expect(placeWord("dry cleaning")).toBe("shop");
+    expect(placeWord("plumbing")).toBe("business");
+  });
+});

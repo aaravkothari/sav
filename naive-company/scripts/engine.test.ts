@@ -70,16 +70,17 @@ describe("coldKey", () => {
 });
 
 describe("sectors (#52 review)", () => {
-  it("sends the auto template only to auto shops", () => {
+  it("sends the auto template only to auto shops, and the general one to other sectors", () => {
     expect(sectorOf("RESEARCH: rated 4.8.\nSector: salon")).toBe("salon");
     expect(sectorOf("RESEARCH: rated 4.8. Opener detail: x")).toBeNull();
     expect(isAutoSector(null)).toBe(true);
     expect(isAutoSector("auto repair")).toBe(true);
     expect(isAutoSector("physical therapy")).toBe(false);
     const salon = client("s1", { notes: ["RESEARCH: rated 4.8. Opener detail: you've styled Oakland since 1990\nSector: salon"] });
-    const { candidates, skipped } = selectCandidates([salon], new Set());
-    expect(candidates).toHaveLength(0);
-    expect(skipped[0]!.reason).toMatch(/auto-only/);
+    const { candidates } = selectCandidates([salon], new Set());
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]!.text).not.toMatch(/Automotive Service Association|auto repair/);
+    expect(candidates[0]!.text).toContain("nobody picks up or your salon is closed?");
   });
 });
 
