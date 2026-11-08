@@ -1,8 +1,10 @@
-import { Bot, Box, ClipboardCheck, Columns3, LayoutDashboard, ListChecks, Rocket, Rows3, ShieldCheck, Settings2, SlidersHorizontal } from "lucide-react";
-import { useEffect } from "react";
-import { NavLink, Outlet } from "react-router";
+import { Bot, Box, ChevronRight, ClipboardCheck, Columns3, LayoutDashboard, ListChecks, Rocket, Rows3, ShieldCheck, Settings2, SlidersHorizontal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router";
 import { apiSend, useApi } from "./api";
+import { leadRows, ShopName } from "./components/sav";
 import { TEMPLATE_NAME, type Client } from "./data";
+import { leadPath } from "./leads";
 import { waitingOn, type PlatformSession } from "./platform";
 
 /**
@@ -35,6 +37,47 @@ function useApproveEverything() {
   }, []);
 }
 
+/**
+ * The phone's row of tabs. It scrolls sideways, so it says when there is more: the edge that has
+ * more tabs past it fades, the active tab is scrolled into view, and the arrow scrolls the rest in.
+ */
+function PhoneTabs({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  const [more, setMore] = useState({ left: false, right: false });
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const left = el.scrollLeft > 4;
+      const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+      setMore((was) => (was.left === left && was.right === right ? was : { left, right }));
+    };
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      el.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+  useEffect(() => {
+    const el = ref.current;
+    const active = el?.querySelector<HTMLElement>("a.active");
+    if (el && active) el.scrollLeft = active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2;
+  }, [pathname]);
+  return (
+    <div className={`sav-tabs${more.left ? " more-left" : ""}${more.right ? " more-right" : ""}`}>
+      <nav ref={ref} aria-label="Sections">{children}</nav>
+      {more.right ? (
+        <button type="button" className="sav-tabs-more" aria-label="More sections" onClick={() => ref.current?.scrollBy({ left: 200, behavior: "smooth" })}>
+          <ChevronRight size={16} strokeWidth={1.8} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 /** The SAV mark, as the landing page draws it. */
 export const Logo = () => (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -60,7 +103,7 @@ export function Shell() {
   type Item = { to: string; label: string; Icon: typeof Bot; count?: number; hot?: boolean };
   const nav: Item[] = [
     { to: "/", label: "Overview", Icon: LayoutDashboard },
-    { to: "/leads", label: "Leads", Icon: Rows3, count: clients?.length },
+    { to: "/leads", label: "Leads", Icon: Rows3, count: clients ? leadRows(clients).length : undefined },
     { to: "/crm", label: "Pipeline", Icon: Columns3 },
     { to: "/approvals", label: "Approvals", Icon: ShieldCheck, count: waiting, hot: waiting > 0 },
     // Where the company is started, paused and watched (`src/screens/Runs.tsx`).
@@ -90,7 +133,7 @@ export function Shell() {
     <div className="sav-shell">
       <header className="sav-top">
         <NavLink to="/" className="sav-brand"><Logo />sav<small>operations</small></NavLink>
-        <nav aria-label="Sections">{[...nav, ...foot].map((item) => link(item, false))}</nav>
+        <PhoneTabs>{[...nav, ...foot].map((item) => link(item, false))}</PhoneTabs>
       </header>
       <aside className="sav-side">
         <NavLink to="/" className="sav-brand"><Logo />sav<small>operations</small></NavLink>
@@ -102,8 +145,8 @@ export function Shell() {
           ) : (
             <nav className="sav-nav sav-roster" aria-label="Live shops">
               {active.map((c) => (
-                <NavLink key={c.id} to={`/leads/${c.id}`} className={({ isActive }) => (isActive ? "active" : "")}>
-                  <span className="dot" /><span>{c.name}</span>
+                <NavLink key={c.id} to={leadPath(c)} className={({ isActive }) => (isActive ? "active" : "")}>
+                  <span className="dot" /><ShopName client={c} />
                 </NavLink>
               ))}
             </nav>

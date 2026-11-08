@@ -2,9 +2,9 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { apiMessage, apiSend } from "../api";
-import { PageHead, useLeads } from "../components/sav";
+import { PageHead, ShopName, useLeads } from "../components/sav";
 import type { Client } from "../data";
-import { ago, STATUS_LABEL, STATUSES, type Lead, type LeadStatus } from "../leads";
+import { ago, leadPath, nextStepText, shopName, STATUS_LABEL, STATUSES, type Lead, type LeadStatus } from "../leads";
 
 /**
  * The pipeline as a board: one column per step a shop takes, from researched to paying, each shop
@@ -27,15 +27,17 @@ const SOURCE_LABEL: Record<NonNullable<Client["source"]>, string> = {
 function sourceText(c: Client, clients: readonly Client[]): string | null {
   if (!c.source || c.source === "outreach") return null;
   const referrer = c.source === "referral" ? clients.find((row) => row.id === c.referredBy)?.name : undefined;
-  return referrer ? `referred by ${referrer}` : SOURCE_LABEL[c.source];
+  // (display name below)
+  return referrer ? `referred by ${shopName(referrer)}` : SOURCE_LABEL[c.source];
 }
 
 function Tile({ lead, clients }: { lead: Lead; clients: readonly Client[] }) {
   const c = lead.client;
   const source = sourceText(c, clients);
+  const next = nextStepText(c.nextAction);
   return (
-    <Link to={`/leads/${c.id}`} className="sav-tile">
-      <div className="name">{c.name}</div>
+    <Link to={leadPath(c)} className="sav-tile">
+      <div className="name"><ShopName client={c} /></div>
       <div className="meta">{[lead.city, lead.sector].filter(Boolean).join(" · ")}</div>
       {c.contact.name || c.contact.email ? <div className="meta">{c.contact.name || c.contact.email}</div> : null}
       {source || (lead.demoReady && lead.rank < 3) ? (
@@ -44,7 +46,7 @@ function Tile({ lead, clients }: { lead: Lead; clients: readonly Client[] }) {
           {lead.demoReady && lead.rank < 3 ? <span className="sav-tag plain">demo ready</span> : null}
         </div>
       ) : null}
-      {c.nextAction ? <div className="next line-clamp-3">{c.nextAction}</div> : null}
+      {next ? <div className="next line-clamp-3">{next}</div> : null}
       {lead.lastAt ? <div className="mt-2 sav-fine">{ago(lead.lastAt)}</div> : null}
     </Link>
   );
@@ -80,10 +82,13 @@ export function Crm() {
     && form.name.trim() !== "" && form.domain.trim() !== ""
     && form.contactName.trim() !== "" && form.contactEmail.trim() !== "";
 
-  const columns: LeadStatus[] = [...STATUSES, ...((leads ?? []).some((l) => l.status === "bounced") ? ["bounced" as const] : [])];
+  const has = (s: LeadStatus) => (leads ?? []).some((l) => l.status === s);
+  const columns: LeadStatus[] = [...(has("new") ? ["new" as const] : []), ...STATUSES, ...(has("bounced") ? ["bounced" as const] : [])];
+  // Every column on one laptop screen: a step with shops takes a share of the width, an empty one folds narrow.
+  const boardCols = columns.map((s) => (has(s) ? "minmax(0, 1fr)" : "minmax(0, 7.5rem)")).join(" ");
 
   return (
-    <div className="pane-in" style={{ maxWidth: "96rem" }}>
+    <div className="pane-in" style={{ maxWidth: "110rem" }}>
       <PageHead
         title="Pipeline"
         sub="Every shop by the step it has reached. Cards move on their own as the crew files each step."
@@ -138,17 +143,17 @@ export function Crm() {
           </button>
         </div>
       ) : (
-        <div className="sav-board">
+        <div className="sav-board" style={{ "--board-cols": boardCols } as React.CSSProperties}>
           {columns.map((status) => {
             const rows = leads.filter((l) => l.status === status).sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? "") || a.client.name.localeCompare(b.client.name));
             return (
-              <section key={status} className="sav-col" aria-label={STATUS_LABEL[status]}>
+              <section key={status} className={`sav-col${rows.length === 0 ? " empty" : ""}`} aria-label={STATUS_LABEL[status]}>
                 <div className="sav-col-head">
                   <h2 className="sav-h3">{STATUS_LABEL[status]}</h2>
                   <span className="n">{rows.length}</span>
                 </div>
                 <div className="sav-col-body max-h-[72vh] overflow-y-auto">
-                  {rows.length === 0 ? <div className="sav-empty">No shop here yet.</div> : rows.map((l) => <Tile key={l.client.id} lead={l} clients={clients ?? []} />)}
+                  {rows.length === 0 ? <div className="sav-empty">None yet</div> : rows.map((l) => <Tile key={l.client.id} lead={l} clients={clients ?? []} />)}
                 </div>
               </section>
             );
