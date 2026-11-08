@@ -110,7 +110,10 @@ export default defineProject({
       credentials: [
         { kind: "static_bearer", key: "AgentMail", mcp_server_url: AGENTMAIL.url, value: { from_env: "AGENTMAIL_API_KEY" } },
         { kind: "static_bearer", key: "Monid", mcp_server_url: MONID.url, value: { from_env: "MONID_API_KEY" } },
-        { kind: "static_bearer", key: "autoops-voice", mcp_server_url: AUTOOPS.url, value: { from_env: "AUTOOPS_VOICE_TOKEN" } },
+        // Credentials are immutable and keyed by name: the old "autoops-voice" one is bound to a dead
+        // tunnel URL and can only be removed by a person. A new key makes the live URL's credential
+        // additively; delete the stale "autoops-voice" credential in the morning (tracker #49).
+        { kind: "static_bearer", key: "autoops-voice-live", mcp_server_url: AUTOOPS.url, value: { from_env: "AUTOOPS_VOICE_TOKEN" } },
       ],
     },
   ],
