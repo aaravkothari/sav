@@ -283,6 +283,20 @@ describe("mcp tools", () => {
     expect(store.read().clients.find((c) => c.id === anyClient)?.nextAction).toBe("Reply to follow-up");
   });
 
+  it("update_client_contact sets the fields given, keeps the rest, and refuses a bad email", async () => {
+    const store = freshStore();
+    const before = store.read().clients.find((c) => c.id === anyClient)!.contact.role;
+    const answer = (await handleMcp(call("update_client_contact", { id: anyClient, contact_name: " Steven ", contact_email: "steven@shop.example" }), store, null)) as CallResult;
+    expect(answer.result.isError).toBeFalsy();
+    expect(store.read().clients.find((c) => c.id === anyClient)!.contact).toEqual({ name: "Steven", email: "steven@shop.example", role: before });
+    const bad = (await handleMcp(call("update_client_contact", { id: anyClient, contact_email: "steven" }), store, null)) as CallResult;
+    expect(bad.result.isError).toBe(true);
+    const empty = (await handleMcp(call("update_client_contact", { id: anyClient }), store, null)) as CallResult;
+    expect(empty.result.isError).toBe(true);
+    const missing = (await handleMcp(call("update_client_contact", { id: "cli_nope", contact_name: "X" }), store, null)) as CallResult;
+    expect(missing.result.isError).toBe(true);
+  });
+
   it("walks a post through draft → approve → schedule", async () => {
     const store = freshStore();
     const drafted = (await handleMcp(call("create_draft_post", {
