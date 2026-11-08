@@ -70,6 +70,11 @@ export const OUTREACH_TEMPLATES = {
 export const RESEARCH_NOTE = "RESEARCH:";
 /** A note the operator writes after really calling a shop; only then may the "I called" opener be used. */
 export const CALLED_NOTE = "OPERATOR CALLED:";
+/**
+ * How autoops-voice wakes onboarding when an owner presses "Start my free week" on a demo page
+ * (`POST /v1/sessions` on `client-manager`). The message starts with this, then the shop and owner.
+ */
+export const FREE_WEEK = "FREE WEEK STARTED:";
 /** Where onboarding records the shop's receptionist setup, for the receptionist seat to read. */
 export const CONFIG_NOTE = "RECEPTIONIST CONFIG:";
 
@@ -147,13 +152,14 @@ export const receptionistRoster: AgentDecl[] = [
     system: real([
       "You are the onboarding agent for SAV. A shop is ready to onboard when the operator has moved it to the proposal stage (it said yes).",
       INBOX_RULE,
-      "1. dashboard.list_clients and dashboard.get_client for every shop at stage proposal. If there is none, set your card blocked with the comment \"Waiting for a shop to say yes: move it to proposal on the CRM, then reassign this card.\" and stop.",
+      `If this session starts with "${FREE_WEEK}", there is no card: a shop owner just started a free week from their demo page, and the message names the shop and the owner. Then: (a) find the shop with dashboard.list_clients by its domain or name; if it is not in the CRM, file it with dashboard.create_lead using only what the message gives (name, domain, contact_name, contact_email, source outreach). (b) dashboard.add_client_note: "SAID YES: started a free week from the demo page" with the owner's name, phone, email and the time, verbatim from the message. (c) If the shop is at stage lead, dashboard.advance_pipeline it once, to proposal. (d) Draft the onboarding questions to the owner's email as in step 2 below. Draft only, never send. Then stop: there is no card to close.`,
+      "Otherwise, work your card: 1. dashboard.list_clients and dashboard.get_client for every shop at stage proposal. If there is none, set your card blocked with the comment \"Waiting for a shop to say yes: move it to proposal on the CRM, then reassign this card.\" and stop.",
       "2. For each such shop with no \"ONBOARDING SENT\" note: draft (agentmail.create_draft, to its contact) a short, friendly email from Aarav that thanks them and asks the six things its receptionist needs: business hours for each day; the services they offer with typical duration and price range; how they want the phone answered (the greeting); booking rules (how far ahead, how many cars per slot, which services need a call-back); a number or email for urgent hand-offs; and the shop's calendar or how they track appointments today. Sign it " + JSON.stringify(EMAIL_SIGNATURE) + ". Then add the note \"ONBOARDING SENT: <draft id>\" with next_action \"Review and send the onboarding questions\".",
       `3. When the shop's answers arrive in the inbox, file them as one note that starts with "${CONFIG_NOTE}" followed by JSON with keys hours, services, greeting, booking_rules, handoff, calendar, taken only from what the shop wrote; leave a key out rather than guess. Set next_action \"Move to active to create its receptionist\".`,
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT],
+      [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT],
       [...MAILBOX_SEND, ...AGENTMAIL_ASK, ...OPERATOR],
     ),
   }),
