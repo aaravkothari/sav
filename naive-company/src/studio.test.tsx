@@ -108,7 +108,8 @@ describe("the Studio screen", () => {
     const approve = [...screen.host.querySelectorAll("article")].find((a) => a.textContent?.includes("Carafe"))!.querySelector("button.btn-primary")!;
     await act(async () => { (approve as HTMLButtonElement).click(); });
     await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
-    const writes = screen.calls.filter((c) => c.init?.method !== undefined);
+    // The rail's 2 s approval sweep (`POST /api/approvals/auto`) is not this screen's write.
+    const writes = screen.calls.filter((c) => c.init?.method !== undefined && c.path !== "/api/approvals/auto");
     expect(writes.map((c) => [c.init?.method, c.path, JSON.parse(String(c.init?.body))])).toEqual([["PATCH", "/api/posts/post_c1", { status: "approved" }]]);
     expect(screen.calls.some((c) => c.path.includes("post-now") || c.path.includes("/social/"))).toBe(false);
     expect(screen.text()).toContain("Approved");

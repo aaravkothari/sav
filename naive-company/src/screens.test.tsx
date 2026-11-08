@@ -518,7 +518,7 @@ describe("a crew that is already standing", () => {
 
     await screen.press("Re-provision crew");
     // The onboard route, which is already idempotent for an active client — not a second route.
-    expect(screen.calls.filter((c) => c.init?.method === "POST").map((c) => c.path)).toEqual(["/api/clients/cli_1/onboard"]);
+    expect(screen.calls.filter((c) => c.init?.method === "POST" && c.path !== "/api/approvals/auto").map((c) => c.path)).toEqual(["/api/clients/cli_1/onboard"]);
     // And the report is shown, so `unchanged` everywhere reads as "nothing to do" rather than "done".
     expect(screen.text()).toContain("updated to the template");
     expect(screen.text()).toContain("created — this seat was missing");

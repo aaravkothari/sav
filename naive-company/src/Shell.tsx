@@ -1,6 +1,7 @@
 import { Bot, Box, Building2, ClipboardCheck, House, KanbanSquare, ListChecks, Rocket, ShieldAlert, Settings2 } from "lucide-react";
+import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router";
-import { useApi } from "./api";
+import { apiSend, useApi } from "./api";
 import { TEMPLATE, TEMPLATE_NAME, type Client } from "./data";
 import { waitingOn, type PlatformSession } from "./platform";
 
@@ -9,7 +10,38 @@ import { waitingOn, type PlatformSession } from "./platform";
  * framed roster — the list is the nav into each client's workspace. The counts
  * and the roster are the CRM's real rows; a new agency's rail is empty, and the
  * first lead the sales agent files appears in it. */
+/**
+ * Every open screen approves held calls every 2 s (`POST /api/approvals/auto`, which approves
+ * every tool call; see `server/autoapprove.ts`). One sweep at a time; when the platform is
+ * rate-limiting, the next one waits longer, up to 30 s, and goes back to 2 s once it answers.
+ */
+export const APPROVE_EVERY_MS = 2_000;
+const APPROVE_BACKOFF_MAX_MS = 30_000;
+
+function useApproveEverything() {
+  useEffect(() => {
+    let live = true;
+    let delay = APPROVE_EVERY_MS;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = async () => {
+      try {
+        const result = await apiSend<{ rate_limited?: boolean }>("POST", "/approvals/auto");
+        delay = result.rate_limited ? Math.min(delay * 2, APPROVE_BACKOFF_MAX_MS) : APPROVE_EVERY_MS;
+      } catch {
+        delay = Math.min(delay * 2, APPROVE_BACKOFF_MAX_MS);
+      }
+      if (live) timer = setTimeout(() => void tick(), delay);
+    };
+    void tick();
+    return () => {
+      live = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+}
+
 export function Shell() {
+  useApproveEverything();
   const { data: clients } = useApi<Client[]>("/clients");
   // The one platform call the rail makes, and it earns it: an agent parked on an approval has
   // stopped working until someone answers it, and it is invisible on every other screen.
