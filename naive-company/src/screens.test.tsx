@@ -21,6 +21,9 @@ import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
 import { LaunchReview } from "./screens/LaunchReview";
+import { Leads } from "./screens/Leads";
+import { Overview } from "./screens/Overview";
+import { Shop } from "./screens/Shop";
 import { ProductAudit } from "./screens/ProductAudit";
 
 const routes = [
@@ -33,6 +36,9 @@ const routes = [
       { path: "product-audit", Component: ProductAudit },
       { path: "launch-review", Component: LaunchReview },
       { path: "crm", Component: Crm },
+      { path: "overview", Component: Overview },
+      { path: "leads", Component: Leads },
+      { path: "leads/:id", Component: Shop },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
       {
@@ -419,14 +425,14 @@ describe("an agent", () => {
       : path.startsWith("/api/sessions") ? { body: sessions }
       : { body: [] });
 
-    // The cap the agent carries, and the reason its last session stopped — neither was ever shown.
-    expect(screen.text()).toContain("$10.00 / day");
+    // Its role, when it last worked and why it stopped; never its model id or its raw budget.
+    expect(screen.text()).toContain("Last active");
     expect(screen.text()).toContain("Paused — out of budget");
     expect(screen.text()).toContain("1 session");
+    expect(screen.text()).not.toContain("$10.00");
 
     await screen.press("Sales");
-    expect(screen.text()).toContain("$3.50");
-    expect(screen.text()).toContain("Spent this day");
+    expect(screen.text()).toContain("Spends about $3.50 a day.");
   });
 
   it("says its spend is unavailable rather than printing a zero it did not read", async () => {
@@ -533,5 +539,89 @@ describe("a crew that is already standing", () => {
       : path.startsWith("/api/agents") ? { body: { data: [] } }
       : { body: { data: [] } });
     expect(screen.button("Re-provision crew")).toBeUndefined();
+  });
+});
+
+describe("the pipeline numbers and a shop's page", () => {
+  const shop = (id: string, slug: string, name: string, email: string, notes: string[], extra: Record<string, unknown> = {}) =>
+    ({ id, slug, name, domain: email.split("@")[1], stage: "lead", services: [], contact: { name: "", email, role: "" }, notes, ...extra });
+  const clients = [
+    shop("cli_a1", "a-1-imports", "A-1 Imports Autoworks - Auto Repair Shop In San Rafael", "info@a1.example", [
+      "RESEARCH: Auto repair shop rated 4.8 on 120 Google reviews. Hours: mon 8:30-17:00; tue 8:30-17:00; wed 8:30-17:00; thu 8:30-17:00; fri 8:30-17:00; sat closed; sun closed. Fit: busy shop.\nOpener detail: you've fixed imports since 1990\nSector: auto repair",
+      "RECEPTIONIST: shop_id a1-example\ndemo_url /demo/a1-example\npreview",
+      "OUTREACH SENT: <id@amazonses.com> to info@a1.example\n\nSubject: Missed calls at A-1\n\nHi there,",
+    ], { nextAction: "Waiting for the owner's answers in aarav.sav@agentmail.to — file them as RECEPTIONIST CONFIG, then move to active" }),
+    shop("cli_b2", "bay-motors", "Bay Motors", "info@bay.example", [
+      "RESEARCH: x",
+      "OUTREACH SENT: <id2@amazonses.com> to info@bay.example\n\nHi there,",
+      "BOUNCED: <id2@amazonses.com> to info@bay.example\nSubject: Delivery Status Notification (Failure)\n\nAction: failed",
+    ]),
+    shop("cli_c3", "cedar", "Cedar Auto", "pat@cedar.example", ["RESEARCH: x", "OUTREACH DRAFTED: d to pat@cedar.example\n\nHi", "ONBOARDING SENT: e sent to pat@cedar.example"], { stage: "proposal" }),
+  ];
+  const now = new Date().toISOString();
+  const mail = {
+    configured: true,
+    messages: [
+      { direction: "received", counterpart: "mailer-daemon@amazonses.com", subject: "Delivery Status Notification (Failure)", preview: "could not deliver to info@bay.example\nReporting-MTA: dns; smtp", at: now },
+      { direction: "sent", counterpart: "info@bay.example", subject: "Missed calls at Bay Motors", preview: "Hi there", at: now },
+      { direction: "sent", counterpart: "info@a1.example", subject: "Missed calls at A-1", preview: "Hi there", at: now },
+      { direction: "sent", counterpart: "aarav.sav@agentmail.to", subject: "engine self-test", preview: "self-test, ignore", at: now },
+      { direction: "received", counterpart: "aarav.sav@agentmail.to", subject: "engine self-test", preview: "self-test, ignore", at: now },
+    ],
+  };
+  const route = (path: string) =>
+    path === "/api/clients" ? { body: clients }
+    : path === "/api/mail/recent" ? { body: mail }
+    : path.endsWith("/receptionist") ? { body: { configured: false, demo_base: "https://voice.example" } }
+    : path.endsWith("/emails") ? { body: { configured: true, emails: [] } }
+    : { body: { data: [] } };
+
+  it("counts each step once, from real mail: no self-test, no bounce report as a reply", async () => {
+    const screen = await render("/overview", route);
+    const text = screen.text();
+    expect(text).toContain("3 shops in the pipeline. 2 emails sent today.");
+    expect(text).toMatch(/2\s*Emailed · 1 bounced/);
+    expect(text).toMatch(/0\s*Replied/);
+    expect(text).toContain("Email to Bay Motors bounced");
+    expect(text).toContain("Emailed A-1 Imports Autoworks“Missed calls at A-1”");
+    expect(text).not.toMatch(/mailer-daemon|wrote back|self-test|Reporting-MTA/);
+  });
+
+  it("prints the same numbers on the leads table", async () => {
+    const screen = await render("/leads", route);
+    expect(screen.text()).toContain("3 shops found, 2 emailed (1 bounced), 0 replied.");
+    // The shop that was only sent its setup questions has not replied to anything.
+    expect(screen.text()).not.toMatch(/Replied\s*1/);
+  });
+
+  it("opens a shop by its slug, and still by the old cli_ id", async () => {
+    for (const at of ["/leads/a-1-imports", "/leads/cli_a1"]) {
+      const screen = await render(at, route);
+      const text = screen.text();
+      expect(text).toContain("A-1 Imports Autoworks");
+      expect(text).not.toContain("Auto Repair Shop In San Rafael");
+      expect(text).toContain("Demo receptionist ready");
+      expect(text).toContain("Hours: Mon–Fri 8:30–5, Sat–Sun closed.");
+      expect(text).not.toMatch(/Opener detail:|Fit:|RESEARCH:|\/demo\/a1|preview|CRM stage|RECEPTIONIST CONFIG|agentmail/);
+      expect(text).toContain("Waiting for the owner's setup answers");
+      const open = [...screen.host.querySelectorAll("a")].find((a) => a.textContent?.includes("Open demo"));
+      expect(open?.getAttribute("href")).toBe("https://voice.example/demo/a1-example");
+      // The page asks for the shop's own data by its id, never by the slug in the address.
+      expect(screen.calls.some((c) => c.path === "/api/shops/cli_a1/receptionist")).toBe(true);
+      document.body.innerHTML = "";
+    }
+  });
+
+  it("says plainly what the button does", async () => {
+    const screen = await render("/leads/cedar", route);
+    expect(screen.text()).toContain("Mark as customer");
+    expect(screen.text()).not.toContain("Move to");
+  });
+
+  it("links every lead row by slug", async () => {
+    const screen = await render("/leads", route);
+    const hrefs = [...screen.host.querySelectorAll("a")].map((a) => a.getAttribute("href") ?? "");
+    expect(hrefs).toContain("/leads/a-1-imports");
+    expect(hrefs.some((h) => /\/leads\/cli_/.test(h))).toBe(false);
   });
 });

@@ -2,31 +2,30 @@ import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { useApi } from "../api";
-import { PageHead, Quiet, StatusPill, useLeads } from "../components/sav";
+import { PageHead, Quiet, ShopName, StatusPill, useLeads } from "../components/sav";
 import type { Agent } from "../data";
-import { agentLabel, ago, mailFor, STATUSES, type Lead, type MailMessage } from "../leads";
-import { waitingOn, type PlatformSession } from "../platform";
+import { agentLabel, ago, leadPath, mailFor, mailKind, mailToday, STATUSES, type Funnel, type Lead, type MailMessage } from "../leads";
+import { stopLabel, waitingOn, type PlatformSession } from "../platform";
 
 /**
  * The first screen: how far every shop has got, what the crew did today, and who is working now.
- * Everything is counted from the CRM's notes, the company inbox and the platform's sessions; a
- * source that cannot be read says so in its own card and the rest of the page still stands.
+ * Every pipeline number is `funnelOf` (`src/leads.ts`), the same count the leads table and the
+ * rail print; the inbox is read without our own test traffic. A source that cannot be read says
+ * so in its own card and the rest of the page still stands.
  */
 
-const FUNNEL: { label: string; reached: (typeof STATUSES)[number] }[] = [
-  { label: "Leads", reached: "researched" },
-  { label: "Emailed", reached: "emailed" },
-  { label: "Replied", reached: "replied" },
-  { label: "Demos sent", reached: "demo" },
-  { label: "Free weeks", reached: "free_week" },
-  { label: "Paying", reached: "paying" },
+const FUNNEL: { label: string; key: keyof Funnel; reached: (typeof STATUSES)[number] }[] = [
+  { label: "Leads", key: "shops", reached: "researched" },
+  { label: "Emailed", key: "emailed", reached: "emailed" },
+  { label: "Replied", key: "replied", reached: "replied" },
+  { label: "Demos sent", key: "demo", reached: "demo" },
+  { label: "Free weeks", key: "free_week", reached: "free_week" },
+  { label: "Paying", key: "paying", reached: "paying" },
 ];
-
-const sameDay = (iso: string, now = new Date()) => new Date(iso).toDateString() === now.toDateString();
 
 interface FeedItem {
   at: string;
-  mark: "sent" | "received" | "run" | "ok";
+  mark: "sent" | "received" | "run" | "ok" | "bad";
   title: React.ReactNode;
   detail?: string;
 }
@@ -35,21 +34,25 @@ function shopFor(m: MailMessage, leads: readonly Lead[]): Lead | undefined {
   return leads.find((l) => mailFor(l.client, [m]).length > 0);
 }
 
+/** A run that finished says nothing on its own; only one still going, or one that stopped short, is news. */
+export function runNews(s: PlatformSession): string | null {
+  if (s.status === "running" || s.status === "queued") return "still going";
+  if (!s.stop_reason || s.stop_reason === "end_turn") return null;
+  return stopLabel(s);
+}
+
 export function Overview() {
-  const { leads, error, mail, mailError } = useLeads();
+  const { leads, funnel, error, mail, messages, mailError } = useLeads();
   const sessions = useApi<{ data?: PlatformSession[] }>("/sessions");
   const roster = useApi<{ data?: Agent[] }>("/agents");
   const names = useMemo(() => new Map((roster.data?.data ?? []).map((a) => [a.id, a.name])), [roster.data]);
-  const messages = mail?.messages ?? [];
-  const all = leads ?? [];
+  const all = useMemo(() => leads ?? [], [leads]);
 
-  const reached = (i: number) => all.filter((l) => l.rank >= i && l.status !== "bounced").length;
-  const sentToday = messages.filter((m) => m.direction === "sent" && sameDay(m.at)).length;
-  const repliesToday = messages.filter((m) => m.direction === "received" && sameDay(m.at)).length;
+  const today = mailToday(messages);
   const demosBuilt = all.filter((l) => l.demoReady).length;
   const replied = all.filter((l) => l.status === "replied").sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? ""));
 
-  const rows = sessions.data?.data ?? [];
+  const rows = useMemo(() => sessions.data?.data ?? [], [sessions.data]);
   const running = rows.filter((s) => s.status === "running" || s.status === "queued");
   const waiting = waitingOn(rows, names).length;
 
@@ -57,17 +60,24 @@ export function Overview() {
     const out: FeedItem[] = [];
     for (const m of messages.slice(0, 40)) {
       const shop = shopFor(m, all);
-      const name = shop ? <Link to={`/leads/${shop.client.id}`}>{shop.client.name}</Link> : <span>{m.counterpart}</span>;
-      out.push(m.direction === "sent"
-        ? { at: m.at, mark: "sent", title: <>Emailed {name}</>, detail: m.subject }
-        : { at: m.at, mark: "received", title: <>{name} wrote back</>, detail: m.preview || m.subject });
+      const kind = mailKind(m);
+      const name = shop ? <Link to={leadPath(shop.client)}><ShopName client={shop.client} /></Link> : <span>{m.counterpart}</span>;
+      if (kind === "bounce") {
+        out.push({ at: m.at, mark: "bad", title: shop ? <>Email to {name} bounced</> : <>An email bounced</> });
+      } else if (m.direction === "sent") {
+        out.push({ at: m.at, mark: "sent", title: <>Emailed {name}</>, detail: `“${m.subject}”` });
+      } else if (kind === "auto") {
+        out.push({ at: m.at, mark: "received", title: <>{name} sent an automatic reply</> });
+      } else {
+        out.push({ at: m.at, mark: "received", title: <>{name} wrote back</>, detail: m.preview || m.subject });
+      }
     }
     for (const s of rows.slice(0, 40)) {
-      const at = s.created_at;
-      if (!at) continue;
+      const news = runNews(s);
+      if (!s.created_at || news === null) continue;
       const who = agentLabel(names.get(s.agent_id));
       const live = s.status === "running" || s.status === "queued";
-      out.push({ at, mark: live ? "ok" : "run", title: <>{who} {live ? "started working" : "ran"}</>, detail: live ? "still going" : undefined });
+      out.push({ at: s.created_at, mark: live ? "ok" : "run", title: <>{who} {live ? "started working" : "stopped"}</>, detail: news });
     }
     return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 14);
   }, [messages, rows, names, all]);
@@ -76,22 +86,25 @@ export function Overview() {
     <div className="pane-in">
       <PageHead
         title="Overview"
-        sub={leads === null ? "How far every shop has got, and what the crew is doing." : `${all.length} shops in the pipeline. ${sentToday === 0 ? "No emails out yet today" : `${sentToday} ${sentToday === 1 ? "email" : "emails"} sent today`}${repliesToday > 0 ? `, ${repliesToday} ${repliesToday === 1 ? "reply" : "replies"} in` : ""}.`}
+        sub={funnel === null ? "How far every shop has got, and what the crew is doing." : `${funnel.shops} shops in the pipeline. ${today.sent === 0 ? "No emails out yet today" : `${today.sent} ${today.sent === 1 ? "email" : "emails"} sent today`}${today.replies > 0 ? `, ${today.replies} ${today.replies === 1 ? "reply" : "replies"} in` : ""}.`}
         actions={<Link to="/leads" className="btn btn-ghost">All leads <ArrowRight size={15} strokeWidth={1.6} /></Link>}
       />
 
       <section className="sav-card flush mb-[18px]" aria-label="Funnel">
-        {leads === null ? (
+        {funnel === null ? (
           <p className="p-6 sav-sub">{error ? `The CRM could not be read: ${error}.` : "Counting the pipeline…"}</p>
         ) : (
           <div className="sav-funnel">
-            {FUNNEL.map((step, i) => {
-              const n = reached(i);
-              const top = Math.max(reached(0), 1);
+            {FUNNEL.map((step) => {
+              const n = funnel[step.key];
+              const top = Math.max(funnel.shops, 1);
               return (
-                <Link key={step.reached} to={`/leads?reached=${step.reached}`}>
+                <Link key={step.key} to={step.key === "shops" ? "/leads" : `/leads?reached=${step.reached}`}>
                   <div className="n num">{n}</div>
-                  <div className="lab">{step.label}</div>
+                  <div className="lab">
+                    {step.label}
+                    {step.key === "emailed" && funnel.bounced > 0 ? <span className="text-ink-3"> · {funnel.bounced} bounced</span> : null}
+                  </div>
                   <div className="bar"><i style={{ width: `${Math.max((n / top) * 100, n > 0 ? 3 : 0)}%` }} /></div>
                 </Link>
               );
@@ -101,8 +114,8 @@ export function Overview() {
       </section>
 
       <div className="sav-stats mb-[18px]">
-        <div className="sav-stat"><div className="n num">{mail?.configured === false ? "—" : sentToday}</div><div className="lab">Emails sent today</div></div>
-        <div className="sav-stat"><div className="n num">{mail?.configured === false ? "—" : repliesToday}</div><div className="lab">Replies today</div></div>
+        <div className="sav-stat"><div className="n num">{mail?.configured === false ? "—" : today.sent}</div><div className="lab">Emails sent today</div></div>
+        <div className="sav-stat"><div className="n num">{mail?.configured === false ? "—" : today.replies}</div><div className="lab">Replies today</div></div>
         <div className="sav-stat"><div className="n num">{leads === null ? "—" : demosBuilt}</div><div className="lab">Demo receptionists built</div></div>
       </div>
 
@@ -171,7 +184,7 @@ export function Overview() {
                 {replied.slice(0, 6).map((l) => (
                   <li key={l.client.id}>
                     <span className="what">
-                      <Link to={`/leads/${l.client.id}`}>{l.client.name}</Link>
+                      <Link to={leadPath(l.client)}><ShopName client={l.client} /></Link>
                       <small>{l.client.contact.name || l.client.contact.email}</small>
                     </span>
                     <span className="when"><StatusPill status={l.status} /></span>
