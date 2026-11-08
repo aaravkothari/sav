@@ -372,7 +372,7 @@ describe("blank", () => {
     const perDay = new Map<string, number>();
     for (const [agent, schedule] of fires) perDay.set(agent, (perDay.get(agent) ?? 0) + firesPerDay(schedule.cron) * schedule.budget_micro_usd);
     for (const [agent, total] of perDay) expect([agent, total <= seatOf(agent).budget.cap_micro_usd]).toEqual([agent, true]);
-    expect([...new Set(fires.map(([a]) => a))]).toEqual(["research", "sales", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
+    expect([...new Set(fires.map(([a]) => a))]).toEqual(["research", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
   });
 
   it("researches two cities a day, a new pair each weekday, and arms only the live sector", () => {
@@ -393,7 +393,7 @@ describe("blank", () => {
       expect(system).toMatch(/At most two fetches per business/);
       expect(system).toMatch(/no email means not a lead, so skip it/);
       expect(system).toMatch(/never sleep or wait/);
-      expect(system).toMatch(/Stop when you have filed \d+, or after looking at 15 businesses/);
+      expect(system).toMatch(/Stop when you have filed \d+, or after 10 web_fetch calls in total.*close your card/);
       expect(system).toMatch(/"Opener detail: <one specific, true thing.*in second person.*I came across <name> and noticed.*no trailing period/);
       expect(system).toMatch(/Never call autoops\.provision_demo/);
       expect(seatOf(sector.seat).tools?.configs["autoops.provision_demo"]).toBeUndefined();
