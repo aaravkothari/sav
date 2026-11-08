@@ -171,7 +171,7 @@ export function sectorOf(research: string): string | null {
   const m = /(?:^|\n|[.;]\s+)Sector:\s*([^\n.;]+)/i.exec(research);
   return m ? m[1]!.trim().toLowerCase() : null;
 }
-/** The cold-email template cites auto repair calls, so only auto shops get it until a sector variant exists (#52 review). */
+/** Auto repair (or no sector named): Aarav's exact template, with the Automotive Service Association figure. */
 export const isAutoSector = (sector: string | null): boolean => sector === null || /\b(auto|car|vehicle|smog|tire|body shop|mechanic|automotive|towing)\b/.test(sector);
 
 /**
@@ -195,12 +195,13 @@ export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: R
     if (!isEmail(email)) { skipped.push({ client, reason: "contact email is not an address" }); continue; }
     if (client.stage !== "lead") { skipped.push({ client, reason: `stage is ${client.stage}, not lead` }); continue; }
     if (!research) { skipped.push({ client, reason: "no RESEARCH note" }); continue; }
-    if (!isAutoSector(sectorOf(research))) { skipped.push({ client, reason: `sector ${sectorOf(research)}: the template is auto-only for now` }); continue; }
     if (noteStarts(client, ...DONE_PREFIXES)) { skipped.push({ client, reason: "already contacted (CRM note)" }); continue; }
     if (taken.has(email)) { skipped.push({ client, reason: "address already emailed" }); continue; }
     const detail = personalizedDetail(research);
     if (detail === null) { skipped.push({ client, reason: "no usable detail in RESEARCH note" }); continue; }
-    const email_ = renderColdEmail({ shop_name: client.name, contact_name: client.contact.name, personalized_detail: detail });
+    // Auto repair gets Aarav's exact template; any other sector the general one (no auto statistic).
+    const sector = sectorOf(research);
+    const email_ = renderColdEmail({ shop_name: client.name, contact_name: client.contact.name, personalized_detail: detail, sector: isAutoSector(sector) ? null : sector });
     if (email_ === null) { skipped.push({ client, reason: "could not render" }); continue; }
     taken.add(email);
     candidates.push({ client, email, ...email_ });
