@@ -9,6 +9,7 @@
  * Nothing here touches a socket, a file or a database: the store arrives through `ctx.store()`,
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
+import { autoApprove } from "./autoapprove.ts";
 import { companyStats } from "./stats.ts";
 import { cancelRun, cleanBoard, findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused, UpstreamError } from "./runs.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
@@ -601,7 +602,7 @@ async function chatAgentId(config: ProxyConfig): Promise<string | null> {
  * behind the approval queue and the agent history, the client's social accounts, the timers, and
  * this project's context (the setup answers) from its latest applied install.
  */
-const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context|product-audit|runs|company)(\/|$)/;
+const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context|product-audit|runs|company|approvals)(\/|$)/;
 
 async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (!PLATFORM_ROUTE.test(req.path)) return NO_ROUTE;
@@ -619,10 +620,22 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
     // Running the company from the dashboard (`server/runs.ts`): its on/off switch, and its runs.
     if (req.path === "/api/company" || req.path.startsWith("/api/company/")) {
       const store = await ctx.store();
-      if (req.method === "GET" && req.path === "/api/company") return { status: 200, body: await sweepPaused(config, store) };
+      if (req.method === "GET" && req.path === "/api/company") {
+        // The Runs screen polls this every 10 s: the moment to approve what the rules allow.
+        const state = await sweepPaused(config, store);
+        const auto = await autoApprove(config, store, new Date());
+        return { status: 200, body: { ...state, auto_approved: auto.approved.length, waiting_on_you: auto.left } };
+      }
       if (req.method === "POST" && req.path === "/api/company/pause") return { status: 200, body: await pauseCompany(config, store, new Date()) };
       if (req.method === "POST" && req.path === "/api/company/resume") return { status: 200, body: await resumeCompany(config, store, new Date()) };
       return NO_ROUTE;
+    }
+    // Approving by rule (`server/autoapprove.ts`): run it now, and read what it approved.
+    if (req.path === "/api/approvals/auto") {
+      const store = await ctx.store();
+      if (req.method === "POST") return { status: 200, body: await autoApprove(config, store, new Date()) };
+      if (req.method === "GET") return { status: 200, body: { log: [...(store.read().auto_approvals ?? [])].reverse() } };
+      return NOT_ALLOWED;
     }
     if (req.path === "/api/runs" || req.path.startsWith("/api/runs/")) {
       const ceo = await findCeo(config);

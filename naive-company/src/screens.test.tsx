@@ -217,7 +217,7 @@ describe("the approval queue", () => {
     await decided.press("Approve —");
     expect(decided.text()).toContain("Approved.");
     expect(decided.calls.some((c) => c.path === "/api/sessions/ses_1/tool_confirmations")).toBe(true);
-    const sent = JSON.parse(String(decided.calls.find((c) => c.init?.method === "POST")?.init?.body));
+    const sent = JSON.parse(String(decided.calls.find((c) => c.init?.method === "POST" && c.path.startsWith("/api/sessions/"))?.init?.body));
     expect(sent).toEqual({ tool_call_id: "call_1", decision: "allow" });
 
     document.body.innerHTML = "";
@@ -267,13 +267,14 @@ describe("the approval queue", () => {
     await screen.type("hello@agency", "   ");
     await screen.press("Answer —");
     expect(screen.text()).toContain("Answer every field before sending: Mailbox address, What to read.");
-    expect(screen.calls.some((c) => c.init?.method === "POST")).toBe(false);
+    // The screen also asks the dashboard to approve what is safe; no decision reached a session.
+    expect(screen.calls.some((c) => c.init?.method === "POST" && c.path.startsWith("/api/sessions/"))).toBe(false);
 
     await screen.type("hello@agency", "  hello@agency.example ");
     await screen.press("replies only");
     await screen.press("Answer —");
     expect(screen.text()).toContain("Answered. sales has your answer");
-    const sent = screen.calls.find((c) => c.init?.method === "POST");
+    const sent = screen.calls.find((c) => c.init?.method === "POST" && c.path.startsWith("/api/sessions/"));
     expect(sent?.path).toBe("/api/sessions/ses_q/answers");
     expect(JSON.parse(String(sent?.init?.body))).toEqual({
       tool_call_id: "call_q",
@@ -305,7 +306,7 @@ describe("the approval queue", () => {
     // The first card's field only, then the first card's button.
     await screen.type("hello@", "a@agency.example");
     await screen.press("Answer —");
-    const posted = screen.calls.filter((c) => c.init?.method === "POST");
+    const posted = screen.calls.filter((c) => c.init?.method === "POST" && c.path.startsWith("/api/sessions/"));
     expect(posted.map((c) => c.path)).toEqual(["/api/sessions/ses_a/answers"]);
     // One card reports the answer; the other still has its field and its button.
     expect(screen.text().match(/Answered\./g)).toHaveLength(1);
