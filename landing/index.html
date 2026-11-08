@@ -118,6 +118,11 @@ p { margin: 0; }
 .bubble .who { display: block; font-size: 11px; opacity: .72; margin-bottom: 5px; }
 .bubble.sav { background: var(--bubble-dark); }
 .bubble.caller { background: var(--bubble-teal); align-self: flex-end; }
+.hero-cta { display: none; }
+/* Side by side on a laptop: the sketch keeps to the left of the sample call, so no bubble covers it. */
+@media (min-width: 1001px) {
+  .sketch { left: calc(50% - 200px); width: min(1040px, calc(100% - 440px)); }
+}
 .hero h1 {
   position: absolute; left: max(32px, calc((100% - 1312px) / 2 + 32px)); bottom: 56px; z-index: 2;
   font-size: clamp(40px, 4.4vw, 60px); line-height: 1.08; letter-spacing: -0.02em; max-width: 680px;
@@ -131,13 +136,14 @@ p { margin: 0; }
   .bubbles { position: relative; right: auto; top: auto; width: auto; padding: 0 16px; margin-top: 28px; }
   .bubble { width: 84%; }
 }
-@media (max-width: 1000px) and (min-width: 701px) { .hero h1, .bubbles { padding: 0 32px; } }
+@media (max-width: 1000px) and (min-width: 701px) { .hero h1, .bubbles, .hero-cta { padding: 0 32px; } }
+@media (max-width: 1000px) { .hero-cta { display: block; order: 2; padding: 0 16px; margin-top: 20px; } }
 @media (max-width: 700px) { .bubbles .bubble:nth-of-type(n+4) { display: none; } }
 
 .statement { padding: 112px 0 40px; }
-.statement .wrap { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
-.statement p.big { font-family: var(--serif); font-size: clamp(28px, 3vw, 40px); line-height: 1.2; letter-spacing: -0.01em; max-width: 1000px; }
-.statement .actions { display: flex; gap: 10px; margin-top: 32px; flex-wrap: wrap; justify-content: flex-end; }
+.statement .wrap { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+.statement p.big { font-family: var(--serif); font-size: clamp(28px, 3vw, 40px); line-height: 1.2; letter-spacing: -0.01em; max-width: 860px; text-wrap: balance; }
+.statement .actions { display: flex; gap: 10px; margin-top: 32px; flex-wrap: wrap; justify-content: flex-start; }
 .statement .fine { color: var(--muted-2); font-size: 14px; margin-top: 12px; }
 @media (max-width: 700px) {
   .statement { padding: 72px 0 24px; }
@@ -253,7 +259,9 @@ p { margin: 0; }
 
 .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
 .numbers + .numbers { margin-top: 24px; }
-.numbers[hidden] { display: none; }
+.numbers[hidden], .section[hidden] { display: none; }
+.numbers.proof { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.numbers.proof .stat { background: var(--card); border-radius: 24px; padding: 28px 24px; }
 .ncard { background: var(--card); border-radius: 24px; padding: 28px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .stat .v { font-family: var(--serif); font-size: clamp(36px, 3.4vw, 46px); line-height: 1; letter-spacing: -0.02em; }
 .stat .v.wait { color: #a9a698; }
@@ -432,21 +440,22 @@ footer .logo svg { width: 17px; height: 17px; }
         <span class="sample">Sample call</span>
         <div class="bubble sav"><span class="who">SAV receptionist</span>Thanks for calling. The techs are in the bay, but I can help. What's going on with the car?</div>
         <div class="bubble caller"><span class="who">Caller</span>My brakes started grinding this morning. Can you take a look?</div>
-        <div class="bubble sav"><span class="who">SAV receptionist</span>We can. I have a drop-off open tomorrow at 8. Want me to hold it for you?</div>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>We can. There's a drop-off slot tomorrow at 8. Want me to request it for you?</div>
         <div class="bubble caller"><span class="who">Caller</span>Yes please. I'll bring it in before work.</div>
-        <div class="bubble sav"><span class="who">SAV receptionist</span>Done. You're booked for 8:00 AM tomorrow. I'll text you a confirmation.</div>
+        <div class="bubble sav"><span class="who">SAV receptionist</span>I've put in a request for 8:00 AM tomorrow; the shop will text you to confirm.</div>
       </div>
 
       <h1>Your phone, answered while you're under a car.</h1>
+      <div class="hero-cta"><a class="btn btn-teal" href="#qualify">See if your shop qualifies <span class="arr">&rarr;</span></a></div>
     </section>
   </div>
 
   <section class="statement">
     <div class="wrap">
-      <p class="big">We set up a free demo receptionist for your shop and send you the link when you reply. Call it like a customer would.</p>
+      <p class="big">We build a receptionist for your shop. Tell us where to find you and we'll send you a number to call it.</p>
       <div class="actions">
         <a class="btn btn-teal" href="#qualify">See if your shop qualifies <span class="arr">&rarr;</span></a>
-        <a class="btn btn-outline js-demo" href="#demo">Start your free week</a>
+        <a class="btn btn-outline" href="#how">How it works</a>
       </div>
       <p class="fine">Free first week.</p>
     </div>
@@ -456,20 +465,20 @@ footer .logo svg { width: 17px; height: 17px; }
     <div class="wrap">
       <div class="sec-head">
         <span class="label">Try it</span>
-        <h2>Call it like a customer would</h2>
-        <p>It already knows your hours, your services and how you book work. Nothing is connected to your real line until you say so.</p>
+        <h2>What to try when you call it</h2>
+        <p>It knows your hours, your services and how you take work. Nothing is connected to your real line until you say so.</p>
       </div>
       <div class="try">
         <ul class="try-list">
           <li><span class="n">1</span>Ask for a quote on a brake job.</li>
-          <li><span class="n">2</span>Book a drop-off for tomorrow morning.</li>
+          <li><span class="n">2</span>Ask for a drop-off tomorrow morning.</li>
           <li><span class="n">3</span>Ask if you're open Saturday.</li>
           <li><span class="n">4</span>Ask for a tow at 9 pm.</li>
         </ul>
         <div class="call-card" id="qualify">
           <form class="qualify" id="qualify-form" novalidate>
             <p class="lead">See if your shop qualifies</p>
-            <p class="sub">We set up a free demo receptionist for your shop and send you the link when you reply.</p>
+            <p class="sub">Tell us where to find you and we'll send you a number to call it.</p>
             <div class="q-grid">
               <label><span>Shop name</span><input name="shop" required autocomplete="organization" placeholder="Pat's Garage"></label>
               <label><span>Website</span><input name="website" required inputmode="url" placeholder="patsgarage.com"></label>
@@ -506,7 +515,7 @@ footer .logo svg { width: 17px; height: 17px; }
                   </div>
                   <div class="cap">Handled on its own</div>
                   <div class="chips">
-                    <span>Call answered</span><span>Drop-off booked</span><span>Hours given</span><span>Status call handled</span><span>Directions sent</span><span class="more">and more</span>
+                    <span>Call answered</span><span>Drop-off requested</span><span>Hours given</span><span>Status call handled</span><span>Directions sent</span><span class="more">and more</span>
                   </div>
                   <div class="cap warn">Needs you &middot; 2</div>
                   <div class="task">
@@ -528,7 +537,7 @@ footer .logo svg { width: 17px; height: 17px; }
           <div class="sol-text">
             <span class="tag slate">Front desk</span>
             <h3>Answers every call</h3>
-            <p>It picks up on the first ring, books drop-offs, gives your hours and answers "is my car ready?". Anything that needs a person, like a big quote or a late tow, comes to you with the details already taken.</p>
+            <p>It picks up on the first ring, takes drop-off requests for you to confirm, gives your hours and answers "is my car ready?". Anything that needs a person, like a big quote or a late tow, comes to you with the details already taken.</p>
           </div>
         </div>
 
@@ -547,7 +556,7 @@ footer .logo svg { width: 17px; height: 17px; }
                   <div class="win-body">
                     <div class="win-top"><h4>Every call in one place</h4><span class="status">Answering</span></div>
                     <div style="margin-top:10px">
-                      <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span>Brakes grinding<span class="r booked">Drop-off booked</span></div>
+                      <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span>Brakes grinding<span class="r booked">Drop-off requested</span></div>
                       <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Open Saturday?<span class="r answered">Answered</span></div>
                       <div class="inbox-row"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h2m14 0h2M5 17V9h9l4 4v4M14 9v4h4"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/></svg></span>Tow after hours<span class="r sent">Sent to you</span></div>
                     </div>
@@ -566,12 +575,26 @@ footer .logo svg { width: 17px; height: 17px; }
         </div>
 
         <div class="sol">
-          <div aria-hidden="true"></div>
+          <div>
+            <div class="frame">
+              <div class="window">
+                <div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="brand">sav</span><span class="search">Weekly review</span></div>
+                <div class="win-body">
+                  <div class="win-top"><div><h4>This week's calls</h4><small>Reviewed Monday, 7:00 AM</small></div><span class="status">Reviewed</span></div>
+                  <div class="cap">Found</div>
+                  <div class="task"><span class="t"><b>Gave the wrong Saturday hours</b><span>2 calls</span></span></div>
+                  <div class="cap">Fix</div>
+                  <div class="task"><span class="t"><b>Saturday is 9 to 1, by appointment</b><span>Passed 6 practice calls</span></span><span class="go">Tested</span></div>
+                </div>
+              </div>
+            </div>
+            <p class="caption">Illustration.</p>
+          </div>
           <span class="dot dim" aria-hidden="true"></span>
           <div class="sol-text">
             <span class="tag sand">Every call reviewed</span>
             <h3>It gets better every week</h3>
-            <p>Every call is reviewed. When the receptionist gets something wrong, a fix is written and tested on practice calls. A person approves it before your callers ever hear it.</p>
+            <p>Every call is reviewed. When the receptionist gets something wrong, a fix is written and tested on practice calls before your callers hear it.</p>
           </div>
         </div>
       </div>
@@ -586,46 +609,20 @@ footer .logo svg { width: 17px; height: 17px; }
       </div>
       <div class="steps">
         <div class="step"><span class="n">1</span><h3>We built it already</h3><p>From your public listing and website: your hours, your services, how you book.</p></div>
-        <div class="step"><span class="n">2</span><h3>You call it</h3><p>We send you the link to your demo when you reply. Try to stump it.</p></div>
+        <div class="step"><span class="n">2</span><h3>You call it</h3><p>We send you a number to call it. Try to stump it.</p></div>
         <div class="step"><span class="n">3</span><h3>Keep it for a week, free</h3><p>Forward your missed calls to it. Stop any time.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="section" id="numbers">
+  <section class="section" id="numbers" hidden>
     <div class="wrap">
       <div class="sec-head">
         <span class="label">So far</span>
         <h2>Run by a small team and a lot of automation</h2>
         <p>These numbers come straight from our receptionists and update on their own.</p>
       </div>
-      <div class="numbers">
-        <div class="ncard">
-          <div class="stat"><div class="v num wait" data-voice="calls_handled">&middot;&middot;&middot;</div><div class="k">calls handled</div></div>
-          <div class="stat"><div class="v num wait" data-voice="minutes_on_the_phone">&middot;&middot;&middot;</div><div class="k">minutes on the phone</div></div>
-        </div>
-        <div class="ncard">
-          <div class="stat"><div class="v num wait" data-voice="appointment_requests">&middot;&middot;&middot;</div><div class="k">appointment requests</div></div>
-          <div class="stat"><div class="v num wait" data-voice="requests_confirmed">&middot;&middot;&middot;</div><div class="k">appointments confirmed</div></div>
-        </div>
-        <div class="ncard">
-          <div class="stat"><div class="v num wait" data-voice="receptionists_built">&middot;&middot;&middot;</div><div class="k">receptionists built</div></div>
-          <div class="stat"><div class="v num wait" data-voice="free_week_signups">&middot;&middot;&middot;</div><div class="k">free weeks started</div></div>
-        </div>
-      </div>
-      <div class="numbers" id="company-numbers" hidden>
-        <div class="ncard">
-          <div class="stat"><div class="v num wait" data-field="leads_found">&middot;&middot;&middot;</div><div class="k">shops found</div></div>
-          <div class="stat"><div class="v num wait" data-field="demos_built">&middot;&middot;&middot;</div><div class="k">receptionists built ahead</div></div>
-        </div>
-        <div class="ncard">
-          <div class="stat"><div class="v num wait" data-field="drafts_written">&middot;&middot;&middot;</div><div class="k">emails drafted</div></div>
-          <div class="stat"><div class="v num wait" data-field="free_week_yes">&middot;&middot;&middot;</div><div class="k">owners said yes</div></div>
-        </div>
-        <div class="ncard">
-          <div class="stat"><div class="v num wait" data-field="calls_reviewed">&middot;&middot;&middot;</div><div class="k">calls reviewed</div></div>
-        </div>
-      </div>
+      <div class="numbers proof" id="proof"></div>
       <p class="live-note"><span class="pulse" id="pulse"></span><span id="live-text">Connecting to our receptionists</span></p>
     </div>
   </section>
@@ -634,7 +631,7 @@ footer .logo svg { width: 17px; height: 17px; }
     <div class="wrap">
       <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke="#1f3a3d" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="#1f3a3d"/></svg>
       <h2>Hear it answer your phone</h2>
-      <p>We set up a free demo receptionist for your shop and send you the link when you reply. Free first week.</p>
+      <p>We build a receptionist for your shop and send you a number to call it. Free first week.</p>
       <a class="btn btn-teal" href="#qualify">See if your shop qualifies <span class="arr">&rarr;</span></a>
     </div>
   </section>
@@ -643,7 +640,6 @@ footer .logo svg { width: 17px; height: 17px; }
 <footer>
   <div class="wrap">
     <a class="logo" href="#top"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke="#1f3a3d" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#1f3a3d"/></svg>sav</a>
-    <span>Every number on this page is live.</span>
     <span>Built at the Naive x YC hackathon, Nov 7-8 2026.</span>
   </div>
 </footer>
@@ -708,19 +704,41 @@ function tick(el, to) {
   requestAnimationFrame(step);
 }
 
-function fill(selector, attr, data) {
-  document.querySelectorAll(selector).forEach(el => {
-    const v = data ? data[el.dataset[attr]] : undefined;
-    if (typeof v === "number" && isFinite(v)) tick(el, v);
-    else if (!shown.has(el)) { el.textContent = "···"; el.classList.add("wait"); }
-  });
+/*
+ * What a prospect is shown: only counts that prove something, only when they are above zero, with
+ * the noun matching the number. Internal funnel numbers (shops found, emails drafted, owners who
+ * said yes) never reach this page. With nothing worth showing, the section stays hidden.
+ */
+const PROOF = [
+  { src: "voice", key: "calls_handled", one: "call answered", many: "calls answered" },
+  { src: "voice", key: "minutes_on_the_phone", one: "minute on the phone", many: "minutes on the phone" },
+  { src: "voice", key: "appointment_requests", one: "appointment request taken", many: "appointment requests taken" },
+  { src: "voice", key: "requests_confirmed", one: "appointment confirmed by a shop", many: "appointments confirmed by shops" },
+  { src: "built", key: "receptionists_built", one: "receptionist built", many: "receptionists built" },
+  { src: "voice", key: "free_week_signups", one: "free week started", many: "free weeks started" },
+  { src: "company", key: "calls_reviewed", one: "call reviewed", many: "calls reviewed" }
+];
+
+function proofValue(item) {
+  const n = (d, k) => (d && typeof d[k] === "number" && isFinite(d[k]) ? d[k] : 0);
+  if (item.src === "built") return Math.max(n(sources.voice.data, "receptionists_built"), n(sources.company.data, "demos_built"));
+  return n(sources[item.src].data, item.key);
 }
 
 function render() {
-  fill("[data-voice]", "voice", sources.voice.data);
-  const c = sources.company;
-  document.getElementById("company-numbers").hidden = !c.data;
-  fill("[data-field]", "field", c.data);
+  const grid = document.getElementById("proof");
+  const shownNow = PROOF.map(item => ({ item, v: proofValue(item) })).filter(x => x.v > 0);
+  document.getElementById("numbers").hidden = shownNow.length === 0;
+  const keys = shownNow.map(x => x.item.key).join(",");
+  if (grid.dataset.keys !== keys) {
+    grid.dataset.keys = keys;
+    grid.innerHTML = shownNow.map(x => `<div class="stat"><div class="v num" data-proof="${x.item.key}"></div><div class="k"></div></div>`).join("");
+  }
+  for (const { item, v } of shownNow) {
+    const el = grid.querySelector(`[data-proof="${item.key}"]`);
+    tick(el, v);
+    el.nextElementSibling.textContent = v === 1 ? item.one : item.many;
+  }
 
   const v = sources.voice;
   const pulse = document.getElementById("pulse");
@@ -791,7 +809,7 @@ if (qualify) qualify.addEventListener("submit", async (e) => {
       body: JSON.stringify({ name: v("shop"), domain, contact: { name: v("name"), email: v("email"), role: "" } }) });
     if (!r.ok) throw new Error(((await r.json().catch(() => ({}))).error) || "failed");
     qualify.reset(); msg.className = "q-msg ok";
-    msg.textContent = "Thanks. We'll set up your demo receptionist and email you the link.";
+    msg.textContent = "Thanks. We'll build your receptionist and email you a number to call it.";
   } catch (err) {
     msg.className = "q-msg bad"; msg.textContent = "That didn't go through. Please try again in a minute.";
   } finally { btn.disabled = false; }
