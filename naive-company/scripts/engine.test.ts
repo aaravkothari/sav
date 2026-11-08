@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -77,7 +77,12 @@ describe("sectors (#52 review)", () => {
     expect(isAutoSector("auto repair")).toBe(true);
     expect(isAutoSector("physical therapy")).toBe(false);
     const salon = client("s1", { notes: ["RESEARCH: rated 4.8. Opener detail: you've styled Oakland since 1990\nSector: salon"] });
-    const { candidates } = selectCandidates([salon], new Set());
+    const { candidates, skipped } = selectCandidates([salon], new Set());
+    if (!SECTORS_LIVE) {
+      expect(candidates).toHaveLength(0);
+      expect(skipped[0]!.reason).toMatch(/#47/);
+      return;
+    }
     expect(candidates).toHaveLength(1);
     expect(candidates[0]!.text).not.toMatch(/Automotive Service Association|auto repair/);
     expect(candidates[0]!.text).toContain("nobody picks up or your salon is closed?");
