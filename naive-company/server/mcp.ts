@@ -13,7 +13,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 import { listAgents, proxyFetch, type AgentRow, type ProxyConfig } from "./proxy.ts";
 import { SITE_SECTIONS } from "../site/site.config.ts";
 import { ACTIVE } from "../templates/index.ts";
-import type { DraftPostInput, Store } from "./store.ts";
+import { phoneKey, type DraftPostInput, type Store } from "./store.ts";
 import type { LeadSource } from "../seed/clients.ts";
 import { FILE_ID, MAX_POST_FILES, POST_CHANNELS, type PostChannel } from "../seed/posts.ts";
 
@@ -82,6 +82,7 @@ export const TOOLS = [
   { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator. A name alone, with no domain and no contact_email, is always the agency's own record: if that record exists it is returned, whatever name you give. To file a client or prospect, give its domain or contact_email.", inputSchema: obj({
     name: str("Company name"), domain: str("Company domain, when known"),
     contact_name: str("Contact person, when known"), contact_email: str("Contact email, when known"), contact_role: str("Contact role, when known"),
+    phone: str("The business's public phone, when known. A lead whose phone matches one already filed (last 10 digits) is not filed twice"),
     note: str("Optional first note"),
     source: { type: "string", enum: AGENT_SOURCES, description: "Where this lead came from: outreach (your own prospecting, the default), network (someone the operator already knows) or referral (an existing client introduced them; give referred_by)" },
     referred_by: str("For a referral: the id (cli_…) of the client who introduced them"),
@@ -192,7 +193,10 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       // seat that never reads people's data keeps its outside calls free of the operator (§64), so
       // research files by domain and never needs list_clients to avoid a duplicate.
       const domain = text(params, "domain").trim().toLowerCase();
-      const existing = domain === "" ? undefined : store.read().clients.find((c) => c.domain.trim().toLowerCase() === domain);
+      // The same goes for a phone: two listings of one shop share its number, if not its website.
+      const phone = phoneKey(text(params, "phone"));
+      const existing = (domain === "" ? undefined : store.read().clients.find((c) => c.domain.trim().toLowerCase() === domain))
+        ?? (phone === null ? undefined : store.read().clients.find((c) => phoneKey(c.phone) === phone));
       if (existing) {
         return { id: existing.id, name: existing.name, domain: existing.domain, stage: existing.stage, already_filed: true,
           notice: `${existing.name} (${existing.id}) is already in the CRM: nothing was filed. Skip this shop.` };
@@ -200,13 +204,14 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       const filed = store.createLead({
         name, domain: text(params, "domain"),
         contact: { name: text(params, "contact_name"), email: text(params, "contact_email"), role: text(params, "contact_role") },
+        ...(text(params, "phone").trim() ? { phone: text(params, "phone").trim() } : {}),
         note: typeof params.note === "string" ? params.note : undefined,
         source: source as LeadSource,
         ...(referredBy ? { referredBy } : {}),
       });
       // A name-only filing lands on the agency's own record whatever the name (store.ts). Say so when
       // the name differs, or a seat filing a client by name alone takes the agency's id for the client's.
-      if (filed.domain === "" && filed.contact.email === "" && filed.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+      if (filed.domain === "" && filed.contact.email === "" && !filed.phone && filed.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
         return { ...filed, notice: `A name alone files the agency's own record, so this is ${filed.name} (${filed.id}), not a new "${name}". To file a client, call create_lead again with its domain or contact_email; never invent one.` };
       }
       return filed;

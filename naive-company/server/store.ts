@@ -64,6 +64,12 @@ const newReferralCode = (): string => randomBytes(9).toString("base64url");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Last 10 digits of a phone number, or null when it has fewer: the key `create_lead` dedupes on. */
+export function phoneKey(phone: string | null | undefined): string | null {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  return digits.length >= 10 ? digits.slice(-10) : null;
+}
+
 /**
  * Why a client may not be asked for a referral at `now`, or null when it may (`REFERRAL_READY`).
  * Recent work is judged by its calendar slot, the one date every post carries as an ISO day.
@@ -92,6 +98,8 @@ export interface LeadInput {
   name: string;
   domain: string;
   contact: { name: string; email: string; role: string };
+  /** The shop's public phone; optional. */
+  phone?: string;
   services?: string[];
   note?: string;
   source?: LeadSource;
@@ -206,7 +214,7 @@ export function openStore(file: string): Store {
  */
 export function openStoreOver(state: StoreState, persist: (state: StoreState) => void): Store {
   const save = () => persist(state);
-  const nameOnly = (row: { domain: string; contact: { email: string } }) => row.domain === "" && row.contact.email === "";
+  const nameOnly = (row: { domain: string; contact: { email: string }; phone?: string }) => row.domain === "" && row.contact.email === "" && !row.phone;
 
   // Older installs allowed each intake to choose a different label for the agency itself. The CRM
   // has clients; it has exactly one internal workspace. Consolidate those legacy rows under the
@@ -247,6 +255,7 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         stage: "lead",
         services: input.services ?? [],
         contact: input.contact,
+        ...(input.phone ? { phone: input.phone } : {}),
         notes: input.note === undefined ? [] : [input.note],
         // The agency's own name-only record is not a lead, so it has no source.
         ...(input.source && !nameOnly(input) ? { source: input.source } : {}),

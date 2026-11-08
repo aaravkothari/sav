@@ -31,6 +31,8 @@ export interface Client {
   stage: PipelineStage;
   services: string[];
   contact: { name: string; email: string; role: string };
+  /** The shop's public phone, as filed. `create_lead` dedupes on its last 10 digits. */
+  phone?: string;
   notes: string[];
   nextAction?: string;
   /** Set when the client graduates and its agents are provisioned. */
