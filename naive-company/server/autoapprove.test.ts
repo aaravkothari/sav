@@ -74,6 +74,10 @@ describe("autoApprove", () => {
     const asked = { ...session, pending_actions: [{ kind: "question", name: "ask_operator", tool_call_id: "q" }] };
     const once = vi.fn(async () => new Response(JSON.stringify({ data: [asked] }), { status: 200 })) as unknown as typeof fetch;
     expect(await autoApprove(config, store, new Date(), once)).toEqual({ approved: [], left: 1 });
+    // The public site is public: the SEO seat's update_site waits for a person, like a question.
+    const site = { ...session, pending_actions: [tool("dashboard.update_site", { site: { hero: {} } })] };
+    const siteOnce = vi.fn(async () => new Response(JSON.stringify({ data: [site] }), { status: 200 })) as unknown as typeof fetch;
+    expect(await autoApprove(config, store, new Date(), siteOnce)).toEqual({ approved: [], left: 1 });
     const limited = vi.fn(async () => new Response("{}", { status: 429 })) as unknown as typeof fetch;
     expect(await autoApprove(config, store, new Date(), limited)).toEqual({ approved: [], left: 0, rate_limited: true });
   });

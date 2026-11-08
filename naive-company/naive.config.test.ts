@@ -7,6 +7,9 @@ import { TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
 
+const MONID_TOOLS = ["monid.monid_discover", "monid.monid_inspect", "monid.monid_get_run", "monid.monid_list_runs", "monid.monid_balance", "monid.monid_run"];
+const AUTOOPS_READS = ["autoops.get_receptionist", "autoops.list_call_summaries", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"];
+
 /** Loaded once: jiti compiles the config cold, and every test below reads the same apply. */
 const loaded = loadConfig(dirname(fileURLToPath(import.meta.url)));
 
@@ -67,7 +70,7 @@ describe("naive.config.ts", () => {
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
     expect(result.config.agents.map((a) => a.name)).toEqual(SEO
       ? ["site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer", "paid-media-planner"]
-      : ["research", "sales", "client-manager", "monitoring", "self-improvement"]);
+      : ["research", "research-salon", "research-drycleaner", "research-pt", "research-home", "sales", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
       expect(agent.tools?.default_config.permission).toBe("deny");
@@ -84,7 +87,7 @@ describe("naive.config.ts", () => {
       // the platform offers these only to a turn whose identity owns an inbox, and deny-by-default
       // means they must still be named here. Reads run. Sending is `ask` in the SEO crew; in the
       // receptionist crew (blank) nothing asks permission, sending included (the operator's call).
-      if (agent.name === "sales" || agent.name === "client-manager") {
+      if (agent.name === "sales" || agent.name === "client-manager" || agent.name === "payments") {
         expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
         expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
         expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: SEO ? "ask" : "allow" });
@@ -100,13 +103,17 @@ describe("naive.config.ts", () => {
         };
         // blank: research reaches Monid's catalogue; reads and paid runs both run, within the seat budget.
         const receptionist: Record<string, string[]> = {
-          research: ["monid.monid_discover", "monid.monid_inspect", "monid.monid_get_run", "monid.monid_list_runs", "monid.monid_balance", "monid.monid_run", "autoops.provision_demo"],
-          monitoring: ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"],
-          "self-improvement": ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"],
+          ...Object.fromEntries(["research", "research-salon", "research-drycleaner", "research-pt", "research-home"].map((name) => [name, MONID_TOOLS])),
+          monitoring: AUTOOPS_READS,
+          "self-improvement": [...AUTOOPS_READS, "autoops.update_receptionist"],
         };
         expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO ? measurement[agent.name] : receptionist[agent.name]) || []]);
         if (!SEO && agent.name === "research") expect(agent.tools?.configs["monid.monid_run"]?.permission).toBe("allow");
       }
+      if (!SEO && agent.name === "payments") expect(connectionTools(agent)).toEqual(expect.arrayContaining(["autoops.create_trial_checkout", "autoops.activate_shop", "autoops.list_shops", "agentmail.send_message"]));
+      // The receptionist crew's mail seats: sales replies only (first emails are the engine's), onboarding also books on Google Calendar.
+      if (!SEO && agent.name === "sales") expect(connectionTools(agent).filter((n) => /^agentmail\.(send|reply|forward)/.test(n))).toEqual(["agentmail.reply_to_message"]);
+      if (!SEO && agent.name === "client-manager") expect(connectionTools(agent)).toEqual(expect.arrayContaining(["googlecalendar.create_event", "agentmail.send_message"]));
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
       // the pause), so it is `ask`; a prompt that says "ask the operator" without it is a dead letter.
@@ -130,8 +137,9 @@ describe("naive.config.ts", () => {
       expect(byName["site-builder"]?.tools?.configs["dashboard.get_site"]).toEqual({ enabled: true, permission: "allow" });
       expect(byName["site-builder"]?.tools?.configs["dashboard.update_site"]).toEqual({ enabled: true, permission: "ask" });
     } else {
-      // The receptionist crew is all placeholders: the apply opens no session and arms no timer.
-      for (const agent of result.config.agents) expect([agent.name, agent.intake, agent.schedules]).toEqual([agent.name, undefined, []]);
+      // The receptionist crew opens no session on apply; its timers are capped per fire, and only the live research sector is armed.
+      for (const agent of result.config.agents) expect([agent.name, agent.intake]).toEqual([agent.name, undefined]);
+      expect(result.config.agents.filter((a) => (a.schedules ?? []).length > 0).map((a) => a.name)).toEqual(["research", "sales", "client-manager", "payments", "monitoring", "self-improvement", "seo", "promotion", "coding-liaison"]);
       // The CEO's board is seeded with the pipeline, every card unassigned, so nothing starts on its own.
       expect(result.config.tasks.map((t) => t.key)).toEqual(["research", "outreach", "onboarding", "test-call", "monitoring", "self-improvement"]);
       expect(result.config.tasks.every((t) => t.assignee === undefined)).toBe(true);
@@ -177,7 +185,7 @@ describe("the agency persona", () => {
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
     expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual([
-      ...(SEO ? [] : ["research"]), "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : ["monitoring", "self-improvement"]),
+      ...(SEO ? [] : ["research", "research-salon", "research-drycleaner", "research-pt", "research-home"]), "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : ["payments", "monitoring", "self-improvement"]),
     ]);
   }, 30_000);
 

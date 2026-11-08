@@ -61,7 +61,7 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
   }
 
   // autoops-voice: reads and free text-mode calls; a demo only when it is a preview (no number).
-  if (["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"].includes(name)) return "receptionist read";
+  if (["autoops.get_receptionist", "autoops.list_call_summaries", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"].includes(name)) return "receptionist read";
   if (name === "autoops.provision_demo") {
     const shop = args.shop as { demo?: unknown } | undefined;
     return shop?.demo === true ? "free preview demo" : null;
@@ -102,6 +102,12 @@ async function parkedSessions(config: ProxyConfig, fetchImpl: typeof fetch): Pro
 
 const LOG_CAP = 200;
 
+/**
+ * Held calls the dashboard never approves for the operator: changing the public site is posting
+ * publicly, which AGENTS.md keeps for a person. The SEO seat proposes it; a person decides.
+ */
+export const NEVER_AUTO: ReadonlySet<string> = new Set(["dashboard.update_site"]);
+
 /** Approves every held call a rule allows, logs each one, and leaves the rest for a person. */
 export async function autoApprove(config: ProxyConfig, store: Store, now: Date, fetchImpl: typeof fetch = fetch): Promise<{ approved: AutoApproval[]; left: number; rate_limited?: boolean }> {
   if (store.company().paused) return { approved: [], left: 0 };
@@ -112,8 +118,8 @@ export async function autoApprove(config: ProxyConfig, store: Store, now: Date, 
   let left = 0;
   for (const session of sessions) {
     for (const action of session.pending_actions ?? []) {
-      // A question needs an answer from a person; every tool call is approved.
-      if (action.kind !== undefined && action.kind !== "tool") {
+      // A question needs an answer from a person, and so does the public site; every other tool call is approved.
+      if ((action.kind !== undefined && action.kind !== "tool") || NEVER_AUTO.has(action.name)) {
         left += 1;
         continue;
       }

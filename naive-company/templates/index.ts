@@ -81,6 +81,8 @@ const blank: TemplateVocabulary = {
     { id: "script", label: "Call script", description: "What a shop's receptionist says: greeting, questions, booking rules." },
     { id: "report", label: "Report", description: "Calls answered, bookings made and anything missed, per shop." },
     { id: "audit", label: "Review", description: "A review of a shop's calls with suggested changes." },
+    { id: "post", label: "Social post", description: "A drafted X or Reddit post about SAV, for a person to review and post." },
+    { id: "ad", label: "Ad idea", description: "An ad concept: audience, hook, copy and where it would run. Never live spend." },
   ],
   words: {
     brand: "Shop Receptionist",

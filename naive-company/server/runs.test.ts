@@ -58,7 +58,7 @@ describe("groupRuns", () => {
   it("groups cards by run, newest first, each as the six pipeline steps in order", () => {
     const runs = groupRuns([
       card("Find and qualify 3 shops (run-202611080130)", "done"),
-      card("Draft intro emails (run-202611080130)", "doing"),
+      card("Answer shop replies (run-202611080130)", "doing"),
       card("Find and qualify 3 shops (run-202611090800)", "todo"),
       card("Something the CEO filed itself", "todo"),
     ]);
@@ -133,7 +133,7 @@ describe("cleaning up runs", () => {
   });
   const board = [
     card("crd_r", `Find and qualify 3 shops (${T})`, "doing", { assignee: "agt_research", woken_session_id: "ses_r" }),
-    card("crd_s", `Draft intro emails (${T})`, "blocked", { assignee: "agt_sales", blocked_by: ["crd_r"] }),
+    card("crd_s", `Answer shop replies (${T})`, "blocked", { assignee: "agt_sales", blocked_by: ["crd_r"] }),
     card("crd_seed", "Find and qualify 3 shops", "todo"),
     card("crd_old", "You: Write down your pitch", "todo"),
     card("crd_done", "Already finished", "done"),

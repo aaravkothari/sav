@@ -2,28 +2,40 @@
 
 An autonomous company on [Naïve](https://usenaive.ai/docs), built on Naïve's **agency blueprint** (`blank` template). The blueprint provides the company itself: a public site, an operator dashboard (CRM pipeline, Approvals, per-shop workspaces), an MCP server the agents work through, and a company identity. This repo adds the crew for one business: finding independent auto repair shops, signing them up, and giving each one an AI receptionist.
 
-**Status: foundation only.** Every agent is a placeholder that closes its card with a `MOCK:` note. Nothing scrapes, emails, calls, or uses a paid API.
+**Status: the crew runs itself.** Once `naive up` applies it, capped schedules (America/Los_Angeles) and event wakes keep the company going; pausing the company in the dashboard pauses every timer and interrupts every running session (`server/runs.ts`).
 
 > The blueprint's own README is kept as [BLUEPRINT.md](BLUEPRINT.md). It is the reference for the dashboard, the MCP tools, the site and the deploy.
 
 ## The company
 
-| Seat | Role | Status | Defined in |
-| --- | --- | --- | --- |
-| **CEO** | Coordinator. Owns the board and hands each card to a specialist. | Created by `naive up` | the platform's standing orchestrator |
-| `research` | Find and qualify repair shops | placeholder | `templates/receptionist.ts` |
-| `sales` | Outreach. Sending needs approval. | placeholder | 〃 |
-| `client-manager` | Onboarding: hours, services, greeting, booking rules | placeholder | 〃 |
-| `booking--<shop>` | One receptionist per shop: answers calls, books appointments | placeholder | 〃 (per-shop crew) |
-| `monitoring` | Watches calls, bookings and failures | placeholder | 〃 |
-| `self-improvement` | Proposes changes to prompts and process; never applies them | placeholder | 〃 |
+All seats are in `templates/receptionist.ts`. Budgets are per day (#34); a schedule's budget is the cap for one fire. Times are America/Los_Angeles.
+
+| Seat | Role | Model | Budget (cap, per task) | Schedule | Woken by |
+| --- | --- | --- | --- | --- | --- |
+| **CEO** | Hands each board card to a seat | platform default | Naïve default ($50/month, $5/task) | none (platform-owned) | a run from the dashboard |
+| `research` | Auto repair leads: one Maps run, email from the shop's own site, Hunter as fallback | `z-ai/glm-5.3-flash` | $2.00/day, $0.75 | 06:00 and 13:00 daily, a new pair of Bay Area cities each weekday, $0.75/fire | a research card |
+| `research-salon` | Salon leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until the sector is live (`SECTORS[].live`) | a research card |
+| `research-drycleaner` | Dry cleaner leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until live | a research card |
+| `research-pt` | Physical therapy leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until live | a research card |
+| `research-home` | Plumbing and HVAC leads | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none until live | a research card |
+| `sales` | Answers shops that replied (demo link, honest answer, or polite close). First emails are the outbound engine's. | `anthropic/claude-sonnet-5` | $3.00/day, $0.50 | every 2 h 07:00 to 21:00, $0.25/fire | `SHOP REPLIED:` |
+| `client-manager` | Onboarding questions, the call booking (Google Calendar when connected), `MEETING SCRIPT:` for Aarav | `anthropic/claude-haiku-5.5` | $2.00/day, $0.50 | every 3 h 08:30 to 20:30, $0.25/fire | `FREE WEEK STARTED:`, `BOOK CALL:` |
+| `payments` | Stripe checkout link (TEST mode), then `activate_shop` once the subscription is active | `z-ai/glm-5.3-flash` | $1.00/day, $0.25 | every 2 h at :45, 08:45 to 20:45, $0.10/fire | `CHECKOUT NEEDED:` |
+| `monitoring` | Every call against the guardrails, PII-free summaries first; uptime of the voice MCP | `z-ai/glm-5.3-flash` | $1.50/day, $0.40 | uptime every 3 h at :15 ($0.08), digest 21:00 ($0.40) | `A receptionist call just ended` |
+| `self-improvement` | Fixes flagged calls: simulate, smallest change, simulate again, roll back on a fail | `anthropic/claude-haiku-5.5` | $1.50/day, $0.75 | 22:00 daily, $0.75 | a card |
+| `seo` | SAV's own site copy, proposed through `update_site` (a person approves) | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | Mon and Thu 10:00, $0.50 | a card |
+| `promotion` | X and Reddit post drafts and ad ideas into the queue; never posts | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | Tue and Fri 11:00, $0.40 | a card |
+| `coding-liaison` | Collects every seat's `INFRA REQUEST:` notes into one list for the human coding agents | `z-ai/glm-5.3-flash` | $0.50/day, $0.25 | 19:00 daily, $0.20 | a card |
+| `booking--<shop>` | One receptionist per active shop (per-shop crew) | `z-ai/glm-5.3-flash` | $1.00/day, $0.50 | none | moving a shop to active |
+
+The live seats' caps add up to $13.50/day; their scheduled fires to about $8/day.
 
 How Naïve's built-in pieces are used:
 
 - **The CEO and its board.** `naive.config.ts` declares the company's first workflow as `tasks` (`PIPELINE` in `templates/receptionist.ts`). Declaring `tasks` is what makes `naive up` create the organization's CEO, give it the company board, and add this crew to its roster. A card assigned to a seat starts that seat working on it. When a card is `done` or `blocked`, the CEO is told.
 - **The per-shop receptionist.** This uses the blueprint's per-client crew. When a shop is moved to *active* in the dashboard, `server/proxy.ts` creates `booking--<shop-slug>` for it.
-- **No approval gates.** Every seat is deny-by-default, and every tool it does hold runs without asking, email sends included (Aarav's call, Nov 8). Spending is bounded by each seat's budget. The only card left on **Approvals** from our config is `ask_operator`, an agent asking you a question. Naïve's own hold still applies: once a session has read people's data (contact names and emails), the platform holds its later outside calls, and no setting turns that off. Research is arranged not to read the CRM so its lookups aren't held.
-- **Kept from the blueprint:** `sales` and `client-manager` keep their names because the dashboard's chat talks to `client-manager`. The four other agency seats are not used. The shared crew in `templates/agents.ts` is untouched because the `seo-geo` template still builds on it.
+- **No approval gates.** Every seat is deny-by-default, and every tool it does hold runs without asking, email sends included (Aarav's call, Nov 8). Spending is bounded by each seat's budget. What is left on **Approvals** from our config: `ask_operator` (an agent asking you a question) and the `seo` seat's `update_site`, because the public site is public (`server/autoapprove.ts` never approves it for you). Naïve's own hold still applies: once a session has read people's data (contact names and emails), the platform holds its later outside calls, and no setting turns that off. Research is arranged not to read the CRM so its lookups aren't held.
+- **Kept names:** `research` (auto repair), `sales`, `client-manager` and `monitoring` keep their names: renaming a seat is a delete plus a create, autoops-voice wakes `monitoring` and `client-manager` by agent id, and the dashboard's chat talks to `client-manager`. The four other agency seats are not used. The shared crew in `templates/agents.ts` is untouched because the `seo-geo` template still builds on it.
 
 ### Where things live
 
@@ -41,12 +53,14 @@ src/ server/ site/         the blueprint's dashboard, API/MCP server and public 
 
 | Service | Used by | What runs freely | What waits for your approval |
 | --- | --- | --- | --- |
-| [AgentMail](https://agentmail.to) (email inboxes) | `sales`, `client-manager` | everything offered: reading, drafting, creating the company inbox, sending, replying, forwarding | nothing (Naïve may still hold a call after the session read contacts). Deleting is not offered. |
-| [Monid](https://monid.ai) (~2,800 data tools) | `research` | searching the catalogue, inspecting a tool, every `monid_run` (spends your Monid balance, capped by the seat budget), reading runs, balance | nothing. Top-ups and disputes are not offered. |
+| [AgentMail](https://agentmail.to) (email inboxes) | `sales` (replies only), `client-manager`, `payments` | everything offered: reading, drafting, creating the company inbox, sending, replying, forwarding | nothing (Naïve may still hold a call after the session read contacts). Deleting is not offered. |
+| [Monid](https://monid.ai) (~2,800 data tools) | every `research*` seat | searching the catalogue, inspecting a tool, every `monid_run` (spends your Monid balance, capped by the seat budget), reading runs, balance | nothing. Top-ups and disputes are not offered. |
+| autoops-voice (the receptionist, BeigeElk) | `sales`, `payments` (demos, checkout, activation), `monitoring`, `self-improvement`, `booking--<shop>` | reads, PII-free call summaries, simulated calls, preview demos, checkout links, `activate_shop`, and receptionist updates for self-improvement and booking | nothing. `get_claim` (owner contacts) is never offered to an agent. |
+| Google Calendar (Naïve managed connector `googlecalendar`) | `client-manager` | finding free slots, creating and updating the onboarding-call event | nothing. Offered only once the account is connected to the agency identity; until then onboarding asks the owner for a time. |
 
 Both connect as MCP servers (`templates/receptionist.ts`). Their API keys come from `.env` (`AGENTMAIL_API_KEY`, `MONID_API_KEY`) and `naive up` seals them into the `agency-integrations` vault of the agency identity. Naïve injects each key when a session connects, so agents, prompts and transcripts never see it. Vault credentials are write-once: to rotate a key, create the new credential and delete the old one on the platform; editing `.env` and re-running `up` changes nothing.
 
-The seats are still placeholders and are told not to call external services. The tools are ready for when each seat is built for real.
+The autoops-voice URL is a quick tunnel (`AUTOOPS.url`). Its vault credential is keyed on that URL, so when the tunnel changes, re-create the `autoops-voice` credential and delete the old one.
 
 For development here in Claude Code, the Monid CLI and skill are installed too (`.claude/skills/monid/`), with the key registered via `monid keys add`.
 
@@ -85,13 +99,13 @@ This creates real resources, and agents spend real USD from prepaid credits once
 1. **Account:** `npx naive login` (or `npx naive auth register …`), then `npx naive whoami`.
 2. **Plan + credits:** `npx naive plan subscribe` and `npx naive credits topup --usd …`. Both print a checkout link that you open and pay yourself.
 3. **Put your API key in `.env`** (git-ignored; `.env.example` shows the shape): `NAIVE_API_KEY=sk_live_…`. Every script below reads it, and `pnpm naive …` runs any CLI command with it, e.g. `pnpm naive whoami`.
-4. **Check the budgets.** Every seat runs on a placeholder of **$5.00** a month, at most **$0.50** per task (`placeholderBudget` in `templates/receptionist.ts`), on the cheap `z-ai/glm-5.3-flash` model. `naive up` creates the CEO itself, with Naïve's default of $50/month and $5/task.
+4. **Check the budgets.** Each seat's daily cap, per-task ceiling and model are in the table above (`BUDGETS` and `MODELS` in `templates/receptionist.ts`). `naive up` creates the CEO itself, with Naïve's default of $50/month and $5/task.
 5. **Preview, then apply.** The dashboard app gets its own key minted from yours on the first apply:
    ```bash
    pnpm naive:plan    # naive up --dry-run: everything it would create, nothing written
-   pnpm naive:up      # identity, dashboard app, 5 agents, the CEO + board, 6 unassigned cards
+   pnpm naive:up      # identity, dashboard app, 13 agents and their timers, the CEO + board, 6 unassigned cards
    ```
-   Read the report: every line is `created`, `updated`, `unchanged`, `kept`, `skipped` or `refused`. **Nothing runs until you start it.** There are no intakes or timers, and the cards are unassigned.
+   Read the report: every line is `created`, `updated`, `unchanged`, `kept`, `skipped` or `refused`. **The timers start on the apply.** There are no intakes and the cards are unassigned, but every schedule in the table above is armed. Pause the company from the dashboard to stop them all.
 6. **Trigger the workflow (billed):**
    ```bash
    pnpm live:run --confirm-spend      # the CEO assigns each card to its owner; seats close them with MOCK notes
