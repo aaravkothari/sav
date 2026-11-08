@@ -17,6 +17,7 @@
 import { AUTOOPS } from "../templates/receptionist.ts";
 import type { ApiContext, ApiReply, ApiRequest } from "./routes.ts";
 import type { Client } from "../seed/clients.ts";
+import { mailFor } from "../src/leads.ts";
 
 type Env = Record<string, string | undefined>;
 const env = (): Env => (typeof process === "undefined" ? {} : process.env);
@@ -133,7 +134,25 @@ export function callView(c: Rec, summaries: Map<string, string>): CallSummary {
   };
 }
 
+/**
+ * Where the voice service serves its demo pages: the MCP URL's origin. A `RECEPTIONIST:` note can
+ * carry a bare `/demo/<slug>`, and the shop page opens it on this base. Null when unparseable.
+ */
+export function demoBase(e: Env = env()): string | null {
+  try {
+    return new URL(autoopsUrl(e)).origin;
+  } catch {
+    return null;
+  }
+}
+
+/** The receptionist reply, always carrying `demo_base` (a public address, no credential in it). */
 async function receptionistRoute(client: Client): Promise<ApiReply> {
+  const reply = await receptionistReply(client);
+  return { ...reply, body: { ...(reply.body as Record<string, unknown>), demo_base: demoBase() } };
+}
+
+async function receptionistReply(client: Client): Promise<ApiReply> {
   const e = env();
   if (!e.AUTOOPS_VOICE_TOKEN) return { status: 200, body: { configured: false } };
   const shopId = shopIdOf(client);
@@ -217,10 +236,9 @@ export async function recentMail(key: string, fetcher: typeof fetch = fetch, now
 const publicRow = ({ ref: _ref, ...row }: MailRow) => row;
 
 async function emailsRoute(client: Client, key: string): Promise<ApiReply> {
-  const email = client.contact.email.trim().toLowerCase();
-  const domain = client.domain.trim().toLowerCase().replace(/^www\./, "");
-  const mine = (await recentMail(key)).filter((m) =>
-    (email !== "" && m.counterpart === email) || (domain !== "" && m.counterpart.endsWith(`@${domain}`))).slice(0, 12);
+  // The same match the screens use (`src/leads.ts`): the contact or the shop's own domain (never a
+  // webmail domain), a bounce report naming one of them, and never our own inbox's self-tests.
+  const mine = mailFor(client, await recentMail(key)).slice(0, 12);
   const full = await Promise.all(mine.map(async (m) => {
     if (!m.ref?.message) return { ...publicRow(m), text: m.preview };
     try {
