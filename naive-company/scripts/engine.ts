@@ -29,6 +29,7 @@
  * (operator bearer; also used for `/mcp` unless DASHBOARD_MCP_TOKEN is set), optional
  * DASHBOARD_MCP_URL (default `$DASHBOARD_URL/mcp`), NAIVE_API_URL (default https://api.vetta.sh).
  */
+import { createHash } from "node:crypto";
 import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -172,6 +173,12 @@ export function sectorOf(research: string): string | null {
 }
 /** The cold-email template cites auto repair calls, so only auto shops get it until a sector variant exists (#52 review). */
 export const isAutoSector = (sector: string | null): boolean => sector === null || /\b(auto|car|vehicle|smog|tire|body shop|mechanic|automotive|towing)\b/.test(sector);
+
+/**
+ * The AgentMail Idempotency-Key for a shop's first email: one per address, so a retry never sends
+ * twice. AgentMail allows only A-Z a-z 0-9 - . _ ~ in it, so the address is hashed.
+ */
+export const coldKey = (email: string): string => `sav-cold-1-${createHash("sha256").update(normEmail(email)).digest("hex").slice(0, 32)}`;
 
 /** Who gets the cold email, in CRM order, and why everyone else does not. */
 export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: ReadonlySet<string>): { candidates: Candidate[]; skipped: Skip[] } {
@@ -541,7 +548,7 @@ class Engine {
         }
         if (!this.inbox) break;
         try {
-          const r = await this.mail.send(this.inbox.inbox_id, c.email, c.subject, c.text, `sav-cold-1-${c.email}`);
+          const r = await this.mail.send(this.inbox.inbox_id, c.email, c.subject, c.text, coldKey(c.email));
           const row: LedgerRow = { email: c.email, client_id: c.client.id, message_id: r.message_id, thread_id: r.thread_id ?? null, at: new Date().toISOString(), noted: false };
           await mkdir(DATA, { recursive: true });
           await appendFile(LEDGER, `${JSON.stringify(row)}\n`);

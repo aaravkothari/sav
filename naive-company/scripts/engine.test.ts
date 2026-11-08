@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -51,6 +51,14 @@ describe("the ramp", () => {
   it("never goes past the daily cap", () => {
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP - 10).size).toBe(10);
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP).size).toBe(0);
+  });
+});
+
+describe("coldKey", () => {
+  it("is stable per address and uses only the characters AgentMail allows", () => {
+    expect(coldKey("Pat@Shop.com")).toBe(coldKey("pat@shop.com"));
+    expect(coldKey("pat@shop.com")).not.toBe(coldKey("sam@shop.com"));
+    expect(coldKey("o'brien+x@shop.com")).toMatch(/^[A-Za-z0-9._~-]+$/);
   });
 });
 
