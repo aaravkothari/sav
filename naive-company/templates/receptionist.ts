@@ -113,7 +113,7 @@ export const INBOX_NAME = "Aarav from SAV";
 const INBOX_RULE =
   `Your email goes through AgentMail (agentmail.* tools), from the company inbox whose display name is "${INBOX_NAME}": find it with agentmail.list_inboxes. ` +
   `If it does not exist yet, propose agentmail.create_inbox once with display_name "${INBOX_NAME}" and username "aarav.sav". ` +
-  "Write every email as an AgentMail draft (agentmail.create_draft): drafts are reviewed by the operator, who sends them. Never call send_message, send_draft, reply_to_message or forward_message unless your card explicitly says the operator asked you to send.";
+  "Send email yourself: no operator review per send (the operator's call, Nov 7). A new email goes out with agentmail.send_message to the shop's contact_email from the CRM, never to an address you found anywhere else; a reply goes out with agentmail.reply_to_message on the shop's own thread, and only on a thread the shop wrote in. Never send a follow-up or nudge to a shop that has not answered, and never email the same address twice for the same step. Where your steps below say draft only, draft (agentmail.create_draft) and do not send.";
 
 const seat = (decl: Omit<AgentDecl, "model" | "budget" | "identity" | "schedules" | "handoffs">): AgentDecl => ({
   model: placeholderModel,
@@ -150,18 +150,18 @@ export const receptionistRoster: AgentDecl[] = [
   seat({
     name: "sales",
     role: "Outreach",
-    description: "Drafts a personal email to each qualified shop from the company's AgentMail inbox, and files replies. Nothing is sent without you.",
+    description: "Sends a personal email to each qualified shop from the company's AgentMail inbox, and answers shops that reply.",
     system: real([
       "You are the outreach agent for SAV. You write to the shops research filed, as Aarav, the founder: a short, personal one-to-one email, never a marketing blast.",
       INBOX_RULE,
-      `1. dashboard.list_clients, then dashboard.get_client for every lead whose notes hold a "${RESEARCH_NOTE}" note and that has a contact_email and no "OUTREACH DRAFTED" note yet.`,
+      `1. dashboard.list_clients, then dashboard.get_client for every lead whose notes hold a "${RESEARCH_NOTE}" note and that has a contact_email and no "OUTREACH SENT" or "OUTREACH DRAFTED" note yet.`,
       `2. Pick the template. Use the "called" template ONLY when the shop's notes hold an "${CALLED_NOTE}" note from the operator, and use what that note says; otherwise use the "partner" template, or a shorter version of it that keeps its words and adds one personal line. Never claim a call, a hold, a visit or anything else that did not happen.`,
       `Template "called": ${JSON.stringify(OUTREACH_TEMPLATES.called)}`,
       `Template "partner": ${JSON.stringify(OUTREACH_TEMPLATES.partner)}`,
       "Fill {{first_name}} from the contact name (use \"there\" when none is known), {{shop_name}} from the client name, and {{specific_detail_about_shop}} only from the detail in the research note. The subject is short and plain, like a person would write: e.g. \"Missed calls at <shop name>\".",
       "The first email never carries a demo link: every demo call bills the voice account, so the demo is only for warm leads. Never put a preview phone number in an email. Nothing goes after the signature.",
-      "3. Create one agentmail.create_draft per shop, to its contact_email. Then dashboard.add_client_note on that shop: \"OUTREACH DRAFTED: <draft id> to <email>\" followed by the email in full, with next_action \"Review and send the opener\".",
-      "4. Replies: read the inbox (agentmail.list_threads, agentmail.get_thread). File each reply verbatim as a note on its shop. When a shop says yes, add a note \"SAID YES:\" with what they said and set next_action \"Move to proposal to start onboarding\". Draft a reply only to a shop that wrote back. When the reply shows interest (yes, a question, asks to try it) and the shop's notes hold a \"" + RECEPTIONIST_NOTE + "\" note, the reply draft may add one sentence: \"I set up a free demo receptionist for <shop name> so you can hear it for yourself: <demo_url>\", with the demo_url copied exactly from that note.",
+      "3. Send one agentmail.send_message per shop, to its contact_email. Then dashboard.add_client_note on that shop: \"OUTREACH SENT: <message id> to <email>\" followed by the email in full, with next_action \"Wait for a reply\".",
+      "4. Replies: read the inbox (agentmail.list_threads, agentmail.get_thread). File each reply verbatim as a note on its shop. When a shop says yes, add a note \"SAID YES:\" with what they said and set next_action \"Move to proposal to start onboarding\". Reply (agentmail.reply_to_message) only to a shop that wrote back, then note \"REPLY SENT: <message id>\" followed by the reply in full. When the reply shows interest (yes, a question, asks to try it) and the shop's notes hold a \"" + RECEPTIONIST_NOTE + "\" note, the reply may add one sentence: \"I set up a free demo receptionist for <shop name> so you can hear it for yourself: <demo_url>\", with the demo_url copied exactly from that note.",
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
@@ -208,7 +208,7 @@ export const receptionistRoster: AgentDecl[] = [
     description: "Reviews finished work and calls, tests prompt ideas with free simulated calls, and proposes at most three changes. Never applies them.",
     system: real([
       "You are the self-improvement agent for SAV. You make the company better without changing anything yourself.",
-      "Read what happened in this order: the board's cards and notes (board_read), the CRM notes (RESEARCH:, OUTREACH DRAFTED, SAID YES:, CALL:), autoops.list_calls, and your autoops.simulate_call tests; read real transcripts with autoops.get_call last, because after that your outside calls and your card update wait for the operator.",
+      "Read what happened in this order: the board's cards and notes (board_read), the CRM notes (RESEARCH:, OUTREACH SENT, OUTREACH DRAFTED, SAID YES:, CALL:), autoops.list_calls, and your autoops.simulate_call tests; read real transcripts with autoops.get_call last, because after that your outside calls and your card update wait for the operator.",
       "Pick at most three concrete improvements: to an agent's instructions, the outreach wording, or a receptionist's prompt. For a receptionist change, test it first with autoops.simulate_call on that shop (free, text only) and quote what the simulated caller heard.",
       `Close your card with the three proposals: what to change, where (file or shop_id), why, and the evidence. Never apply a change yourself: do not call update_receptionist, and agent instructions change only through the repo. ${PROTECTED_RULE}`,
     ].join(" ")),

@@ -14,6 +14,7 @@ Owner: FoggyReef (Naïve crew, `naive-company/`). Written Nov 7 with Aarav.
 | Outbound email needs no per-send approval | The `AGENTS.md` rule now excludes email. SMS, calls, spend and public posts still need approval in the issue. |
 | No email footer | `EMAIL_FOOTER` is removed from `naive-company/templates/receptionist.ts`. Nothing comes after the signature. |
 | Demo link only for warm leads | The first email never has a demo link. A reply to a shop that wrote back with interest may add it. Every demo call bills Swayam's Vapi account (~$0.11/min). |
+| Send without review |  The `sales` seat sends first emails and replies itself. Onboarding still drafts. |
 | Reply only when they reply | Outreach never drafts follow-ups or nudges. It drafts a reply only on a thread where the shop wrote back. |
 
 ## Where things stand
@@ -23,9 +24,13 @@ Owner: FoggyReef (Naïve crew, `naive-company/`). Written Nov 7 with Aarav.
   `provision_demo`, then a Hunter `domain-search` run through Monid, then `create_lead` and notes.
   Every Monid run is a separate inspect, run and poll cycle driven by AI turns. That is why it
   is slow.
-- **Outreach** (`sales` seat) drafts one email per lead in AgentMail. `INBOX_RULE` still says
-  "drafts only, never send" even though the send tools are `allow`. Change that rule when
-  workstream 3 lands.
+- **Outreach** (`sales` seat) sends one email per lead itself (`agentmail.send_message`, note
+  `OUTREACH SENT: <message id> to <email>`) and replies only on threads the shop wrote in (note
+  `REPLY SENT:`). `INBOX_RULE` says so. Onboarding (`client-manager`) still drafts only.
+  `/api/stats` counts both notes as `emails_sent`.
+- **Approval catch:** auto-approve (`server/autoapprove.ts`) clears `send_message` to a CRM
+  contact, but not `reply_to_message`, because a reply's recipient isn't in its arguments. Until
+  that rule learns to look up the thread, replies wait in Approvals.
 - **Inbox**: nothing watches it. Replies are read only when someone runs the outreach card.
 
 ## Workstream 1: faster enrichment (do first)
@@ -76,7 +81,7 @@ cover that.
   spam. Plan for your own sending domain, several inboxes, and a ramp-up (start around 20–30 per
   inbox per run and raise it as bounce and spam rates allow). Read AgentMail's rate limits
   before you set the batch size.
-- Update `INBOX_RULE` at the same time, so the prompt and the permissions agree.
+- `INBOX_RULE` already sends. This workstream only adds the 30-minute trigger and the batch cap.
 
 ## Workstream 4: watching the inbox
 
