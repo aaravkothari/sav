@@ -21,6 +21,11 @@ describe("companyStats", () => {
     });
   });
 
+  it("counts a bounce filed twice for one address once", () => {
+    const twice = shop("d", ["OUTREACH SENT: m4 to owner@d.example", "BOUNCED: m4 to owner@d.example\nSubject: x", "BOUNCED: <daemon-id> to owner@d.example\nSubject: Undeliverable"]);
+    expect(companyStats([...clients, twice], new Date()).bounces).toBe(2);
+  });
+
   it("never carries a name, an email, a note or an id", () => {
     const text = JSON.stringify(companyStats(clients, new Date()));
     for (const leak of ["owner@", "Owner Name", "Shop a", "597", "demo_url", "d1"]) expect(text).not.toContain(leak);
