@@ -171,12 +171,12 @@ describe("connected accounts", () => {
     for (const agent of template.agents) {
       const outward = agent.name === "sales" || agent.name === "client-manager" || agent.name === "account-manager" ||
         (template.name === "seo-geo" && ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"].includes(agent.name)) ||
-        // The receptionist's research seat reaches Monid's data catalogue (a third-party MCP server).
-        (template.name === "blank" && agent.name === "research");
+        // Every receptionist seat reaches a third-party MCP server: Monid, AgentMail or autoops-voice.
+        template.name === "blank";
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
-    // The search crew reads each client's own accounts; the receptionist crew holds none yet.
-    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, template.name === "seo-geo"]);
+    // The search crew reads each client's own accounts; the receptionist crew runs its shop's autoops-voice receptionist.
+    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
   });
 
   it("lets the SEO/GEO agency's own scheduled work read its Search Console and Analytics evidence", () => {
@@ -208,8 +208,8 @@ describe("connected accounts", () => {
     for (const agent of [...template.agents, ...template.crew]) {
       for (const [name, config] of connectionTools(agent)) {
         // The one gate the operator keeps: email actually being sent (send, reply, forward).
-        // Drafts, creating the company inbox and paid Monid runs run on their own, within the
-        // seat budget.
+        // Drafts, the company inbox, paid Monid runs and receptionist changes run on their own,
+        // within the seat budget.
         const sendsEmail = /\.(send|send_draft|send_message|reply|reply_to_message|forward|forward_message)$/.test(name);
         expect([name, config.permission]).toEqual([name, sendsEmail ? "ask" : "allow"]);
       }
@@ -303,7 +303,7 @@ describe("blank", () => {
   });
 
   /** Seats are built one at a time; these are real, the rest still close their card with a MOCK note. */
-  const BUILT = ["research", "sales", "client-manager"];
+  const BUILT = ["research", "sales", "client-manager", "monitoring", "self-improvement", "booking"];
 
   it("starts nothing on its own: no intake, no timer, a small budget, the shared preamble and gate", () => {
     for (const agent of [...blank.agents, ...blank.crew]) {
@@ -344,6 +344,35 @@ describe("blank", () => {
   it("plans a pipeline whose every owner is a seat of this template", () => {
     const seats = new Set([...blank.agents, ...blank.crew].map((a) => a.name));
     for (const step of PIPELINE) expect([step.key, seats.has(step.owner)]).toEqual([step.key, true]);
+  });
+
+  it("onboards an owner who started a free week from the demo page, drafting only", () => {
+    const onboarding = blank.agents.find((a) => a.name === "client-manager")!;
+    expect(onboarding.system).toMatch(/starts with "FREE WEEK STARTED:", there is no card/);
+    expect(onboarding.system).toMatch(/using only what the message gives/);
+    expect(onboarding.system).toMatch(/Draft only, never send/);
+    for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline"]) {
+      expect([tool, onboarding.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
+    }
+    expect(onboarding.tools?.configs["agentmail.send_message"]?.permission).toBe("ask");
+  });
+
+  it("builds free demo receptionists; only a shop's own booking seat can buy a number or change what callers hear", () => {
+    for (const agent of [...blank.agents, ...blank.crew]) {
+      const c = agent.tools?.configs ?? {};
+      const writes = ["autoops.provision_receptionist", "autoops.update_receptionist"].filter((tool) => c[tool]);
+      expect([agent.name, writes.length > 0]).toEqual([agent.name, agent.name === "booking"]);
+      for (const tool of writes) expect([agent.name, tool, c[tool]?.permission]).toEqual([agent.name, tool, "allow"]);
+      if (agent.tools?.configs["autoops.get_receptionist"]) {
+        // Every seat that reaches a receptionist is told to leave the stage demos alone.
+        expect(agent.system).toMatch(/Never call update_receptionist or provision_receptionist for "axl-roadside" or "demo-shop"/);
+      }
+    }
+    const research = blank.agents.find((a) => a.name === "research")!;
+    expect(research.tools?.configs["autoops.provision_demo"]?.permission).toBe("allow");
+    expect(research.system).toMatch(/autoops\.provision_demo once/);
+    const sales = blank.agents.find((a) => a.name === "sales")!;
+    expect(sales.system).toMatch(/Never put a preview phone number in an email/);
   });
 
   it("files the receptionist's kinds of work", () => {

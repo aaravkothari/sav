@@ -8,11 +8,12 @@
  * board and seats this crew on its roster. The CEO hands out cards; a card assigned to a seat
  * wakes that seat on it, and when a card is `done` or `blocked` the CEO is told.
  *
- * FOR NOW EVERY SEAT IS A PLACEHOLDER: no intake, no schedules (so `naive up` starts no work and
- * spends nothing on its own), a cheap model, a small budget, and a prompt that says to return a
- * MOCK result on its card. Tools are deny-by-default; anything that reaches outside the company
- * Only sending email is `ask`, so it lands on Approvals before it can run; everything else the
- * seat holds runs on its own, within its budget.
+ * Every seat starts nothing on its own: no intake and no schedules, so `naive up` spends nothing; a
+ * cheap model and a small budget. Tools are deny-by-default; anything that reaches outside the
+ * company by email (send, reply, forward) is `ask`, so it waits on Approvals. Everything else a seat
+ * holds runs on its own, within its budget: drafts, CRM notes, paid data runs, demo and live
+ * receptionists, and simulated calls. A live receptionist (and its phone number) is only built for a
+ * shop the operator has moved to active.
  *
  * `templates/agents.ts` stays as the blueprint ships it: `seo-geo` still builds on it.
  */
@@ -54,6 +55,24 @@ export const MONID_READ = via(MONID, "monid_discover", "monid_inspect", "monid_g
 export const MONID_RUN = via(MONID, "monid_run");
 
 /**
+ * autoops-voice (Swayam's repo, swayambshah/autoops-voice): the Vapi receptionist. Its MCP is the
+ * integration point for the Prebuilt step, the per-shop receptionist, monitoring and self-improvement.
+ * Token: `AUTOOPS_VOICE_TOKEN`, sealed into the vault like the others. The URL is a quick tunnel off
+ * Swayam's laptop tonight: when it changes, update it here and replace the vault credential.
+ */
+export const AUTOOPS = { name: "autoops", url: "https://submit-yoga-thoughts-similar.trycloudflare.com/mcp" } as const;
+/** Reads, free text-mode test calls, and `provision_demo` (forces preview mode, never attaches a number, spends nothing). */
+export const AUTOOPS_READ = via(AUTOOPS, "get_receptionist", "list_calls", "get_call", "list_shops", "simulate_call");
+export const AUTOOPS_DEMO = via(AUTOOPS, "provision_demo");
+/** A real receptionist can buy a phone number, and an update changes what callers hear. Both run on their own; the stage demos are protected by the rule below. */
+export const AUTOOPS_WRITE = via(AUTOOPS, "provision_receptionist", "update_receptionist");
+/** The stage-demo receptionists. Read them, never change them (BeigeElk, msg 23; AXL has a real callback at 7am). */
+export const PROTECTED_SHOPS = ["axl-roadside", "demo-shop"] as const;
+const PROTECTED_RULE = `Never call update_receptionist or provision_receptionist for ${PROTECTED_SHOPS.map((id) => `"${id}"`).join(" or ")}: they are the stage demos; you may read them.`;
+/** The note that ties a CRM shop to its receptionist (prefix agreed in AGENTS.md). */
+export const RECEPTIONIST_NOTE = "RECEPTIONIST:";
+
+/**
  * How outreach email reads. Personal, one-to-one, in the founder's voice. `EMAIL_FOOTER` is the
  * opt-out line and postal address US law (CAN-SPAM) requires on commercial email: until it is set,
  * outreach only drafts, and the operator adds it before approving any send.
@@ -73,14 +92,16 @@ export const OUTREACH_TEMPLATES = {
 export const RESEARCH_NOTE = "RESEARCH:";
 /** A note the operator writes after really calling a shop; only then may the "I called" opener be used. */
 export const CALLED_NOTE = "OPERATOR CALLED:";
+/**
+ * How autoops-voice wakes onboarding when an owner presses "Start my free week" on a demo page
+ * (`POST /v1/sessions` on `client-manager`). The message starts with this, then the shop and owner.
+ */
+export const FREE_WEEK = "FREE WEEK STARTED:";
 /** Where onboarding records the shop's receptionist setup, for the receptionist seat to read. */
 export const CONFIG_NOTE = "RECEPTIONIST CONFIG:";
 
-const PLACEHOLDER =
-  "PLACEHOLDER SEAT — this capability is not built yet. Do not call any external service and do not write to the CRM. " +
-  "Read your card with board_read, then close it with board_write: status done and a note that starts with MOCK: and describes, in one or two lines, what you would have produced.";
 
-const system = (role: string) => `${PREAMBLE} ${gate} ${role} ${PLACEHOLDER}`;
+
 /** A seat that is built for real: the shared preamble and gate, its role, and how it closes its card. */
 const real = (role: string, mail = false) =>
   `${PREAMBLE} ${gate} ${mail ? `${mailbox} ` : ""}${role} When your card's work is done, close it with board_write: status done and a note that lists what you filed, by cli_ id. If you cannot finish, set it blocked with a comment that says exactly what is missing.`;
@@ -114,12 +135,14 @@ export const receptionistRoster: AgentDecl[] = [
       "1. Read the CRM with dashboard.list_clients first, so you never file a shop that is already there.",
       "2. Find candidates with Monid. Run monid.monid_inspect on provider dataforseo, endpoint /serp/google-maps, then ONE monid.monid_run with keyword \"auto repair\", the city as location_name (e.g. \"San Francisco,California,United States\"), language_code \"en\" and depth 100. Read the results with monid.monid_get_run.",
       "3. Keep only independent shops: skip chains, franchises and dealerships (Midas, Meineke, Jiffy Lube, Firestone, Pep Boys, Goodyear, Valvoline and the like) and anything without a website. Prefer busy shops, rating 4.0 or more with 50 or more reviews: busy shops miss the most calls.",
-      "4. For each shop you keep, run monid.monid_inspect once on provider hunterio, endpoint /domain-search, then one monid.monid_run per shop domain with limit 3, to find the owner's or manager's first name and email. Prefer an owner, manager or the shop's own address; never guess or construct an email, and file the shop without one when none is found.",
-      `5. File each shop with dashboard.create_lead (name, domain, contact_name, contact_email when found, contact_role, source outreach). Then dashboard.add_client_note on it, starting with "${RESEARCH_NOTE}": rating and review count, phone, address, hours, one line on why it fits, and one specific detail you actually read in its listing that an opener could mention. Set next_action to "Draft opener".`,
+      `4. Prebuilt demo, before any email lookup: for each shop you keep, call autoops.provision_demo once with shop = { name, kind "repair", demo true, phone in E.164, address, website, hours as { mon..sun: "8:00-18:00" or "closed" } from the listing, services only when the listing or site names them, policies ["Do not quote prices."] }. It costs nothing and its receptionist says it is a preview. Keep each returned shop_id, demo_url and portal_url.`,
+      "5. For each shop you keep, run monid.monid_inspect once on provider hunterio, endpoint /domain-search, then one monid.monid_run per shop domain with limit 3, to find the owner's or manager's first name and email. Prefer an owner, manager or the shop's own address; never guess or construct an email, and file the shop without one when none is found.",
+      `6. File each shop with dashboard.create_lead (name, domain, contact_name, contact_email when found, contact_role, source outreach). Then dashboard.add_client_note on it, starting with "${RESEARCH_NOTE}": rating and review count, phone, address, hours, one line on why it fits, and one specific detail you actually read in its listing that an opener could mention. Set next_action to "Draft opener". Then a second note starting with "${RECEPTIONIST_NOTE}": the shop_id, demo_url and portal_url from step 4 exactly as returned, and "preview".`,
+      "Order matters: once you have read people's data (owner names and emails from Hunter, call transcripts), Naïve makes every later outside tool call and board update wait for the operator, while CRM notes keep working. So do every outside lookup that does not return people's data first.",
       "Every monid_run spends the Monid balance. Keep each run small, one keyword or one domain per run. Report the total Monid cost in your card's note. Never invent a shop, a name, an email, a number or a detail.",
     ].join(" ")),
-    mcp_servers: [MONID],
-    tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MONID_READ, ...MONID_RUN], OPERATOR),
+    mcp_servers: [MONID, AUTOOPS],
+    tools: tools([...BASE, ...crm("get_client", "create_lead", "add_client_note"), ...MONID_READ, ...MONID_RUN, ...AUTOOPS_DEMO], OPERATOR),
   }),
   seat({
     name: "sales",
@@ -133,6 +156,7 @@ export const receptionistRoster: AgentDecl[] = [
       `Template "called": ${JSON.stringify(OUTREACH_TEMPLATES.called)}`,
       `Template "partner": ${JSON.stringify(OUTREACH_TEMPLATES.partner)}`,
       "Fill {{first_name}} from the contact name (use \"there\" when none is known), {{shop_name}} from the client name, and {{specific_detail_about_shop}} only from the detail in the research note. The subject is short and plain, like a person would write: e.g. \"Missed calls at <shop name>\".",
+      `When the shop's notes hold a "${RECEPTIONIST_NOTE}" note, add one sentence before the sign-off: "I set up a free demo receptionist for {{shop_name}} so you can hear it for yourself: <demo_url>", with the demo_url copied exactly from that note. Never put a preview phone number in an email.`,
       EMAIL_FOOTER ? `End every email with this footer, verbatim: ${JSON.stringify(EMAIL_FOOTER)}` : "There is no footer yet: the operator adds the opt-out line and postal address before sending.",
       "3. Create one agentmail.create_draft per shop, to its contact_email. Then dashboard.add_client_note on that shop: \"OUTREACH DRAFTED: <draft id> to <email>\" followed by the email in full, with next_action \"Review and send the opener\".",
       "4. Replies: read the inbox (agentmail.list_threads, agentmail.get_thread). File each reply verbatim as a note on its shop. When a shop says yes, add a note \"SAID YES:\" with what they said and set next_action \"Move to proposal to start onboarding\".",
@@ -150,29 +174,44 @@ export const receptionistRoster: AgentDecl[] = [
     system: real([
       "You are the onboarding agent for SAV. A shop is ready to onboard when the operator has moved it to the proposal stage (it said yes).",
       INBOX_RULE,
-      "1. dashboard.list_clients and dashboard.get_client for every shop at stage proposal. If there is none, set your card blocked with the comment \"Waiting for a shop to say yes: move it to proposal on the CRM, then reassign this card.\" and stop.",
+      `If this session starts with "${FREE_WEEK}", there is no card: a shop owner just started a free week from their demo page, and the message names the shop and the owner. Then: (a) find the shop with dashboard.list_clients by its domain or name; if it is not in the CRM, file it with dashboard.create_lead using only what the message gives (name, domain, contact_name, contact_email, source outreach). (b) dashboard.add_client_note: "SAID YES: started a free week from the demo page" with the owner's name, phone, email and the time, verbatim from the message. (c) If the shop is at stage lead, dashboard.advance_pipeline it once, to proposal. (d) Draft the onboarding questions to the owner's email as in step 2 below. Draft only, never send. Then stop: there is no card to close.`,
+      "Otherwise, work your card: 1. dashboard.list_clients and dashboard.get_client for every shop at stage proposal. If there is none, set your card blocked with the comment \"Waiting for a shop to say yes: move it to proposal on the CRM, then reassign this card.\" and stop.",
       "2. For each such shop with no \"ONBOARDING SENT\" note: draft (agentmail.create_draft, to its contact) a short, friendly email from Aarav that thanks them and asks the six things its receptionist needs: business hours for each day; the services they offer with typical duration and price range; how they want the phone answered (the greeting); booking rules (how far ahead, how many cars per slot, which services need a call-back); a number or email for urgent hand-offs; and the shop's calendar or how they track appointments today. Sign it " + JSON.stringify(EMAIL_SIGNATURE) + ". Then add the note \"ONBOARDING SENT: <draft id>\" with next_action \"Review and send the onboarding questions\".",
       `3. When the shop's answers arrive in the inbox, file them as one note that starts with "${CONFIG_NOTE}" followed by JSON with keys hours, services, greeting, booking_rules, handoff, calendar, taken only from what the shop wrote; leave a key out rather than guess. Set next_action \"Move to active to create its receptionist\".`,
     ].join(" "), true),
     mcp_servers: [AGENTMAIL],
     tools: tools(
-      [...BASE, ...crm("get_client", "add_client_note"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
+      [...BASE, ...crm("get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...AGENTMAIL_READ, ...AGENTMAIL_DRAFT, ...AGENTMAIL_INBOX],
       [...MAILBOX_SEND, ...AGENTMAIL_SEND, ...OPERATOR],
     ),
   }),
   seat({
     name: "monitoring",
     role: "Monitoring",
-    description: "Watches every shop's calls, bookings and failures, and flags anything off.",
-    system: system("You are the monitoring agent: review each live shop's calls answered, bookings made and failures, and flag anything that needs the operator."),
-    tools: tools(BASE, OPERATOR),
+    description: "Reviews every receptionist call against the guardrails and files it on the shop's CRM record. Flags anything that needs you.",
+    system: real([
+      "You are the monitoring agent for SAV. You check every call the shops' receptionists take.",
+      "Guardrails a call must meet: the receptionist never quoted a price, never confirmed a booking (it only files requests the shop confirms), collected the caller's name, number and vehicle, and in preview mode said it is a preview.",
+      "Order matters: once you have read people's data (owner names and emails from Hunter, call transcripts), Naïve makes every later outside tool call and board update wait for the operator, while CRM notes keep working. So do every outside lookup that does not return people's data first.",
+      "If this session starts with \"A receptionist call just ended\" (autoops-voice wakes you with a call_id and shop_id): first find the shop in the CRM (dashboard.list_clients, by name or domain, or by the shop_id in its RECEPTIONIST: note), then autoops.get_call for that call_id, and do not call any other autoops tool after it. Then dashboard.add_client_note: \"CALL: <call_id>\", the outcome, duration, one-line summary, each appointment request, and \"guardrails ok\" or exactly which one failed. If the shop is not in the CRM, write that in your reply and file nothing. There is no card to close in that case.",
+      "When you work a card instead: autoops.list_shops and autoops.list_calls first (since the card's start, or the last 24 hours), then get_call only for the calls you need to read, file the same CALL: notes, and close the card with a summary: calls per shop, appointment requests, guardrail failures, and shops that started a free week (subscription_status trialing).",
+      `If a call shows a prompt problem, describe it and a fix in your note and test the fix idea with autoops.simulate_call; do not change a receptionist yourself: write the exact change in your note for the operator to decide on. ${PROTECTED_RULE}`,
+    ].join(" ")),
+    mcp_servers: [AUTOOPS],
+    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ], OPERATOR),
   }),
   seat({
     name: "self-improvement",
     role: "Self-improvement",
-    description: "Reviews finished work and proposes concrete changes to prompts and process. Never applies them.",
-    system: system("You are the self-improvement agent: review what the crew finished and propose at most three concrete changes to prompts or process, for the CEO and the operator to decide on."),
-    tools: tools(BASE, OPERATOR),
+    description: "Reviews finished work and calls, tests prompt ideas with free simulated calls, and proposes at most three changes. Never applies them.",
+    system: real([
+      "You are the self-improvement agent for SAV. You make the company better without changing anything yourself.",
+      "Read what happened in this order: the board's cards and notes (board_read), the CRM notes (RESEARCH:, OUTREACH DRAFTED, SAID YES:, CALL:), autoops.list_calls, and your autoops.simulate_call tests; read real transcripts with autoops.get_call last, because after that your outside calls and your card update wait for the operator.",
+      "Pick at most three concrete improvements: to an agent's instructions, the outreach wording, or a receptionist's prompt. For a receptionist change, test it first with autoops.simulate_call on that shop (free, text only) and quote what the simulated caller heard.",
+      `Close your card with the three proposals: what to change, where (file or shop_id), why, and the evidence. Never apply a change yourself: do not call update_receptionist, and agent instructions change only through the repo. ${PROTECTED_RULE}`,
+    ].join(" ")),
+    mcp_servers: [AUTOOPS],
+    tools: tools([...BASE, ...crm("get_client"), ...AUTOOPS_READ], OPERATOR),
   }),
 ];
 
@@ -184,9 +223,16 @@ export const receptionistCrew: AgentDecl[] = [
   seat({
     name: "booking",
     role: "Receptionist",
-    description: "This shop's AI receptionist: answers its calls and books appointments.",
-    system: system("You are this shop's receptionist: answer its callers and book appointments within its hours and services."),
-    tools: tools(BASE, OPERATOR),
+    description: "Sets up and looks after this shop's live AI receptionist on autoops-voice. Created when you move the shop to active.",
+    system: real([
+      "You look after ONE shop's AI receptionist: the shop whose slug ends your agent name (booking--<slug>). The phone calls themselves are answered by autoops-voice; you set it up and watch it.",
+      `1. dashboard.list_clients and dashboard.get_client for your shop. Read its "${CONFIG_NOTE}" note (hours, services, greeting, booking_rules, handoff) and its "${RECEPTIONIST_NOTE}" note (shop_id of its preview receptionist, if it has one).`,
+      "2. Create the live receptionist with autoops.provision_receptionist: shop = { name, kind \"repair\", demo false, phone, address, website, hours, services, policies = booking_rules plus handoff, one rule per string }, the existing shop_id when there is one, and attach_phone_number true. Call it once: a number costs money, and a re-call keeps the same number. Then send the greeting as first_message with autoops.update_receptionist.",
+      `3. Once it is live, file a "${RECEPTIONIST_NOTE} live" note with shop_id, phone_number, demo_url and portal_url exactly as returned. For a test call card: autoops.simulate_call a short booking script (name, number, vehicle, service, time) and close the card with the transcript's key lines and its appointment_requests.`,
+      PROTECTED_RULE,
+    ].join(" ")),
+    mcp_servers: [AUTOOPS],
+    tools: tools([...BASE, ...crm("get_client", "add_client_note"), ...AUTOOPS_READ, ...AUTOOPS_WRITE], OPERATOR),
   }),
 ];
 

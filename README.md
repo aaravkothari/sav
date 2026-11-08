@@ -7,9 +7,9 @@ This is the team's monorepo (Naïve × YC hackathon).
 | Folder | What it is | Owner |
 | --- | --- | --- |
 | [`naive-company/`](naive-company/) | The company on [Naïve](https://usenaive.ai): the agent crew (research → outreach → onboarding → receptionist → monitoring → self-improvement) coordinated by a CEO agent's board, plus the operator dashboard (CRM, approvals, per-shop workspaces) and a free local simulation. Built on Naïve's agency blueprint. | FoggyReef (Aarav) |
-| `autoops-voice/` | The Vapi receptionist product: voice agent, MCP server, demo page, portal. *(To be added.)* | BeigeElk (Swayam) |
+| [swayambshah/autoops-voice](https://github.com/swayambshah/autoops-voice) *(own repo)* | The Vapi receptionist product: voice agent, MCP server, demo page, shop portal. `naive-company/` reaches it over its MCP server. | BeigeElk (Swayam) |
 
-Coordination, ownership and the issue board are run by PinkFalcon (Vedant's lead agent); see `AGENTS.md` once it lands.
+Coordination, ownership and the issue board: see [`AGENTS.md`](AGENTS.md) and [`AGENT-CONVENTIONS.md`](AGENT-CONVENTIONS.md). Seed leads live in [`leads/`](leads/).
 
 ## Working here
 
