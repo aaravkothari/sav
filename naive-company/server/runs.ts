@@ -65,8 +65,25 @@ export const runId = (now: Date): string => `run-${now.toISOString().slice(0, 16
 
 const RUN_SUFFIX = / \((run-\d{12})\)$/;
 
-async function json<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error(`upstream ${res.status}`);
+/** A platform refusal, carried to the operator as the platform worded it (never a key: the platform never echoes one). */
+export class UpstreamError extends Error {
+  constructor(readonly status: number, readonly step: string, message: string) {
+    super(`${step}: the platform answered ${status}${message ? ` (${message})` : ""}`);
+    this.name = "UpstreamError";
+  }
+}
+
+async function json<T>(res: Response, step = "platform call"): Promise<T> {
+  if (!res.ok) {
+    let message = "";
+    try {
+      const body = (await res.json()) as { error?: { message?: string; code?: string } | string };
+      message = typeof body.error === "string" ? body.error : [body.error?.code, body.error?.message].filter(Boolean).join(": ");
+    } catch {
+      // Not JSON: the status alone says it.
+    }
+    throw new UpstreamError(res.status, step, message.slice(0, 300));
+  }
   return (await res.json()) as T;
 }
 
@@ -82,7 +99,7 @@ export async function startRun(
   const send = (method: string, path: string, body: unknown) =>
     proxyFetch(config, { method, path }, JSON.stringify(body), fetchImpl);
 
-  const board = await json<{ id: string }>(await send("POST", "/v1/boards", { agent_id: ceoId }));
+  const board = await json<{ id: string }>(await send("POST", "/v1/boards", { agent_id: ceoId }), "opening the CEO's board");
   const ids = new Map<string, string>();
   for (const step of PIPELINE) {
     const blockers = "blocked_by" in step ? step.blocked_by : [];
@@ -91,7 +108,7 @@ export async function startRun(
       title: `${step.title} (${run})`,
       body: `Goal: ${goal}\n${step.body}\nOwner: ${step.owner}.`,
       blocked_by: blockers.map((key) => ids.get(key)!),
-    }));
+    }), `adding the "${step.key}" card`);
     ids.set(step.key, card.id);
   }
   const session = await json<{ id: string }>(await send("POST", "/v1/sessions", {
@@ -103,7 +120,7 @@ export async function startRun(
       'The "test-call" card belongs to the shop\'s own receptionist (booking--<shop-slug>). If no such agent exists yet, leave that card unassigned and say so.',
       "Then report which cards you assigned. You will be told as each card is done or blocked.",
     ].join("\n"),
-  }));
+  }), "starting the CEO");
   return { run, session_id: session.id, cards: ids.size };
 }
 
@@ -139,7 +156,7 @@ async function activeSessions(config: ProxyConfig, fetchImpl: Fetch): Promise<st
   const ids: string[] = [];
   for (const status of ["queued", "running"]) {
     const res = await proxyFetch(config, { method: "GET", path: `/v1/sessions?status=${status}&limit=100` }, null, fetchImpl);
-    const page = await json<{ data?: { id: string }[] }>(res);
+    const page = await json<{ data?: { id: string }[] }>(res, "listing running sessions");
     for (const row of page.data ?? []) ids.push(row.id);
   }
   return ids;
