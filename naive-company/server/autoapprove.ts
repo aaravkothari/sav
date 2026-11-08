@@ -121,7 +121,9 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
   if (name === "board_write") {
     const own = session.metadata?.board?.card_id;
     const op = str(args.op);
-    return own !== undefined && str(args.card_id) === own && (op === "comment" || op === "update") ? "note on its own card" : null;
+    // A scheduled or woken run names no card_id: the platform applies the write to the session's own card.
+    const target = str(args.card_id) === "" ? own : str(args.card_id);
+    return own !== undefined && target === own && (op === "comment" || op === "update") ? "note on its own card" : null;
   }
 
   // Our CRM and the company inbox: filing, notes and drafts stay inside the company.
