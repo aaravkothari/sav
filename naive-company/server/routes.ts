@@ -9,7 +9,7 @@
  * Nothing here touches a socket, a file or a database: the store arrives through `ctx.store()`,
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
-import { autoApprove } from "./autoapprove.ts";
+import { autoApprove, HARD_LIMITS } from "./autoapprove.ts";
 import { companyStats } from "./stats.ts";
 import { cancelRun, cleanBoard, findCeo, listRuns, pauseCompany, resumeCompany, startRun, sweepPaused, UpstreamError } from "./runs.ts";
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
@@ -637,7 +637,7 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
     if (req.path === "/api/approvals/auto") {
       const store = await ctx.store();
       if (req.method === "POST") return { status: 200, body: await autoApprove(config, store, new Date()) };
-      if (req.method === "GET") return { status: 200, body: { log: [...(store.read().auto_approvals ?? [])].reverse() } };
+      if (req.method === "GET") return { status: 200, body: { log: [...(store.read().auto_approvals ?? [])].reverse(), hard_limits: HARD_LIMITS } };
       return NOT_ALLOWED;
     }
     if (req.path === "/api/runs" || req.path.startsWith("/api/runs/")) {

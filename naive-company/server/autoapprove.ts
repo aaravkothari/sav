@@ -33,6 +33,15 @@ import { receptionistCrew, receptionistRoster } from "../templates/receptionist.
 /** Emails a day, across the crew and the engine, after which no send is approved. */
 export const DAILY_SEND_CAP = 2500;
 
+/** What `hardLimit` never approves, as `GET /api/approvals/auto` reports it (the engine sweeps only a dashboard that says so). */
+export const HARD_LIMITS = [
+  "phone number purchase without a PAID: note",
+  "Stripe live mode",
+  "request_tools",
+  "email to an address not on a CRM contact",
+  `any email past ${DAILY_SEND_CAP} a Pacific day`,
+] as const;
+
 export interface PendingAction {
   kind?: string;
   name: string;
