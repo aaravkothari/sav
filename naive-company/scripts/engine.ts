@@ -162,6 +162,17 @@ export interface Skip {
   reason: string;
 }
 
+/**
+ * The shop's sector from its RESEARCH note (`Sector: salon`), or null when the note names none
+ * (every lead filed before sectors existed is an auto repair shop).
+ */
+export function sectorOf(research: string): string | null {
+  const m = /(?:^|\n|[.;]\s+)Sector:\s*([^\n.;]+)/i.exec(research);
+  return m ? m[1]!.trim().toLowerCase() : null;
+}
+/** The cold-email template cites auto repair calls, so only auto shops get it until a sector variant exists (#52 review). */
+export const isAutoSector = (sector: string | null): boolean => sector === null || /\b(auto|car|vehicle|smog|tire|body shop|mechanic|automotive|towing)\b/.test(sector);
+
 /** Who gets the cold email, in CRM order, and why everyone else does not. */
 export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: ReadonlySet<string>): { candidates: Candidate[]; skipped: Skip[] } {
   const candidates: Candidate[] = [];
@@ -174,6 +185,7 @@ export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: R
     if (!isEmail(email)) { skipped.push({ client, reason: "contact email is not an address" }); continue; }
     if (client.stage !== "lead") { skipped.push({ client, reason: `stage is ${client.stage}, not lead` }); continue; }
     if (!research) { skipped.push({ client, reason: "no RESEARCH note" }); continue; }
+    if (!isAutoSector(sectorOf(research))) { skipped.push({ client, reason: `sector ${sectorOf(research)}: the template is auto-only for now` }); continue; }
     if (noteStarts(client, ...DONE_PREFIXES)) { skipped.push({ client, reason: "already contacted (CRM note)" }); continue; }
     if (taken.has(email)) { skipped.push({ client, reason: "address already emailed" }); continue; }
     const detail = personalizedDetail(research);

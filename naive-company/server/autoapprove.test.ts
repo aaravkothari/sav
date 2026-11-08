@@ -21,13 +21,13 @@ describe("ruleFor", () => {
   it("leaves everything else for a person", () => {
     expect(ruleFor(tool("monid.monid_run", { provider: "someone", endpoint: "/people/search" }), session, crm)).toBeNull();
     expect(ruleFor(tool("autoops.provision_demo", { shop: { name: "x", demo: false } }), session, crm)).toBeNull();
-    expect(ruleFor(tool("autoops.provision_receptionist", { attach_phone_number: true }), session, crm)).toBeNull();
     expect(ruleFor(tool("board_write", { op: "comment", card_id: "crd_someone_elses" }), session, crm)).toBeNull();
     expect(ruleFor(tool("board_write", { op: "assign", card_id: "crd_mine" }), session, crm)).toBeNull();
     expect(ruleFor(tool("email.send", { to: ["owner@meissner.example", "stranger@elsewhere.example"] }), session, crm)).toBeNull();
     expect(ruleFor(tool("agentmail.send_draft", { draft_id: "d1" }), session, crm)).toBeNull();
     expect(ruleFor(tool("request_tools"), session, crm)).toBeNull();
-    expect(ruleFor(tool("web_fetch", { url: "https://x" }), session, crm)).toBeNull();
+    expect(ruleFor(tool("dashboard.update_site", { sections: {} }), session, crm)).toBeNull();
+    expect(ruleFor(tool("some_new_server.do_something"), session, crm)).toBeNull();
     expect(ruleFor({ kind: "question", name: "ask_operator", tool_call_id: "q" }, session, crm)).toBeNull();
   });
 });
@@ -37,6 +37,27 @@ const shop = (over: Partial<Client> = {}): Client => ({
   contact: { name: "Pat", email: "owner@meissner.example", role: "Owner" }, notes: ["RECEPTIONIST: shop_id meissner-example, demo_url https://x"], ...over,
 });
 const limits = (over: Partial<LimitContext> = {}): LimitContext => ({ crmEmails: crm, clients: [shop()], sendsToday: 0, ...over });
+
+describe("review of #52: allowlist, not approve-everything", () => {
+  it("approves what the crew needs", () => {
+    expect(ruleFor(tool("monid.monid_run", { provider: "anyapi", endpoint: "/maps.contacts" }), session, crm)).toBe("Maps contacts search");
+    expect(ruleFor(tool("autoops.create_trial_checkout", { shop_id: "x" }), session, crm)).not.toBeNull();
+    expect(ruleFor(tool("agentmail.reply_to_message", { message_id: "m1" }), session, crm)).not.toBeNull();
+    expect(ruleFor(tool("dashboard.create_draft_post", { client: "c" }), session, crm)).not.toBeNull();
+  });
+
+  it("never approves public posts, SMS, outbound calls or the frozen stage demos", () => {
+    for (const name of ["social.create_post", "dashboard.approve_post", "dashboard.schedule_post", "twilio.send_sms", "phone.place_call", "x.tweet", "vapi.dial", "publish"]) {
+      expect(hardLimit(tool(name), limits()), name).toMatch(/human/);
+    }
+    for (const name of ["autoops.list_calls", "autoops.get_call", "autoops.simulate_call", "autoops.list_call_summaries", "dashboard.list_posts", "dashboard.create_draft_post"]) {
+      expect(hardLimit(tool(name), limits()), name).toBeNull();
+    }
+    expect(hardLimit(tool("autoops.update_receptionist", { shop_id: "axl-roadside" }), limits())).toMatch(/frozen/);
+    expect(hardLimit(tool("autoops.update_receptionist", { shop_id: "demo-shop" }), limits())).toMatch(/frozen/);
+    expect(hardLimit(tool("autoops.update_receptionist", { shop_id: "meissner-example" }), limits())).toBeNull();
+  });
+});
 
 describe("hardLimit (issue #30): never approved, whatever any rule says", () => {
   it("lets ordinary calls through", () => {
@@ -118,7 +139,7 @@ describe("autoApprove", () => {
     expect(result.left).toBe(0);
     expect(result.approved.map((a) => [a.tool, a.rule])).toEqual([
       ["monid.monid_run", "Google Maps search"],
-      ["web_fetch", "approved everything"],
+      ["web_fetch", "reading the public web"],
     ]);
     expect(result.denied.map((a) => a.tool)).toEqual(["autoops.provision_receptionist"]);
     expect(confirmed.map((c) => [c.body.tool_call_id, c.body.decision])).toEqual([

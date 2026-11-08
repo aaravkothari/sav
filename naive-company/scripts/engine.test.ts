@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -51,6 +51,20 @@ describe("the ramp", () => {
   it("never goes past the daily cap", () => {
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP - 10).size).toBe(10);
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP).size).toBe(0);
+  });
+});
+
+describe("sectors (#52 review)", () => {
+  it("sends the auto template only to auto shops", () => {
+    expect(sectorOf("RESEARCH: rated 4.8.\nSector: salon")).toBe("salon");
+    expect(sectorOf("RESEARCH: rated 4.8. Opener detail: x")).toBeNull();
+    expect(isAutoSector(null)).toBe(true);
+    expect(isAutoSector("auto repair")).toBe(true);
+    expect(isAutoSector("physical therapy")).toBe(false);
+    const salon = client("s1", { notes: ["RESEARCH: rated 4.8. Opener detail: you've styled Oakland since 1990\nSector: salon"] });
+    const { candidates, skipped } = selectCandidates([salon], new Set());
+    expect(candidates).toHaveLength(0);
+    expect(skipped[0]!.reason).toMatch(/auto-only/);
   });
 });
 
