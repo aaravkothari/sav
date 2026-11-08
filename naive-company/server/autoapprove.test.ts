@@ -63,6 +63,10 @@ describe("review of #52: allowlist, not approve-everything", () => {
     expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", system_prompt: "…" }), recreated, crm, new Set([SALES_AGENT_ID, "agt_new_sales"]))).toBeNull();
   });
 
+  it("never auto-approves a crew write of a business's call_instructions (only a person writes them)", () => {
+    expect(ruleFor(tool("autoops.update_receptionist", { shop_id: "x", call_instructions: "Ask for the plate" }), session, crm)).toBeNull();
+  });
+
   it("approves what the crew needs", () => {
     expect(ruleFor(tool("monid.monid_run", { provider: "anyapi", endpoint: "/maps.contacts" }), session, crm)).toBe("Maps contacts search");
     expect(ruleFor(tool("autoops.create_trial_checkout", { shop_id: "x" }), session, crm)).not.toBeNull();

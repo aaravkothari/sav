@@ -113,6 +113,9 @@ export function ruleFor(action: PendingAction, session: ParkedSession, crmEmails
   if (name === "autoops.create_trial_checkout") return "test-mode checkout link";
   if (name === "autoops.add_caller") return "caller ID for the shared demo line";
   if (name === "autoops.update_receptionist") {
+    // A business's call_instructions are the owner's own words: only a person (the dashboard's
+    // after-call form) writes them, never a crew seat on its own (BeigeElk and SageGate, Nov 8).
+    if ("call_instructions" in args) return null;
     // sales may only set an owner's notify_phone (BeigeElk, Nov 8); anything more waits for a person.
     if (salesAgentIds.has(session.agent_id) && Object.keys(args).some((k) => k !== "shop_id" && k !== "notify_phone")) return null;
     return "receptionist update";

@@ -274,7 +274,7 @@ function AfterCall({ client, call, onFiled }: { client: Client; call: Onboarding
   const [form, setForm] = useState<CallFeedback>({});
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState<{ onboarding: string; reason?: string } | null>(null);
+  const [sent, setSent] = useState<{ onboarding: string; reason?: string; voice?: string } | null>(null);
   const filed = call.feedbackIndex !== null ? client.notes[call.feedbackIndex] ?? null : null;
 
   const submit = async (e: FormEvent) => {
@@ -282,8 +282,8 @@ function AfterCall({ client, call, onFiled }: { client: Client; call: Onboarding
     setSending(true);
     setError(null);
     try {
-      const reply = await apiSend<{ client: Client; onboarding: string; onboarding_reason?: string }>("POST", `/bookings/${client.id}/feedback`, form);
-      setSent({ onboarding: reply.onboarding, reason: reply.onboarding_reason });
+      const reply = await apiSend<{ client: Client; onboarding: string; onboarding_reason?: string; voice?: string }>("POST", `/bookings/${client.id}/feedback`, form);
+      setSent({ onboarding: reply.onboarding, reason: reply.onboarding_reason, voice: reply.voice });
       onFiled(reply.client);
     } catch (err: unknown) {
       setError(apiMessage(err));
@@ -301,6 +301,7 @@ function AfterCall({ client, call, onFiled }: { client: Client; call: Onboarding
           {sent === null || sent.onboarding === "woken"
             ? "Feedback sent to onboarding. It turns this into the receptionist's setup."
             : `Filed on the shop. Onboarding was not woken (${sent.reason ?? "unknown"}); it picks this up on its next pass.`}
+          {sent?.voice === "sent" ? " The receptionist now follows these instructions on its next call." : sent?.voice === "failed" ? " The receptionist could not be updated just now; onboarding will carry it over." : ""}
         </p>
         <ul className="sav-fb-lines">
           {lines.map((l, i) => {

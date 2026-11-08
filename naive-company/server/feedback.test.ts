@@ -126,3 +126,35 @@ describe("requestMeetingScript", () => {
     expect((await requestMeetingScript(shop(), { config, fetchImpl: good.fetchImpl, now })).woke).toBe(true);
   });
 });
+
+import { CALL_INSTRUCTIONS_MAX, mergeCallInstructions, sendFeedbackToVoice } from "./feedback.ts";
+describe("call_instructions (autoops-voice #13)", () => {
+  const now = new Date("2026-11-08T19:00:00Z");
+  it("appends the newest call last and keeps within the cap", () => {
+    expect(mergeCallInstructions("", ["Greeting: Thanks for calling Besa"], now)).toBe("From the onboarding call on 2026-11-08:\nGreeting: Thanks for calling Besa");
+    const long = mergeCallInstructions("x".repeat(1490), ["Hand-off: text Ron for tows"], now);
+    expect(long.length).toBeLessThanOrEqual(CALL_INSTRUCTIONS_MAX);
+    expect(long.endsWith("Hand-off: text Ron for tows")).toBe(true);
+  });
+  const rpc = (result: unknown) => new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: JSON.stringify(result) }] } }), { status: 200 });
+  it("is not connected until the voice server returns call_instructions, and never touches the stage demos", async () => {
+    process.env.AUTOOPS_VOICE_TOKEN = process.env.AUTOOPS_VOICE_TOKEN || "test";
+    const calls: string[] = [];
+    const old = (async (_u: unknown, init?: RequestInit) => { calls.push(JSON.parse(String(init?.body)).params.name); return rpc({ shop_id: "s1", version: 3 }); }) as unknown as typeof fetch;
+    expect(await sendFeedbackToVoice("s1", { greeting: "Hi" } as never, { voiceFetchImpl: old, now })).toBe("not_connected");
+    expect(calls).toEqual(["get_receptionist"]);
+    expect(await sendFeedbackToVoice("axl-roadside", { greeting: "Hi" } as never, { voiceFetchImpl: old, now })).toBe("not_connected");
+    expect(await sendFeedbackToVoice(null, { greeting: "Hi" } as never, { voiceFetchImpl: old, now })).toBe("not_connected");
+  });
+  it("writes merged call_instructions once the field exists", async () => {
+    process.env.AUTOOPS_VOICE_TOKEN = process.env.AUTOOPS_VOICE_TOKEN || "test";
+    const sent: Array<Record<string, unknown>> = [];
+    const live = (async (_u: unknown, init?: RequestInit) => {
+      const p = JSON.parse(String(init?.body)).params; sent.push(p);
+      return rpc(p.name === "get_receptionist" ? { shop_id: "s1", call_instructions: "" } : { ok: true });
+    }) as unknown as typeof fetch;
+    expect(await sendFeedbackToVoice("s1", { greeting: "Thanks for calling" } as never, { voiceFetchImpl: live, now })).toBe("sent");
+    expect(sent[1]).toMatchObject({ name: "update_receptionist", arguments: { shop_id: "s1" } });
+    expect(String((sent[1]!.arguments as Record<string, unknown>).call_instructions)).toMatch(/Thanks for calling/);
+  });
+});
