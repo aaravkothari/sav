@@ -21,7 +21,8 @@
     "worker": "node --env-file-if-exists=.env --experimental-strip-types scripts/worker.ts",
     "crm-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/crm-import.ts",
     "engine": "node --env-file-if-exists=.env --experimental-strip-types scripts/engine.ts",
-    "lead-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/lead-import.ts"
+    "lead-import": "node --env-file-if-exists=.env --experimental-strip-types scripts/lead-import.ts",
+    "discover": "node --env-file-if-exists=.env --experimental-strip-types scripts/discover.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.10",

@@ -28,7 +28,8 @@ export type Priority = "A" | "B" | "C";
 
 export interface ShopInput {
   name: string;
-  kind?: "repair" | "towing";
+  kind?: "repair" | "towing" | "service";
+  sector?: string;
   demo?: boolean;
   phone?: string | null;
   address?: string | null;
