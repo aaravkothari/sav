@@ -244,7 +244,12 @@ async function mcpRoute(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   // unreachable: it is what the platform dials to decide the endpoint can serve its tools.
   const store = await ctx.store();
   if (req.method !== "POST") return { status: 405, body: { error: "POST only" } };
-  if (!authorized(store, req.headers.authorization, ctx.mcpToken)) {
+  // The operator's `DASHBOARD_TOKEN` also opens `/mcp`, so the operator's own scripts (the outbound
+  // engine, crm-import) can file leads and notes on a deployment, where minting is local-only. One
+  // way only: the agents' `VETTA_MCP_TOKEN` still never opens `/api/*`.
+  const bearer = bearerOf(req.headers.authorization);
+  const operator = !!ctx.dashboardToken && bearer !== null && sameSecret(bearer, ctx.dashboardToken);
+  if (!operator && !authorized(store, req.headers.authorization, ctx.mcpToken)) {
     return { status: 401, body: { error: "missing or invalid bearer token" } };
   }
   // The public site and `/mcp` are one app, so this request's host is the site a referral link names.
@@ -764,7 +769,7 @@ export const isLoopback = (remoteAddress: string | undefined): boolean =>
  *     `isLoopback` on the request's own socket; the deployed entry hard-codes it false, so no
  *     header, host or proxy hop a caller controls can claim it.
  *
- * `/mcp` never reaches here: the agents' bearer is its own credential and is unchanged.
+ * `/mcp` never reaches here: it takes the agents' bearer, and the operator's `DASHBOARD_TOKEN` too.
  */
 function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
   if (!ctx.dashboardToken) return ctx.local ? null : NO_GATE;
