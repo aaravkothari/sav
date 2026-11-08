@@ -1,6 +1,6 @@
 import { Check, X } from "lucide-react";
-import { useState } from "react";
-import { apiMessage, apiSend, useApi } from "../api";
+import { useEffect, useState } from "react";
+import { apiGet, apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
 import type { Agent } from "../data";
 import { argRows, sendable, usd, waitingOn, type Answers, type PlatformSession, type QuestionField, type Waiting } from "../platform";
@@ -24,7 +24,7 @@ import { argRows, sendable, usd, waitingOn, type Answers, type PlatformSession, 
  *   * **A failed read is never an empty queue.** "Nothing is waiting on you" is a statement about
  *     the organization, and printing it over a request that failed would be a lie.
  */
-export function Approvals() {
+function ApprovalQueue() {
   const { data: page, error, setError } = useApi<{ data?: PlatformSession[] }>("/sessions?status=idle");
   const { data: roster } = useApi<{ data?: Agent[] }>("/agents");
   const [reasons, setReasons] = useState<Record<string, string>>({});
@@ -310,6 +310,78 @@ function AnswerField({
           ) : null}
         </div>
       )}
+    </div>
+  );
+}
+
+
+/** One row of the dashboard's auto-approval log (`GET /api/approvals/auto`). */
+interface AutoApproval {
+  at: string;
+  session_id: string;
+  agent_id: string;
+  tool: string;
+  rule: string;
+}
+
+const AUTO_MS = 10_000;
+
+/**
+ * The queue, with the dashboard approving by rule first (`server/autoapprove.ts`): every held call
+ * a rule allows is approved when this screen opens and every 10 s, and the queue below then shows
+ * only what is left for a person. The log says what was approved and by which rule.
+ */
+export function Approvals() {
+  const [round, setRound] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [log, setLog] = useState<AutoApproval[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const run = async (manual: boolean) => {
+    if (manual) setBusy(true);
+    try {
+      const result = await apiSend<{ approved: AutoApproval[]; left: number }>("POST", "/approvals/auto");
+      if (result.approved.length > 0 || manual) setRound((n) => n + 1);
+      if (manual) setMessage(result.approved.length ? `Approved ${result.approved.length} call(s) automatically. ${result.left} left for you.` : `Nothing safe to approve. ${result.left} left for you.`);
+      setLog((await apiGet<{ log: AutoApproval[] }>("/approvals/auto")).log);
+    } catch (err: unknown) {
+      if (manual) setMessage(apiMessage(err));
+    } finally {
+      setReady(true);
+      if (manual) setBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    void run(false);
+    const timer = setInterval(() => void run(false), AUTO_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <button type="button" className="btn btn-quiet btn-sm" disabled={busy} onClick={() => void run(true)}>
+          <Check size={14} strokeWidth={1.75} /> {busy ? "Approving…" : "Approve all safe"}
+        </button>
+        <span className="text-xs text-ink-3">
+          {message ?? "Safe calls are approved automatically every 10 s: Maps and owner-email lookups, free demos, an agent's notes on its own card, our CRM and inbox, and email to contacts already in the CRM. Everything else waits here."}
+        </span>
+      </div>
+      {ready ? <ApprovalQueue key={round} /> : <div className="absence">Approving what is safe…</div>}
+      {log.length > 0 ? (
+        <details className="mt-6">
+          <summary className="eyebrow cursor-pointer">Approved automatically ({log.length})</summary>
+          <div className="list mt-2">
+            {log.slice(0, 50).map((row) => (
+              <p key={`${row.session_id}:${row.at}:${row.tool}`} className="px-3 py-2 text-xs text-ink-2">
+                <span className="font-mono">{new Date(row.at).toLocaleTimeString()}</span> · <span className="font-mono">{row.tool}</span> · {row.rule}
+              </p>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

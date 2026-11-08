@@ -29,6 +29,8 @@ export interface StoreState {
   lead_window?: { startedAt: number; count: number };
   /** Whether the operator has paused the whole company from the Runs screen (`server/runs.ts`). Absent = running. */
   company?: CompanyState;
+  /** Held calls the dashboard approved by rule (`server/autoapprove.ts`), newest last, capped. */
+  auto_approvals?: { at: string; session_id: string; agent_id: string; tool: string; rule: string }[];
 }
 
 /** The company's on/off switch, and what pausing it stopped, so resuming can wake exactly those. */
@@ -152,6 +154,8 @@ export interface Store {
   /** The company's on/off switch; running when nothing was ever paused. */
   company(): CompanyState;
   setCompany(next: CompanyState): CompanyState;
+  /** Appends to the auto-approval log, keeping the newest `cap` rows. */
+  logAutoApprovals(rows: NonNullable<StoreState["auto_approvals"]>, cap: number): void;
 }
 
 /**
@@ -362,6 +366,10 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
     },
     site: () => state.site_profile ?? site,
     company: () => state.company ?? { paused: false, changed_at: "", interrupted: [], deployments: [] },
+    logAutoApprovals(rows, cap) {
+      state.auto_approvals = [...(state.auto_approvals ?? []), ...rows].slice(-cap);
+      save();
+    },
     setCompany(next) {
       state.company = structuredClone(next);
       save();
