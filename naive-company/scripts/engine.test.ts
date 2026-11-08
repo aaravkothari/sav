@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, siteLeadMessage, siteLeadsToResearch, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -51,6 +51,17 @@ describe("the ramp", () => {
   it("never goes past the daily cap", () => {
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP - 10).size).toBe(10);
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP).size).toBe(0);
+  });
+});
+
+describe("site-form leads", () => {
+  it("wakes research once for an unresearched site signup", () => {
+    const site = client("w1", { source: "site", notes: [] });
+    const done = client("w2", { source: "site" });
+    const outreach = client("w3", { notes: [] });
+    expect(siteLeadsToResearch([site, done, outreach], new Set()).map((c) => c.id)).toEqual(["w1"]);
+    expect(siteLeadsToResearch([site], new Set(["w1"]))).toHaveLength(0);
+    expect(siteLeadMessage(site).split("\n")[0]).toBe("SITE LEAD: Shop w1");
   });
 });
 

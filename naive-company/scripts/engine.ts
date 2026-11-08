@@ -44,6 +44,8 @@ import { parseRpcBody, registrableDomain } from "./worker.ts";
 export const REPLY_AGENT = "agt_e0pw49n4rqfysg4m1pjv4122wx";
 /** @deprecated kept for imports; replies now go to `sales` (REPLY_AGENT). */
 export const CLIENT_MANAGER_AGENT = REPLY_AGENT;
+/** The research seat: qualifies a shop that signed up on the public site's form. */
+export const RESEARCH_AGENT = "agt_x258ksqxx28w1n5zev634yeekg";
 export const DAILY_SEND_CAP = 2500;
 export const RAMP = [25, 50, 100] as const;
 export const SEND_EVERY_MS = 30 * 60_000;
@@ -58,6 +60,8 @@ export interface CrmClient {
   stage: string;
   contact: { name: string; email: string; role: string };
   notes: string[];
+  /** `site` when the shop filled in the public site's form. */
+  source?: string;
 }
 
 export interface LastTick {
@@ -74,6 +78,8 @@ export interface EngineState {
   seen: string[];
   last_tick: LastTick | null;
   last_inbox_check: string | null;
+  /** Site-form leads research was already woken for. */
+  site_woken?: string[];
 }
 
 export interface LedgerRow {
@@ -185,6 +191,28 @@ export const coldKey = (email: string): string => `sav-cold-1-${createHash("sha2
 
 /** A send refused by the provider's rate or recipient limit (HTTP 429), which says nothing about the address. */
 export const isRateLimit = (message: string): boolean => /HTTP 429|rate_limit|RateLimitError|recipient limit/i.test(message);
+
+/** Site-form signups nobody has researched yet: research is woken once for each. */
+export function siteLeadsToResearch(clients: readonly CrmClient[], woken: ReadonlySet<string>): CrmClient[] {
+  return clients.filter((c) => c.source === "site" && c.stage === "lead" && !woken.has(c.id) &&
+    !c.notes.some((n) => n.trimStart().startsWith("RESEARCH:")));
+}
+
+/** The message that wakes research for a site signup: first line `SITE LEAD: <shop>`, then what to do. */
+export function siteLeadMessage(c: CrmClient): string {
+  return [
+    `SITE LEAD: ${c.name}`,
+    `client_id: ${c.id}`,
+    `website: ${c.domain || "(none given)"}`,
+    `contact: ${c.contact?.name || "(no name)"} <${c.contact?.email || "no email"}>`,
+    "",
+    "This business filled in the form on our site asking for a demo receptionist. There is no card for this; work it directly.",
+    "1. Look the business up (its website, then a Google Maps search with Monid) and confirm it is a real, independent business that takes phone calls.",
+    "2. dashboard.add_client_note on this client_id, starting \"RESEARCH:\": rating and review count, phone, address, hours, sector, one line on why it fits, and a line \"Opener detail: <one true, specific thing about it, second person, no trailing period>\".",
+    "3. If it is an auto repair shop, build its free preview with autoops.provision_demo (demo true, phone, address, website, hours), then add a \"RECEPTIONIST:\" note with the shop_id and demo_url exactly as returned.",
+    "Never invent a fact. If it is not a real business, note \"RESEARCH: could not verify\" and stop.",
+  ].join("\n");
+}
 
 /** Who gets the cold email, in CRM order, and why everyone else does not. */
 export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: ReadonlySet<string>): { candidates: Candidate[]; skipped: Skip[] } {
@@ -523,6 +551,20 @@ class Engine {
       const latest = latestByEmail(ledger);
       const clients = await this.crm.clients();
 
+      // A shop that signed up on the site gets researched, once.
+      const woken = new Set(this.state.site_woken ?? []);
+      for (const c of siteLeadsToResearch(clients, woken)) {
+        if (this.dry) { await log(`would wake research for site lead ${c.id} "${c.name}"`); continue; }
+        try {
+          await this.wake(siteLeadMessage(c), RESEARCH_AGENT);
+          this.state.site_woken = [...woken.add(c.id)];
+          await this.save();
+          await log(`wake    research for site lead ${c.id} "${c.name}"`);
+        } catch (e) {
+          await log(`error   waking research for ${c.id}: ${(e as Error).message}`);
+        }
+      }
+
       // Retry any note a crash or an outage left unfiled.
       for (const row of latest.values()) {
         if (row.noted || this.dry) continue;
@@ -670,9 +712,9 @@ class Engine {
     await act(`wake    sales for ${client.id} "${client.name}" (${msg.message_id})`, () => this.wake(wakeMessage(client, msg)));
   }
 
-  async wake(message: string) {
-    if (!this.env.naiveKey) throw new Error("NAIVE_API_KEY is not set; cannot wake sales");
-    await http(`${this.env.naiveUrl}/v1/sessions`, { method: "POST", token: this.env.naiveKey, body: JSON.stringify({ agent_id: REPLY_AGENT, message }) });
+  async wake(message: string, agentId: string = REPLY_AGENT) {
+    if (!this.env.naiveKey) throw new Error("NAIVE_API_KEY is not set; cannot wake an agent");
+    await http(`${this.env.naiveUrl}/v1/sessions`, { method: "POST", token: this.env.naiveKey, body: JSON.stringify({ agent_id: agentId, message }) });
   }
 
   /** Job 3: the approval sweep. */
