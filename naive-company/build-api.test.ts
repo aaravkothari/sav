@@ -27,8 +27,9 @@ function buildApi(template?: string): string {
 beforeAll(() => {
   work = mkdtempSync(join(tmpdir(), "sga-build-"));
   // `templates` too: the server reads the active template's crew, seed and kinds from it; `site`
-  // for the site profile the store seeds and the two-door routing the server shares with it.
-  for (const entry of ["build-api.mjs", "server", "seed", "site", "templates"]) {
+  // for the site profile the store seeds and the two-door routing the server shares with it; `src`
+  // for `src/leads.ts`, the one mail-matching rule the shop pages and the screens share.
+  for (const entry of ["build-api.mjs", "server", "seed", "site", "src", "templates"]) {
     cpSync(join(root, entry), join(work, entry), { recursive: true });
   }
   // Symlinked, not copied: the script only needs esbuild to resolve from beside itself.

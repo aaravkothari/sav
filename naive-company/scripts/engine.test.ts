@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, SECTORS_LIVE, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -54,8 +54,23 @@ describe("the ramp", () => {
   });
 });
 
+describe("isRateLimit", () => {
+  it("tells a provider limit from a bad address", () => {
+    expect(isRateLimit('POST /v0/inboxes/x/messages/send: HTTP 429 {"name":"RateLimitError"}')).toBe(true);
+    expect(isRateLimit("HTTP 400 ValidationError")).toBe(false);
+  });
+});
+
+describe("coldKey", () => {
+  it("is stable per address and uses only the characters AgentMail allows", () => {
+    expect(coldKey("Pat@Shop.com")).toBe(coldKey("pat@shop.com"));
+    expect(coldKey("pat@shop.com")).not.toBe(coldKey("sam@shop.com"));
+    expect(coldKey("o'brien+x@shop.com")).toMatch(/^[A-Za-z0-9._~-]+$/);
+  });
+});
+
 describe("sectors (#52 review)", () => {
-  it("sends the auto template only to auto shops", () => {
+  it("sends the auto template only to auto shops, and the general one to other sectors", () => {
     expect(sectorOf("RESEARCH: rated 4.8.\nSector: salon")).toBe("salon");
     expect(sectorOf("RESEARCH: rated 4.8. Opener detail: x")).toBeNull();
     expect(isAutoSector(null)).toBe(true);
@@ -63,8 +78,14 @@ describe("sectors (#52 review)", () => {
     expect(isAutoSector("physical therapy")).toBe(false);
     const salon = client("s1", { notes: ["RESEARCH: rated 4.8. Opener detail: you've styled Oakland since 1990\nSector: salon"] });
     const { candidates, skipped } = selectCandidates([salon], new Set());
-    expect(candidates).toHaveLength(0);
-    expect(skipped[0]!.reason).toMatch(/auto-only/);
+    if (!SECTORS_LIVE) {
+      expect(candidates).toHaveLength(0);
+      expect(skipped[0]!.reason).toMatch(/#47/);
+      return;
+    }
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]!.text).not.toMatch(/Automotive Service Association|auto repair/);
+    expect(candidates[0]!.text).toContain("nobody picks up or your salon is closed?");
   });
 });
 

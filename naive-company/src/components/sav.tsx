@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { useApi } from "../api";
 import type { Client } from "../data";
-import { leadOf, STATUS_LABEL, type Lead, type LeadStatus, type MailMessage } from "../leads";
+import { funnelOf, leadOf, realMail, shopName, STATUS_LABEL, type Lead, type LeadStatus, type MailMessage } from "../leads";
 
 /** The page title block every SAV screen opens with: a serif title, one line of plain context. */
 export function PageHead({ title, sub, actions, children }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode; children?: ReactNode }) {
@@ -34,12 +34,21 @@ export interface MailReply {
 export function useLeads() {
   const clients = useApi<Client[]>("/clients");
   const mail = useApi<MailReply>("/mail/recent");
-  const messages = mail.data?.messages ?? [];
+  // Our own inbox's self-tests never reach a count, a status or the activity feed.
+  const messages = useMemo(() => realMail(mail.data?.messages ?? []), [mail.data]);
   const leads = useMemo<Lead[] | null>(
-    () => (clients.data === null ? null : clients.data.filter((c) => c.domain.trim() !== "" || c.contact.email.trim() !== "").map((c) => leadOf(c, messages))),
+    () => (clients.data === null ? null : leadRows(clients.data).map((c) => leadOf(c, messages))),
     [clients.data, messages],
   );
-  return { leads, clients: clients.data, error: clients.error, mail: mail.data, mailError: mail.error, setClients: clients.setData };
+  const funnel = useMemo(() => (leads === null ? null : funnelOf(leads)), [leads]);
+  return { leads, funnel, messages, clients: clients.data, error: clients.error, mail: mail.data, mailError: mail.error, setClients: clients.setData };
 }
+
+/** The CRM rows that are shops (a domain or an address): what every screen counts as a lead. */
+export const leadRows = (clients: readonly Client[]): Client[] =>
+  clients.filter((c) => c.domain.trim() !== "" || c.contact.email.trim() !== "");
+
+/** A shop's name for the screen, without its listing's SEO tail. */
+export const ShopName = ({ client }: { client: Pick<Client, "name"> }) => <span title={client.name}>{shopName(client.name)}</span>;
 
 export const Quiet = ({ children }: { children: ReactNode }) => <p className="sav-fine">{children}</p>;

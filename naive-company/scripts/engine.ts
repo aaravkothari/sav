@@ -29,6 +29,7 @@
  * (operator bearer; also used for `/mcp` unless DASHBOARD_MCP_TOKEN is set), optional
  * DASHBOARD_MCP_URL (default `$DASHBOARD_URL/mcp`), NAIVE_API_URL (default https://api.vetta.sh).
  */
+import { createHash } from "node:crypto";
 import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -170,8 +171,20 @@ export function sectorOf(research: string): string | null {
   const m = /(?:^|\n|[.;]\s+)Sector:\s*([^\n.;]+)/i.exec(research);
   return m ? m[1]!.trim().toLowerCase() : null;
 }
-/** The cold-email template cites auto repair calls, so only auto shops get it until a sector variant exists (#52 review). */
+/** Non-auto sectors send only when this is set (sav#47 gives the voice server demos for them). */
+export const SECTORS_LIVE = process.env["ENGINE_SECTORS_LIVE"] === "1";
+
+/** Auto repair (or no sector named): Aarav's exact template, with the Automotive Service Association figure. */
 export const isAutoSector = (sector: string | null): boolean => sector === null || /\b(auto|car|vehicle|smog|tire|body shop|mechanic|automotive|towing)\b/.test(sector);
+
+/**
+ * The AgentMail Idempotency-Key for a shop's first email: one per address, so a retry never sends
+ * twice. AgentMail allows only A-Z a-z 0-9 - . _ ~ in it, so the address is hashed.
+ */
+export const coldKey = (email: string): string => `sav-cold-1-${createHash("sha256").update(normEmail(email)).digest("hex").slice(0, 32)}`;
+
+/** A send refused by the provider's rate or recipient limit (HTTP 429), which says nothing about the address. */
+export const isRateLimit = (message: string): boolean => /HTTP 429|rate_limit|RateLimitError|recipient limit/i.test(message);
 
 /** Who gets the cold email, in CRM order, and why everyone else does not. */
 export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: ReadonlySet<string>): { candidates: Candidate[]; skipped: Skip[] } {
@@ -185,12 +198,16 @@ export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: R
     if (!isEmail(email)) { skipped.push({ client, reason: "contact email is not an address" }); continue; }
     if (client.stage !== "lead") { skipped.push({ client, reason: `stage is ${client.stage}, not lead` }); continue; }
     if (!research) { skipped.push({ client, reason: "no RESEARCH note" }); continue; }
-    if (!isAutoSector(sectorOf(research))) { skipped.push({ client, reason: `sector ${sectorOf(research)}: the template is auto-only for now` }); continue; }
     if (noteStarts(client, ...DONE_PREFIXES)) { skipped.push({ client, reason: "already contacted (CRM note)" }); continue; }
     if (taken.has(email)) { skipped.push({ client, reason: "address already emailed" }); continue; }
     const detail = personalizedDetail(research);
     if (detail === null) { skipped.push({ client, reason: "no usable detail in RESEARCH note" }); continue; }
-    const email_ = renderColdEmail({ shop_name: client.name, contact_name: client.contact.name, personalized_detail: detail });
+    // Auto repair gets Aarav's exact template; any other sector the general one (no auto statistic),
+    // but only once the voice server builds demos for other sectors (sav#47): until then a salon that
+    // replies could not get a working demo. ENGINE_SECTORS_LIVE=1 turns them on.
+    const sector = sectorOf(research);
+    if (!isAutoSector(sector) && !SECTORS_LIVE) { skipped.push({ client, reason: `sector ${sector}: held until other-sector demos are live (#47)` }); continue; }
+    const email_ = renderColdEmail({ shop_name: client.name, contact_name: client.contact.name, personalized_detail: detail, sector: isAutoSector(sector) ? null : sector });
     if (email_ === null) { skipped.push({ client, reason: "could not render" }); continue; }
     taken.add(email);
     candidates.push({ client, email, ...email_ });
@@ -452,6 +469,8 @@ export function latestByEmail(rows: readonly LedgerRow[]): Map<string, LedgerRow
 }
 
 class Engine {
+  /** Addresses whose bounce was already noted in this run. */
+  bouncedNoted = new Set<string>();
   readonly opts: Options;
   readonly env: Env;
   readonly mail: ReturnType<typeof agentmail>;
@@ -541,7 +560,7 @@ class Engine {
         }
         if (!this.inbox) break;
         try {
-          const r = await this.mail.send(this.inbox.inbox_id, c.email, c.subject, c.text, `sav-cold-1-${c.email}`);
+          const r = await this.mail.send(this.inbox.inbox_id, c.email, c.subject, c.text, coldKey(c.email));
           const row: LedgerRow = { email: c.email, client_id: c.client.id, message_id: r.message_id, thread_id: r.thread_id ?? null, at: new Date().toISOString(), noted: false };
           await mkdir(DATA, { recursive: true });
           await appendFile(LEDGER, `${JSON.stringify(row)}\n`);
@@ -549,8 +568,15 @@ class Engine {
           await log(`sent    ${c.client.id} "${c.client.name}" to ${c.email} (${r.message_id})`);
           await this.fileSentNote(row, c.client, c.subject, c.text);
         } catch (e) {
+          const message = (e as Error).message;
+          // The provider's sending limit (AgentMail's new-account recipient cap): not a bad address.
+          // Stop this tick without counting it against the ramp; the rest go out next tick.
+          if (isRateLimit(message)) {
+            await log(`limit   provider sending limit reached; holding the rest of this batch until the next tick: ${message.slice(0, 220)}`);
+            break;
+          }
           failed++;
-          await log(`fail    ${c.client.id} "${c.client.name}" to ${c.email}: ${(e as Error).message}`);
+          await log(`fail    ${c.client.id} "${c.client.name}" to ${c.email}: ${message}`);
         }
         if (i < batch.length - 1) await sleep(3000 + Math.floor(Math.random() * 3000));
       }
@@ -628,6 +654,9 @@ class Engine {
     if (kind === "bounce") {
       const to = ownBounce ? parseAddress((Array.isArray(item.to) ? item.to : [item.to])[0]) : bouncedAddress(msg, mailed);
       const client = to ? clients.find((c) => normEmail(c.contact?.email) === to) : null;
+      // One bounce arrives twice (our sent message labelled `bounced`, and the mailer-daemon notice): note and count it once.
+      if (to && (this.bouncedNoted.has(to) || client?.notes.some((n) => n.startsWith("BOUNCED:") && n.includes(` to ${to}`)))) return;
+      if (to) this.bouncedNoted.add(to);
       if (this.state.last_tick && !this.dry) this.state.last_tick.bounced += 1;
       if (!client) return log(`bounce  ${msg.message_id} (${to ?? "address unknown"}): no CRM shop to note it on`);
       return act(`note    ${client.id} BOUNCED ${to}`, () => this.crm.addNote(client.id, `BOUNCED: ${msg.message_id} to ${to}\nSubject: ${msg.subject}\n\n${msg.text.slice(0, 2000)}`, "Find another contact email; this one bounced"));

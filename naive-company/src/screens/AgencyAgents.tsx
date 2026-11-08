@@ -80,11 +80,6 @@ export function AgencyAgents() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-bold">{agentLabel(a.name)}</span>
-                      {a.model ? <span className="chip chip-plain font-mono">{a.model}</span> : null}
-                      {/* The cap the agent carries, straight off the agent row — no call of its own. */}
-                      {a.budget ? (
-                        <span className="chip chip-plain font-mono">{usd(a.budget.cap_micro_usd)} / {a.budget.period}</span>
-                      ) : null}
                     </div>
                     {a.description ? <div className="mt-0.5 text-sm text-ink-2">{a.description}</div> : null}
                     <div className="mt-1 text-xs text-ink-3">
@@ -93,8 +88,13 @@ export function AgencyAgents() {
                           ? "Its sessions could not be read."
                           : "Reading its sessions…"
                         : runs.length === 0
-                          ? "No sessions yet — it has not been asked to do anything."
-                          : `${runs.length} session${runs.length === 1 ? "" : "s"}${last ? ` · last: ${stopLabel(last)}` : ""}`}
+                          ? "Not active yet: it has not been asked to do anything."
+                          : [
+                            last?.created_at ? `Last active ${ago(last.created_at)}` : null,
+                            last ? stopLabel(last) : null,
+                            `${runs.length} session${runs.length === 1 ? "" : "s"}`,
+                            dailySpend(runs),
+                          ].filter(Boolean).join(" · ")}
                     </div>
                   </div>
                   {runs.some(parked) ? (
@@ -116,8 +116,8 @@ export function AgencyAgents() {
       <div className="panel p-3">
         {turns.length === 0 ? (
           <p className="text-sm text-ink-2">
-            Ask <span className="font-mono">client-manager</span> for anything about the agency — it works the same CRM you see
-            here, through the dashboard's own tools.
+            Ask the client manager anything about the company. It works the same CRM you see
+            here.
           </p>
         ) : (
           <div className="space-y-2">
@@ -139,7 +139,7 @@ export function AgencyAgents() {
         >
           <input
             className="input flex-1"
-            placeholder="Ask the client-manager what needs attention this week…"
+            placeholder="Ask the client manager what needs attention this week…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
           />
@@ -152,8 +152,32 @@ export function AgencyAgents() {
   );
 }
 
+const DAY_MS = 86_400_000;
+
+/** Money as a person says it: "$3.50", "under a cent". */
+const roughly = (microUsd: number) => (microUsd > 0 && microUsd < 10_000 ? "under a cent" : usd(microUsd));
+
+/** What its sessions of the last day cost, as "about $X a day"; nothing when it did not run today. */
+export function dailySpend(sessions: readonly PlatformSession[], now = Date.now()): string | null {
+  const day = sessions.filter((s) => s.created_at && now - Date.parse(s.created_at) < DAY_MS && typeof s.consumed_micro_usd === "number");
+  if (day.length === 0) return null;
+  return `about ${roughly(day.reduce((sum, s) => sum + (s.consumed_micro_usd ?? 0), 0))} a day`;
+}
+
+/** The platform's spend for the agent's period, spread over the days of it so far: "about $X a day". */
+export function aboutPerDay(spend: AgentSpend, now = Date.now()): string {
+  if (spend.period === "day") return `about ${roughly(spend.spent_micro_usd)} a day`;
+  const d = new Date(now);
+  const start = spend.period_start ? Date.parse(spend.period_start)
+    : spend.period === "week" ? now - ((d.getDay() + 6) % 7) * DAY_MS
+    : new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const days = Math.max(1, Math.ceil((now - start) / DAY_MS));
+  return `about ${roughly(Math.round(spend.spent_micro_usd / days))} a day`;
+}
+
 /**
- * One agent, opened: what it has spent against its own cap, and what it has actually done.
+ * One agent, opened: what it spends a day, and what it has actually done. Its model and its raw
+ * budget are configuration, not something an operator acts on, so they are not shown.
  *
  * The spend call is made here rather than on the list, so an org with three hundred agents costs
  * one request instead of three hundred. It is its own read and can fail on its own — a budget with
@@ -163,23 +187,9 @@ function AgentDetail({ agent, sessions, loading }: { agent: Agent; sessions: Pla
   const { data: spend, error } = useApi<AgentSpend>(`/agents/${agent.id}/spend`);
   return (
     <div className="mt-3 pl-8">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="panel p-3">
-          <div className="text-numeral font-mono">{agent.budget ? usd(agent.budget.cap_micro_usd) : "—"}</div>
-          <div className="mt-0.5 text-xs text-ink-3">Cap per {agent.budget?.period ?? "period"}</div>
-        </div>
-        <div className="panel p-3">
-          <div className="text-numeral font-mono">{spend ? usd(spend.spent_micro_usd) : "—"}</div>
-          <div className="mt-0.5 text-xs text-ink-3">
-            {spend ? `Spent this ${spend.period}` : error ? "Spend unavailable" : "Reading spend…"}
-          </div>
-        </div>
-        <div className="panel p-3">
-          <div className="text-numeral font-mono">{agent.budget ? usd(agent.budget.max_task_micro_usd) : "—"}</div>
-          <div className="mt-0.5 text-xs text-ink-3">Most one task may spend</div>
-        </div>
-      </div>
-      {error ? <p className="mt-2 text-xs text-fail">{error}</p> : null}
+      <p className="text-sm text-ink-2">
+        {spend ? `Spends ${aboutPerDay(spend)}.` : error ? "Spend unavailable just now." : "Reading what it spends…"}
+      </p>
 
       <div className="eyebrow mb-2 mt-4">Sessions</div>
       {loading ? (
@@ -191,11 +201,7 @@ function AgentDetail({ agent, sessions, loading }: { agent: Agent; sessions: Pla
           {sessions.slice(0, 8).map((s) => (
             <div key={s.id} className="flex items-center gap-3 px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-sm">{stopLabel(s)}</span>
-              <span className="shrink-0 font-mono text-xs text-ink-3">
-                {typeof s.consumed_micro_usd === "number" ? usd(s.consumed_micro_usd) : "—"}
-              </span>
-              <span className="shrink-0 font-mono text-xs text-ink-3">{ago(s.created_at)}</span>
-
+              <span className="shrink-0 text-xs text-ink-3">{ago(s.created_at)}</span>
             </div>
           ))}
         </div>

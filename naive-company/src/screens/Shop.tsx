@@ -3,9 +3,8 @@ import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { apiMessage, apiSend, useApi } from "../api";
 import { PageHead, Quiet, StatusPill, useLeads } from "../components/sav";
-import { STAGE_LABEL } from "../components/kit";
 import { nextStage, type Client } from "../data";
-import { ago, type EventKind, type LeadEvent } from "../leads";
+import { ago, demoLink, findLead, hoursRange, mailKind, nextStepText, shopName, type EventKind, type Lead, type LeadEvent, type MailMessage } from "../leads";
 
 /**
  * One shop, start to finish: what the crew found, every email out and back, and the receptionist
@@ -31,6 +30,8 @@ interface ReceptionistReply {
   } | null;
   calls?: { at: string | null; duration_sec: number | null; outcome: string | null; summary: string; flags: string[]; ended_by: string | null }[];
   error?: string;
+  /** The voice service's address, so a note's bare `/demo/<slug>` can be opened. */
+  demo_base?: string | null;
 }
 
 interface EmailsReply {
@@ -108,7 +109,7 @@ function Letter({ children, meta, incoming }: { children: string; meta?: ReactNo
   );
 }
 
-function Timeline({ events }: { events: LeadEvent[] }) {
+function Timeline({ events, notes, demoBase }: { events: LeadEvent[]; notes: readonly string[]; demoBase: string | null }) {
   if (events.length === 0) return <Quiet>Nothing has been filed on this shop yet.</Quiet>;
   return (
     <ol className="sav-timeline">
@@ -118,7 +119,16 @@ function Timeline({ events }: { events: LeadEvent[] }) {
             <span className="t-title">{e.title}</span>
             {e.at ? <span className="t-when">{ago(e.at)}</span> : null}
           </div>
-          {e.body === "" ? null : LETTER.has(e.kind) ? (
+          {e.kind === "demo_built" ? (
+            (() => {
+              const href = demoLink(notes[e.index] ?? "", demoBase);
+              return href ? (
+                <div className="t-body">
+                  <a className="sav-link inline-flex items-center gap-1" href={href} target="_blank" rel="noreferrer">Open demo <ExternalLink size={13} /></a>
+                </div>
+              ) : null;
+            })()
+          ) : e.body === "" ? null : LETTER.has(e.kind) ? (
             <Letter incoming={e.kind === "replied" || e.kind === "said_yes"}>{e.body}</Letter>
           ) : (
             <div className="t-body"><Rich text={e.body} /></div>
@@ -129,39 +139,49 @@ function Timeline({ events }: { events: LeadEvent[] }) {
   );
 }
 
+/**
+ * The shop's thread, one line per message. The words of each email are in the timeline above, so
+ * this is the list: who, what, when, and whether it bounced. A message the timeline has no note
+ * for (a reply nobody has filed yet) opens in place.
+ */
 function Emails({ id }: { id: string }) {
   const { data, error } = useApi<EmailsReply>(`/shops/${id}/emails`);
+  const [open, setOpen] = useState<number | null>(null);
   if (data?.configured === false) return null;
+  const rows = (data?.emails ?? []).filter((m) => mailKind(m as MailMessage) !== "internal");
   return (
     <section className="sav-card">
       <div className="sav-card-head">
         <h2 className="sav-h2">Emails</h2>
-        {data && data.emails.length > 0 ? <span className="sav-fine">{data.emails.length} in the company inbox</span> : null}
+        {rows.length > 0 ? <span className="sav-fine">{rows.length} in the company inbox</span> : null}
       </div>
       {data === null ? (
         <Quiet>{error ?? "Reading the inbox…"}</Quiet>
-      ) : data.emails.length === 0 ? (
+      ) : rows.length === 0 ? (
         <Quiet>No email to or from this shop yet.</Quiet>
       ) : (
-        <div className="flex flex-col gap-4">
-          {[...data.emails].reverse().map((m, i) => (
-            <div key={i}>
-              <Letter
-                incoming={m.direction === "received"}
-                meta={<>{m.direction === "sent" ? `To ${m.counterpart}` : `From ${m.counterpart}`} · {ago(m.at)}<br /><strong className="font-bold text-ink">{m.subject}</strong></>}
-              >
-                {(m.text || m.preview).trim()}
-              </Letter>
-            </div>
-          ))}
-        </div>
+        <ul className="sav-thread">
+          {rows.map((m, i) => {
+            const kind = mailKind(m as MailMessage);
+            const readable = m.direction === "received" && kind === "real";
+            return (
+              <li key={i}>
+                <button type="button" className="row" disabled={!readable} aria-expanded={readable ? open === i : undefined} onClick={() => setOpen(open === i ? null : i)}>
+                  <span className={`dir ${kind === "bounce" ? "bad" : m.direction}`}>{kind === "bounce" ? "Bounced" : kind === "auto" ? "Auto-reply" : m.direction === "sent" ? "Sent" : "Reply"}</span>
+                  <span className="subj">{kind === "bounce" ? "The email did not arrive" : m.subject}</span>
+                  <span className="when">{ago(m.at)}</span>
+                </button>
+                {readable && open === i ? <Letter incoming>{(m.text || m.preview).trim()}</Letter> : null}
+              </li>
+            );
+          })}
+        </ul>
       )}
     </section>
   );
 }
 
-function Receptionist({ id }: { id: string }) {
-  const { data, error } = useApi<ReceptionistReply>(`/shops/${id}/receptionist`);
+function Receptionist({ data, error }: { data: ReceptionistReply | null; error: string | null }) {
   const [full, setFull] = useState(false);
   const r = data?.receptionist;
   return (
@@ -202,7 +222,7 @@ function Receptionist({ id }: { id: string }) {
                 {DAYS.filter((d) => r.hours[d] !== undefined).map((d) => (
                   <div key={d} className="contents">
                     <span className="text-ink-3">{DAY_LABEL[d]}</span>
-                    <span className={/closed/i.test(r.hours[d]!) ? "closed" : ""}>{r.hours[d]!.replace(/-/g, " – ")}</span>
+                    <span className={/closed/i.test(r.hours[d]!) ? "closed" : ""}>{hoursRange(r.hours[d]!)}</span>
                   </div>
                 ))}
                 {Object.keys(r.hours).length === 0 ? <span className="sav-fine col-span-2">Not given</span> : null}
@@ -268,8 +288,8 @@ function Details({ client, city, sector, phone, rating, onAdvance, advancing }: 
     ["Where", city ?? <span className="text-ink-3">—</span>],
     ["Sector", sector],
     ...(rating ? [["Reviews", rating] as [string, ReactNode]] : []),
-    ["CRM stage", STAGE_LABEL[client.stage]],
   ];
+  const next = nextStepText(client.nextAction);
   return (
     <section className="sav-card">
       <div className="sav-card-head"><h2 className="sav-h2">The shop</h2></div>
@@ -278,28 +298,36 @@ function Details({ client, city, sector, phone, rating, onAdvance, advancing }: 
           <div key={k} className="contents"><dt>{k}</dt><dd>{v}</dd></div>
         ))}
       </dl>
-      {client.nextAction ? (
+      {next ? (
         <div className="mt-5 border-t border-[var(--edge)] pt-4">
           <div className="sav-cap mb-1">Next step</div>
-          <p className="text-[14.5px]">{client.nextAction}</p>
+          <p className="text-[14.5px]">{next}</p>
         </div>
       ) : null}
       {to !== null ? (
         <button type="button" className="btn btn-ghost btn-sm mt-4" disabled={advancing} onClick={onAdvance}>
-          <ArrowRight size={14} strokeWidth={1.6} /> Move to {STAGE_LABEL[to].toLowerCase()}
+          <ArrowRight size={14} strokeWidth={1.6} /> {ADVANCE_LABEL[to] ?? "Move it on"}
         </button>
       ) : null}
-      {to === "active" ? <p className="mt-2 sav-fine">Moving a shop to active sets up its own receptionist agent.</p> : null}
+      {to === "active" ? <p className="mt-2 sav-fine">Marking a shop as a customer sets up its own receptionist.</p> : null}
     </section>
   );
 }
 
+/** The operator's button, in plain words: what saying so means about the shop, not the CRM's stage name. */
+const ADVANCE_LABEL: Partial<Record<Client["stage"], string>> = {
+  proposal: "Mark as interested",
+  active: "Mark as customer",
+};
+
 export function Shop() {
-  const { id = "" } = useParams();
+  const { id: param = "" } = useParams();
   const { leads, error, clients, setClients } = useLeads();
   const [advancing, setAdvancing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const lead = leads?.find((l) => l.client.id === id);
+  // `/leads/<slug>`, or the `cli_…` id an older link carries.
+  const lead = leads ? findLead(leads, param) : undefined;
+  const id = lead?.client.id ?? "";
 
   const advance = async () => {
     if (!lead) return;
@@ -323,11 +351,20 @@ export function Shop() {
   if (leads === null) return <div className="pane-in">{back}<Quiet>{error ? `The CRM could not be read: ${error}.` : "Reading the CRM…"}</Quiet></div>;
   if (!lead) return <div className="pane-in">{back}<PageHead title="No such shop" sub="It may have been removed from the CRM." /></div>;
 
+  return <ShopPage lead={lead} back={back} actionError={actionError} advance={() => void advance()} advancing={advancing} />;
+}
+
+function ShopPage({ lead, back, actionError, advance, advancing }: {
+  lead: Lead; back: ReactNode; actionError: string | null; advance: () => void; advancing: boolean;
+}) {
   const c = lead.client;
+  const id = c.id;
+  const receptionist = useApi<ReceptionistReply>(`/shops/${id}/receptionist`);
+  const demoBase = receptionist.data?.demo_base ?? null;
   return (
     <div className="pane-in">
       <PageHead
-        title={c.name}
+        title={<span title={c.name}>{shopName(c.name)}</span>}
         sub={[lead.city, lead.sector, lead.lastAt ? `last activity ${ago(lead.lastAt)}` : null].filter(Boolean).join(" · ")}
         actions={<StatusPill status={lead.status} />}
       >
@@ -338,13 +375,13 @@ export function Shop() {
         <div className="sav-stack">
           <section className="sav-card">
             <div className="sav-card-head"><h2 className="sav-h2">What happened</h2></div>
-            <Timeline events={lead.events} />
+            <Timeline events={lead.events} notes={c.notes} demoBase={demoBase} />
           </section>
           <Emails id={id} />
         </div>
         <div className="sav-stack">
-          <Receptionist id={id} />
-          <Details client={c} city={lead.city} sector={lead.sector} phone={lead.phone} rating={lead.rating} onAdvance={() => void advance()} advancing={advancing} />
+          <Receptionist data={receptionist.data} error={receptionist.error} />
+          <Details client={c} city={lead.city} sector={lead.sector} phone={lead.phone} rating={lead.rating} onAdvance={advance} advancing={advancing} />
         </div>
       </div>
     </div>
