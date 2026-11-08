@@ -102,7 +102,7 @@ describe("scoreEmail", () => {
     expect(scoreEmail({ email: "carcare@gmail.com", source: "listing" }, shop)).toBeNull();
   });
   it("drops other companies, junk and image names", () => {
-    for (const email of ["contact@sansoxygen.com", "a@drivenbrands.com", "user@example.com", "x@mysite.com", "hi@email.com", "logo@2x.png", "abc123@sentry.io", "noreply@conticarcare.com", "careers@conticarcare.com", "not-an-email"]) {
+    for (const email of ["contact@sansoxygen.com", "a@drivenbrands.com", "user@example.com", "x@mysite.com", "hi@email.com", "logo@2x.png", "abc123@sentry.io", "763-5004lauren@conticarcare.com", "noreply@conticarcare.com", "careers@conticarcare.com", "not-an-email"]) {
       expect(scoreEmail({ email, source: "site" }, shop)).toBeNull();
     }
   });
@@ -117,6 +117,7 @@ describe("pickContact", () => {
   });
   it("cleans an escaped listing address", () => {
     expect(pickContact([{ email: "%20conticarcare@gmail.com", source: "listing" }], shop)?.contact_email).toBe("conticarcare@gmail.com");
+    expect(pickContact([{ email: "http://conticarcare@gmail.com", source: "listing" }], shop)?.contact_email).toBe("conticarcare@gmail.com");
   });
   it("is null with nothing usable", () => {
     expect(pickContact([{ email: "user@example.com", source: "site" }], shop)).toBeNull();
@@ -157,6 +158,7 @@ describe("address helpers", () => {
   it("reads the street and the city", () => {
     expect(streetName("1700 El Camino Real, San Carlos, CA 94070")).toBe("El Camino Real");
     expect(streetName("2107 Palm Ave # C, San Mateo, CA 94403")).toBe("Palm Ave");
+    expect(streetName("5150 Saratoga Ave F, San Jose, CA 95129")).toBe("Saratoga Ave");
     expect(streetName("PO Box, Town, CA")).toBeNull();
     expect(listingCity("2107 Palm Ave # C, San Mateo, CA 94403")).toBe("San Mateo");
     expect(listingCity("nowhere")).toBeNull();

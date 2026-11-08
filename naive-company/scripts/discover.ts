@@ -59,6 +59,8 @@ const NOT_A_SHOP_SITE = new Set([
   "firestonecompleteautocare.com", "midas.com", "jiffylube.com", "pepboys.com", "meineke.com", "valvoline.com", "vioc.com", "aamco.com", "maaco.com", "goodyear.com",
   "lesschwab.com", "bigotires.com", "christianbrothersauto.com", "fixautousa.com", "caliber.com", "calibercollision.com", "drivenbrands.com",
   "greatclips.com", "supercuts.com", "sportclips.com", "fantasticsams.com", "costcutters.com", "aspendental.com", "westerndental.com", "brightnow.com", "pacificdentalservices.com",
+  "stretchlab.com", "rinse.com", "commonspirit.org", "crossoverhealth.com", "marquiscompanies.com", "oilchangers.com", "zipthrucarwashes.com",
+  "mvhealthcare.com", "haywardhcc.com", "stfranciscarecenter.com", "salonrepublic.com",
   "athletico.com", "selectphysicaltherapy.com", "usphclinic.com", "zipsdrycleaners.com", "rotorooter.com", "mrrooter.com", "benjaminfranklinplumbing.com", "onehourheatandair.com",
 ]);
 
@@ -71,6 +73,7 @@ const JUNK_DOMAIN = /(^|\.)(example|mysite|email|domain|yourdomain|yoursite|webs
 const IMAGE_ENDING = /\.(png|jpe?g|gif|webp|svg|ico|css|js)$/i;
 const REJECT_LOCAL = /^(no-?reply|do-?not-?reply|privacy|webmaster|abuse|postmaster|hostmaster|careers?|jobs?|hr|recruiting|billing|accounting|payroll|legal|press|media|sales|marketing|seo|user|username|name|your|you|email|first|firstname|test)$/;
 const HEX_ID = /^[a-f0-9]{16,}$/;
+const PHONE_GLUED = /^\d{3}-\d{3,4}/;
 const ROLE_INBOX = /^(info|service|services|contact|contactus|office|hello|hi|appointments?|appt|schedule|scheduling|booking|bookings|frontdesk|front\.desk|reception|shop|team|customerservice|care|admin|support|mail|inquiries|inquiry|repairs?)$/;
 const OWNER_LOCAL = /^(owner|manager|gm)$/;
 const OWNER_ROLE = /\b(owner|co-?owner|founder|president|ceo|principal|proprietor|general manager|manager|director|office manager|service manager)\b/i;
@@ -271,9 +274,9 @@ function nameTokens(name: string, domain: string): string[] {
   return [...new Set(words)].filter((w) => w.length >= 4 && !GENERIC_TOKENS.has(w));
 }
 
-/** Lowercase, without the `mailto:` or URL-escaped spaces that some listings carry. */
+/** Lowercase, without the `mailto:`, `http://` or URL-escaped spaces that some listings carry. */
 export function cleanEmail(raw: string): string {
-  return raw.replace(/^mailto:/i, "").replace(/%20/gi, "").trim().toLowerCase();
+  return raw.replace(/^(mailto:|https?:\/\/)/i, "").replace(/%20/gi, "").trim().toLowerCase();
 }
 
 /**
@@ -286,7 +289,7 @@ export function scoreEmail(candidate: EmailCandidate, shop: { name: string; doma
   if (at < 1) return null;
   const local = email.slice(0, at);
   const host = email.slice(at + 1);
-  if (IMAGE_ENDING.test(email) || JUNK_DOMAIN.test(host) || REJECT_LOCAL.test(local) || HEX_ID.test(local)) return null;
+  if (IMAGE_ENDING.test(email) || JUNK_DOMAIN.test(host) || REJECT_LOCAL.test(local) || HEX_ID.test(local) || PHONE_GLUED.test(local)) return null;
   if (FREE_MAIL.has(host)) return nameTokens(shop.name, shop.domain).some((t) => local.includes(t)) ? 50 : null;
   if (registrableDomain(host) !== shop.domain) return null;
   if (candidate.position && OWNER_ROLE.test(candidate.position)) return 0;
@@ -353,7 +356,7 @@ function formatRating(rating: number): string {
 export function streetName(address: string | null | undefined): string | null {
   const first = address?.split(",")[0]?.trim();
   if (!first) return null;
-  const street = first.replace(/^\d+[a-z]?\s+/i, "").replace(/\s+(#.*|(suite|ste|unit|apt)\b.*)$/i, "").trim();
+  const street = first.replace(/^\d+[a-z]?\s+/i, "").replace(/\s+(#.*|(suite|ste|unit|apt)\b.*)$/i, "").replace(/\s+[A-Z]$/, "").trim();
   if (!street || street === first || /^\d/.test(street)) return null;
   return street.replace(/^[NSEW]\s+/, "");
 }
