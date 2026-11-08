@@ -1,8 +1,10 @@
 import { Brush, Pause, Play, Rocket, ShieldAlert, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
-import { apiGet, apiMessage, apiSend } from "../api";
+import { apiGet, apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
+import type { Client } from "../data";
+import { agentLabel, scrub, shopName } from "../leads";
 import { stopLabel, waitingOn, type PlatformSession } from "../platform";
 
 /** `GET /api/company`: the company's on/off switch (`server/runs.ts`). */
@@ -69,6 +71,35 @@ export function runWhen(run: string): string {
 }
 
 /**
+ * A card's note or a run's goal as a person reads it. Agents write them for each other: escaped
+ * `\n`s, `cli_…` ids, shop slugs, `booking--<shop>` seats and session ids. Ids and slugs of known
+ * shops become their names, an agent seat its role, and any other machine id is dropped.
+ */
+export function readable(text: string | null | undefined, clients: readonly Pick<Client, "id" | "slug" | "name">[] = []): string {
+  if (!text) return "";
+  const byId = new Map(clients.map((c) => [c.id, shopName(c.name)]));
+  const bySlug = new Map(clients.filter((c) => c.slug).map((c) => [c.slug, shopName(c.name)]));
+  let out = text
+    .replace(/(?:\\r)?\\n/g, "\n")
+    .replace(/\\t/g, " ")
+    .replace(/\b(?:booking|receptionist)--([a-z0-9-]+)\b/g, (seat) => agentLabel(seat))
+    .replace(/\bcli_[A-Za-z0-9]+\b/g, (id) => byId.get(id) ?? "a shop");
+  for (const [slug, name] of bySlug) {
+    if (slug.length >= 4 && slug.includes("-")) out = out.replace(new RegExp(`\\b${slug.replace(/[-]/g, "\\-")}\\b`, "g"), name);
+  }
+  return scrub(out).replace(/\n{3,}/g, "\n\n");
+}
+
+/** What the company's badge says: paused, or what its current run is doing, or that none is going. */
+export function companyBadge(company: CompanyState | null, current: readonly Run[]): { label: string; cls: string } {
+  if (company === null) return { label: "Reading…", cls: "chip-absent" };
+  if (company.paused) return { label: "Paused", cls: "chip-fail" };
+  const run = current[0];
+  if (!run) return { label: "No run going", cls: "chip-absent" };
+  return run.state === "active" ? { label: "Running", cls: "chip-credit" } : RUN_STATE[run.state];
+}
+
+/**
  * The company's control room: switch it on and off, start a run, and watch every run's six steps
  * as the agents work them. Everything the terminal and the Naïve Studio were needed for.
  */
@@ -81,6 +112,9 @@ export function Runs() {
   const [notice, setNotice] = useState<string | null>(null);
   const [goal, setGoal] = useState("Find and sign up busy independent auto repair shops in Palo Alto, California");
   const [confirmed, setConfirmed] = useState(false);
+  // Only to name the shops a card's note mentions by id or slug.
+  const { data: clientRows } = useApi<Client[]>("/clients");
+  const clients = clientRows ?? [];
 
   const refresh = useCallback(async () => {
     try {
@@ -135,6 +169,7 @@ export function Runs() {
   const paused = company?.paused === true;
   const current = (runs ?? []).filter((r) => r.state === "active" || r.state === "stopped");
   const history = (runs ?? []).filter((r) => r.state === "done" || r.state === "cancelled");
+  const badge = companyBadge(company, current);
 
   const runCard = (run: Run, live: boolean) => {
     const state = RUN_STATE[run.state];
@@ -143,8 +178,8 @@ export function Runs() {
       <article key={run.run} className="panel p-4">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className={`chip ${state.cls}`}>{state.label}</span>
-          <span className="min-w-0 flex-1 font-medium">{run.goal || run.run}</span>
-          <span className="font-mono text-xs text-ink-3">{runWhen(run.run)}</span>
+          <span className="min-w-0 flex-1 font-medium">{readable(run.goal, clients) || runWhen(run.run)}</span>
+          <span className="text-xs text-ink-3">{runWhen(run.run)}</span>
           {live ? (
             <button type="button" className="btn btn-quiet btn-sm" disabled={busy !== null} onClick={() => void act(`cancel:${run.run}`)}>
               <X size={14} strokeWidth={1.75} /> {busy === `cancel:${run.run}` ? "Cancelling…" : "Cancel run"}
@@ -159,11 +194,11 @@ export function Runs() {
             const session = step.card?.woken_session_id ? byId.get(step.card.woken_session_id) : undefined;
             return (
               <li key={step.key} className="rounded-md border border-line p-3">
-                <div className="font-mono text-[0.6875rem] text-ink-3">{i + 1}. {step.owner}</div>
+                <div className="text-[0.6875rem] text-ink-3">{i + 1}. {agentLabel(step.owner)}</div>
                 <div className="mt-1 text-sm font-medium">{step.title}</div>
                 <span className={`chip ${status.cls} mt-2`}>{status.label}</span>
                 {session && live ? <div className="mt-2 text-xs text-ink-2">Agent: {session.status === "running" ? "working now" : stopLabel(session)}</div> : null}
-                {step.card?.note && !cancelled ? <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-xs text-ink-2">{step.card.note}</p> : null}
+                {step.card?.note && !cancelled ? <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-xs text-ink-2">{readable(step.card.note, clients)}</p> : null}
               </li>
             );
           })}
@@ -191,9 +226,7 @@ export function Runs() {
       {notice ? <p className="mb-4 text-sm text-ink-2">{notice}</p> : null}
 
       <section className="panel mb-4 flex flex-wrap items-center gap-3 p-4">
-        <span className={`chip ${company === null ? "chip-absent" : paused ? "chip-fail" : "chip-credit"}`}>
-          {company === null ? "Reading…" : paused ? "Paused" : "Running"}
-        </span>
+        <span className={`chip ${badge.cls}`}>{badge.label}</span>
         <p className="min-w-0 flex-1 text-sm text-ink-2">
           {paused
             ? `Paused ${company.changed_at ? new Date(company.changed_at).toLocaleString() : ""}. ${company.interrupted.length} agent session(s) stopped. While this page is open, anything that starts is stopped too.`

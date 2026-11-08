@@ -102,6 +102,15 @@ h1, h2, h3 { font-weight: 400; }
   }
   .sav-top nav a.active { background: var(--teal); color: var(--bg); }
   .sav-top nav a.active .count { color: var(--bg); border-color: rgba(243, 242, 230, .4); }
+  /* The row scrolls; a fade on the side with more tabs, and an arrow, say so. */
+  .sav-tabs { position: relative; }
+  .sav-tabs.more-right nav { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent calc(100% - 8px)); mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent calc(100% - 8px)); }
+  .sav-tabs.more-left.more-right nav { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 64px), transparent calc(100% - 8px)); mask-image: linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 64px), transparent calc(100% - 8px)); }
+  .sav-tabs.more-left:not(.more-right) nav { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 32px); mask-image: linear-gradient(to right, transparent 0, #000 32px); }
+  .sav-tabs-more {
+    position: absolute; right: 6px; top: 0; height: 32px; width: 32px; display: grid; place-items: center;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--ink); cursor: pointer;
+  }
 }
 
 /* ── Page head ── */
@@ -185,9 +194,11 @@ h1, h2, h3 { font-weight: 400; }
 .sav-table .muted { color: var(--muted); }
 .sav-table .nowrap { white-space: nowrap; }
 .sav-rows { display: none; }
+.sav-sort-phone { display: none; }
 @media (max-width: 899px) {
   .sav-table-wrap { display: none; }
   .sav-rows { display: block; }
+  .sav-sort-phone { display: block; }
 }
 .sav-rows a { display: block; padding: 14px 16px; border-bottom: 1px solid var(--edge); text-decoration: none; color: inherit; }
 .sav-rows a:last-child { border-bottom: 0; }
@@ -232,6 +243,7 @@ h1, h2, h3 { font-weight: 400; }
 .sav-mark.received { background: var(--warn); }
 .sav-mark.run { background: var(--teal-2); }
 .sav-mark.ok { background: var(--ok); }
+.sav-mark.bad { background: var(--tone-fail); }
 
 /* ── Timeline ── */
 .sav-timeline { position: relative; list-style: none; margin: 0; padding: 0 0 0 28px; }
@@ -281,9 +293,26 @@ h1, h2, h3 { font-weight: 400; }
 .sav-preview::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #a9a698; }
 .sav-calls { list-style: none; margin: 0; padding: 0; }
 .sav-calls li { padding: 12px 0; border-top: 1px solid var(--edge); }
+.sav-thread { list-style: none; margin: 0; padding: 0; }
+.sav-thread li { border-top: 1px solid var(--edge); }
+.sav-thread li:first-child { border-top: 0; }
+.sav-thread .row { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 10px 0; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.sav-thread .row:disabled { cursor: default; }
+.sav-thread .dir { flex: none; width: 5.5rem; font-size: 12.5px; color: var(--muted-2); }
+.sav-thread .dir.received { color: var(--warn); }
+.sav-thread .dir.bad { color: var(--tone-fail); }
+.sav-thread .subj { min-width: 0; flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sav-thread .when { flex: none; font-size: 13px; color: var(--muted-2); }
+.sav-thread .sav-letter { margin-bottom: 12px; }
 
 /* ── Board ── */
-.sav-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(12.5rem, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
+/* Columns with shops share the width; an empty step folds to a narrow column, so the whole board
+   fits a laptop without sideways scrolling. */
+.sav-board { display: grid; gap: 12px; padding-bottom: 8px; }
+.sav-tile { overflow-wrap: anywhere; }
+@media (min-width: 900px) {
+  .sav-board { grid-template-columns: var(--board-cols, repeat(7, minmax(0, 1fr))); }
+}
 .sav-col { min-width: 0; scroll-snap-align: start; }
 .sav-col-head { display: flex; align-items: baseline; gap: 8px; padding: 0 4px 10px; }
 .sav-col-head .n { color: var(--muted-2); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -294,7 +323,7 @@ h1, h2, h3 { font-weight: 400; }
 .sav-tile .meta { color: var(--muted); font-size: 13px; margin-top: 3px; }
 .sav-tile .next { color: #292724; font-size: 13px; line-height: 1.45; margin-top: 9px; padding-top: 9px; border-top: 1px solid #e6e4d6; }
 .sav-empty { color: var(--muted-2); font-size: 13.5px; padding: 10px 6px; }
-@media (max-width: 899px) { .sav-board { grid-auto-columns: 82%; } }
+@media (max-width: 899px) { .sav-board { grid-auto-flow: column; grid-auto-columns: 82%; overflow-x: auto; scroll-snap-type: x proximity; } }
 
 /* ── Layout helpers ── */
 .sav-grid-2 { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }

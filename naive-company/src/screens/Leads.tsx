@@ -1,8 +1,8 @@
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { PageHead, StatusPill, useLeads } from "../components/sav";
-import { ago, STATUS_LABEL, STATUSES, type Lead, type LeadStatus } from "../leads";
+import { PageHead, ShopName, StatusPill, useLeads } from "../components/sav";
+import { ago, leadPath, shopName, STATUS_LABEL, STATUSES, type Lead, type LeadStatus } from "../leads";
 
 /**
  * Every shop the crew has found, in one table: where it is, what kind of shop, who to talk to,
@@ -26,7 +26,7 @@ const text = (s: string | null | undefined) => (s ?? "").toLowerCase();
 
 function compare(a: Lead, b: Lead, key: SortKey): number {
   switch (key) {
-    case "shop": return a.client.name.localeCompare(b.client.name);
+    case "shop": return shopName(a.client.name).localeCompare(shopName(b.client.name));
     case "city": return (a.city ?? "~").localeCompare(b.city ?? "~");
     case "sector": return a.sector.localeCompare(b.sector);
     case "contact": return (a.client.contact.name || a.client.contact.email || "~").localeCompare(b.client.contact.name || b.client.contact.email || "~");
@@ -36,7 +36,7 @@ function compare(a: Lead, b: Lead, key: SortKey): number {
 }
 
 export function Leads() {
-  const { leads, error, mail } = useLeads();
+  const { leads, funnel, error, mail } = useLeads();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const q = params.get("q") ?? "";
@@ -72,20 +72,29 @@ export function Leads() {
     const needle = q.trim().toLowerCase();
     return (leads ?? [])
       .filter((l) => status === "" || l.status === status)
-      .filter((l) => reached < 0 || (l.rank >= reached && l.status !== "bounced"))
+      .filter((l) => reached < 0 || l.rank >= reached)
       .filter((l) => sector === "" || l.sector === sector)
       .filter((l) => needle === "" || [l.client.name, l.client.domain, l.city, l.client.contact.name, l.client.contact.email, l.sector]
         .some((v) => text(v).includes(needle)))
       .sort((a, b) => dir * compare(a, b, sort) || a.client.name.localeCompare(b.client.name));
   }, [leads, q, status, sector, sort, dir, reached]);
 
-  const emailed = (leads ?? []).filter((l) => l.rank >= 1).length;
+  const sortValue = `${sort}:${dir === 1 ? "asc" : "desc"}`;
+  const pickSort = (value: string) => {
+    const [key, d] = value.split(":");
+    const next = new URLSearchParams(params);
+    next.set("sort", key!);
+    next.set("dir", d!);
+    setParams(next, { replace: true });
+  };
 
   return (
     <div className="pane-in">
       <PageHead
         title="Leads"
-        sub={leads === null ? "Every shop the crew has found and written to." : `${leads.length} shops found, ${emailed} written to. Open any row to see its whole story.`}
+        sub={funnel === null
+          ? "Every shop the crew has found and written to."
+          : `${funnel.shops} shops found, ${funnel.emailed} emailed${funnel.bounced > 0 ? ` (${funnel.bounced} bounced)` : ""}, ${funnel.replied} replied. The chips count where each shop is now.`}
       />
 
       <div className="sav-filters">
@@ -96,6 +105,14 @@ export function Leads() {
         <select className="sav-select" value={sector} onChange={(e) => set("sector", e.target.value)} aria-label="Sector">
           <option value="">All sectors</option>
           {sectors.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {/* The table's headers sort on a laptop; a phone has no headers, so it gets this. */}
+        <select className="sav-select sav-sort-phone" value={sortValue} onChange={(e) => pickSort(e.target.value)} aria-label="Sort">
+          <option value="last:desc">Newest activity</option>
+          <option value="last:asc">Oldest activity</option>
+          <option value="status:desc">Furthest along</option>
+          <option value="shop:asc">Shop, A to Z</option>
+          <option value="city:asc">City, A to Z</option>
         </select>
       </div>
       <div className="sav-chips" role="group" aria-label="Status">
@@ -138,9 +155,9 @@ export function Leads() {
                 </thead>
                 <tbody>
                   {rows.map((l) => (
-                    <tr key={l.client.id} onClick={() => navigate(`/leads/${l.client.id}`)}>
+                    <tr key={l.client.id} onClick={() => navigate(leadPath(l.client))}>
                       <td className="shop">
-                        <Link to={`/leads/${l.client.id}`} onClick={(e) => e.stopPropagation()}>{l.client.name}</Link>
+                        <Link to={leadPath(l.client)} onClick={(e) => e.stopPropagation()}><ShopName client={l.client} /></Link>
                         {/[a-z0-9]{20,}/i.test(l.client.domain) ? null : <small>{l.client.domain}</small>}
                       </td>
                       <td className="muted nowrap">{l.city ?? "—"}</td>
@@ -164,9 +181,9 @@ export function Leads() {
             </div>
             <div className="sav-rows">
               {rows.map((l) => (
-                <Link key={l.client.id} to={`/leads/${l.client.id}`}>
+                <Link key={l.client.id} to={leadPath(l.client)}>
                   <div className="top">
-                    <span className="name">{l.client.name}</span>
+                    <span className="name">{shopName(l.client.name)}</span>
                     <StatusPill status={l.status} />
                   </div>
                   <div className="mt-1 text-[13.5px] text-ink-2">

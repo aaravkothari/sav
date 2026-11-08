@@ -11,7 +11,7 @@
  * Pure functions, no DOM, so the table, the board, the shop page and the tests all read the same
  * answer.
  */
-import type { Client } from "./data";
+import type { Client } from "./data.ts";
 
 /** The funnel, in the order a shop moves through it. */
 export const STATUSES = ["researched", "emailed", "replied", "demo", "free_week", "paying"] as const;
@@ -123,17 +123,17 @@ export function timeIn(text: string): string | null {
 const firstName = (c: Client) => c.contact.name.trim().split(/\s+/)[0] || "the shop";
 
 function titleFor(kind: EventKind, c: Client, rest: string): string {
-  const who = c.contact.name.trim() || c.name;
+  const who = c.contact.name.trim() || shopName(c.name);
   switch (kind) {
     case "research": return "Researched";
-    case "demo_built": return "Demo receptionist built";
+    case "demo_built": return "Demo receptionist ready";
     case "drafted": return `Drafted a first email to ${who}`;
     case "skipped": return "Outreach skipped";
     case "emailed": return `Emailed ${who}`;
-    case "bounced": return "Email bounced";
-    case "replied": return `${firstName(c) === "the shop" ? c.name : firstName(c)} replied`;
+    case "bounced": return `Email to ${shopName(c.name)} bounced`;
+    case "replied": return `${firstName(c) === "the shop" ? shopName(c.name) : firstName(c)} replied`;
     case "reply_sent": return /\/demo\//.test(rest) ? "Replied with the demo link" : "Replied";
-    case "said_yes": return `${firstName(c) === "the shop" ? c.name : firstName(c)} said yes`;
+    case "said_yes": return `${firstName(c) === "the shop" ? shopName(c.name) : firstName(c)} said yes`;
     case "onboarding": return /\bsent\b/i.test(rest) && !/drafted|awaits/i.test(rest) ? "Sent the setup questions" : "Drafted the setup questions";
     case "blocked": return "Onboarding is blocked";
     case "free_week": return "Started a free week";
@@ -148,6 +148,10 @@ function titleFor(kind: EventKind, c: Client, rest: string): string {
 
 /** Drop the bookkeeping first line of an outreach note ("<id> to pat@x.com") and keep the email. */
 function bodyFor(kind: EventKind, rest: string): string {
+  // A bounce is a fact, not a message to read: the SMTP report and the returned email stay out.
+  // The demo note is a path and a mode; the timeline links it instead (`demoLink`).
+  if (kind === "bounced" || kind === "demo_built") return "";
+  if (kind === "research") return researchText(rest);
   let text = rest;
   if (kind === "emailed" || kind === "drafted" || kind === "reply_sent") {
     const [first, ...others] = text.split("\n");
@@ -157,10 +161,148 @@ function bodyFor(kind: EventKind, rest: string): string {
 }
 
 export function eventsOf(c: Client): LeadEvent[] {
-  return c.notes.map((note, index) => {
+  const events = c.notes.map((note, index) => {
     const { kind, rest } = kindOf(note);
     return { kind, title: titleFor(kind, c, rest), body: bodyFor(kind, rest), at: timeIn(note), index };
   });
+  // One bounce is one fact: the engine can file the returned email and the bounce report as two notes.
+  return events.filter((e, i) => e.kind !== "bounced" || !events.slice(0, i).some((x) => x.kind === "bounced"));
+}
+
+/** The demo page path or URL a `RECEPTIONIST:` note carries (`/demo/<slug>`), or null. */
+export function demoPathOf(note: string): string | null {
+  const m = /\bdemo_url\s*[:=]?\s*(https?:\/\/\S+?\/demo\/[\w-]+|\/demo\/[\w-]+)/i.exec(note) ?? /(https?:\/\/\S+?\/demo\/[\w-]+)/.exec(note);
+  return m ? m[1]! : null;
+}
+
+/** The demo page as a link: an absolute URL as written, a bare path on the voice service's base, or null. */
+export function demoLink(note: string, base: string | null | undefined): string | null {
+  const path = demoPathOf(note);
+  if (path === null) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  if (!base) return null;
+  return `${base.replace(/\/+$/, "")}${path}`;
+}
+
+// ── Readable research ────────────────────────────────────────────────────────
+
+const WEEK = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+const DAY_NAME: Record<string, string> = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+
+/** `17:00` → "5", `8:30` → "8:30", `12:00` → "12": clock times as a shop's door sign writes them. */
+export function clock(t: string): string {
+  const m = /^(\d{1,2})(?::(\d\d))?$/.exec(t.trim());
+  if (!m) return t.trim();
+  const h = Number(m[1]) % 24;
+  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return m[2] && m[2] !== "00" ? `${hour}:${m[2]}` : String(hour);
+}
+
+/** `8:30-17:00` → "8:30–5"; `closed` stays "closed"; anything else is kept as written. */
+export function hoursRange(value: string): string {
+  const v = value.trim();
+  if (/^closed$/i.test(v)) return "closed";
+  return v.split(/\s*[,&]\s*/).map((part) => {
+    const m = /^(\d{1,2}(?::\d\d)?)\s*[-–]\s*(\d{1,2}(?::\d\d)?)$/.exec(part);
+    return m ? `${clock(m[1]!)}–${clock(m[2]!)}` : part;
+  }).join(", ");
+}
+
+/** A week of hours keyed `mon..sun`, as one line: "Mon–Fri 8:30–5, Sat–Sun closed". */
+export function readableWeek(hours: Record<string, string>): string {
+  const groups: { from: number; to: number; value: string }[] = [];
+  WEEK.forEach((d, i) => {
+    if (hours[d] === undefined) return;
+    const value = hoursRange(hours[d]!);
+    const last = groups[groups.length - 1];
+    if (last && last.value === value && last.to === i - 1) last.to = i;
+    else groups.push({ from: i, to: i, value });
+  });
+  return groups.map((g) => `${DAY_NAME[WEEK[g.from]!]}${g.to !== g.from ? `–${DAY_NAME[WEEK[g.to]!]}` : ""} ${g.value}`).join(", ");
+}
+
+/** `Hours: mon 8:30-17:00; tue …; sun closed` inside a note, parsed; null when the note words them freely. */
+function hoursIn(text: string): { match: string; week: Record<string, string> } | null {
+  const m = /Hours:?\s*((?:mon|tue|wed|thu|fri|sat|sun)\s+[^;\n]+?(?:;\s*(?:mon|tue|wed|thu|fri|sat|sun)\s+[^;\n]+?)*)(?:\.\s|\.?$|\.?\n)/im.exec(text);
+  if (!m) return null;
+  const week: Record<string, string> = {};
+  for (const part of m[1]!.split(/;\s*/)) {
+    const d = /^(mon|tue|wed|thu|fri|sat|sun)\s+(.+)$/i.exec(part.trim());
+    if (d) week[d[1]!.toLowerCase()] = d[2]!.trim();
+  }
+  return Object.keys(week).length > 0 ? { match: m[0], week } : null;
+}
+
+const sentence = (s: string): string => {
+  const t = s.trim().replace(/\s+/g, " ");
+  if (t === "") return "";
+  const up = t[0]!.toUpperCase() + t.slice(1);
+  return /[.!?)"'”]$/.test(up) ? up : `${up}.`;
+};
+
+/**
+ * A research note as plain sentences: the hours as a readable week, and the crew's labels
+ * ("Opener detail:", "Fit:", "Why it fits:", "Sector:", "RESEARCH:") taken off their content.
+ */
+export function researchText(rest: string): string {
+  let text = rest.replace(/\bRESEARCH:\s*/g, "");
+  const hours = hoursIn(text);
+  if (hours) text = text.replace(hours.match, `Hours: ${readableWeek(hours.week)}.${/\n$/.test(hours.match) ? "\n" : " "}`);
+  // Hours worded freely ("Hours Mon–Fri 8–17, closed weekends"): the 24-hour times read as a sign would.
+  else text = text.replace(/(Hours:?\s)([^.\n]*?\d[^.\n]*)/i, (_m, label: string, span: string) =>
+    label + span.replace(/\b(\d{1,2}(?::\d\d)?)\s*[-–]\s*(\d{1,2}(?::\d\d)?)\b/g, (_r, a: string, b: string) => `${clock(a)}–${clock(b)}`));
+  const lines = text.split("\n")
+    .filter((line) => !/^\s*(?:Sector|City):/i.test(line))
+    .map((line) => line.replace(/(^|[.;]\s+)(?:Why it fits|Fits?|Opener detail|Opener):\s*(\S)/gi, (_m, lead: string, ch: string) => lead + ch.toUpperCase()))
+    .map(sentence)
+    .filter((line) => line !== "");
+  return scrub(lines.join(" "));
+}
+
+// ── Display names, next steps, addresses ─────────────────────────────────────
+
+/**
+ * A shop's name without the SEO tail its listing carries: "A-1 Imports Autoworks - Auto Repair
+ * Shop In San Rafael" → "A-1 Imports Autoworks". Display only; the CRM keeps the name as filed.
+ */
+export function shopName(name: string): string {
+  let n = name.trim();
+  // "Name - City Auto Repair for …", "Name | Best mechanic", "Name – Concord": the part before the dash.
+  const parts = n.split(/\s+[-–—|]\s+/);
+  if (parts.length > 1 && parts[0]!.length >= 3) n = parts[0]!;
+  // "Name, Complete Automotive Repair": a comma tail that only names the trade.
+  n = n.replace(/,\s+(?:complete\s+|full[- ]service\s+)?(?:auto(?:motive)?|car)\b[^,]*$/i, "");
+  // "… Shop in San Jose, Ca." / "… in San Rafael": a trailing "in <City>[, ST]".
+  n = n.replace(/\s+(?:shop\s+)?in\s+[A-Z][A-Za-z .'-]+?(?:,\s*(?:CA|Ca|California)\.?)?\.?$/i, "");
+  return n.trim() || name.trim();
+}
+
+const AGENT_TEXT = /[\w.+-]+@[\w-]+\.[\w.]+|\bfile (?:them|it|this|that) as\b|RECEPTIONIST CONFIG|\b(?:OUTREACH|REPLY|RESEARCH|RECEPTIONIST|ONBOARDING|SAID YES|FREE WEEK|BOUNCED|PAID|CALL)\b[A-Z —-]*:|\b(?:cli|ses|agt|crd)_\w+|\bshop_id\b|\b(?:autoops|dashboard|agentmail)\.\w+|\bmove (?:it |them )?to active\b/;
+
+/**
+ * The CRM's "next step" as a person reads it. The crew writes it as an instruction to the next
+ * agent ("Waiting for Pat's answers in <inbox> — file them as RECEPTIONIST CONFIG…"); that is shown
+ * as the short human version instead.
+ */
+export function nextStepText(text: string | null | undefined): string | null {
+  const s = (text ?? "").trim();
+  if (s === "") return null;
+  if (!AGENT_TEXT.test(s)) return s;
+  if (/\banswers?\b/i.test(s)) return "Waiting for the owner's setup answers";
+  if (/\brepl(?:y|ies)\b/i.test(s)) return "Waiting for a reply";
+  if (/\bonboard/i.test(s)) return "Onboarding the shop";
+  if (/\bdraft/i.test(s)) return "Writing the next email";
+  return "The crew has the next step";
+}
+
+/** The shop page's address: `/leads/<slug>`, or the id for a row filed without a slug. */
+export const leadPath = (c: Pick<Client, "id" | "slug">): string => `/leads/${encodeURIComponent(c.slug || c.id)}`;
+
+/** The lead a `/leads/:id` address names: by slug, or by the `cli_…` id older links carry. */
+export function findLead<T extends { client: Pick<Client, "id" | "slug"> }>(leads: readonly T[], param: string): T | undefined {
+  let key = param;
+  try { key = decodeURIComponent(param); } catch { /* a malformed escape is looked up as written */ }
+  return leads.find((l) => l.client.slug === key) ?? leads.find((l) => l.client.id === key);
 }
 
 export interface Lead {
@@ -187,8 +329,6 @@ const REACHES: Partial<Record<EventKind, number>> = {
   bounced: 1,
   replied: 2,
   said_yes: 2,
-  onboarding: 2,
-  blocked: 2,
   config: 4,
   free_week: 4,
   live: 4,
@@ -253,27 +393,100 @@ export interface MailMessage {
   at: string;
 }
 
-/** Messages to or from this shop: its contact's address, or anyone at its domain. */
-export function mailFor(c: Client, mail: readonly MailMessage[]): MailMessage[] {
+/** The company's own inboxes. Mail between them is a self-test, never a send or a reply. */
+export const OWN_INBOXES: readonly string[] = ["aarav.sav@agentmail.to"];
+
+/** Ours: a listed inbox, or any AgentMail address (no shop writes from one). */
+export const isOwnAddress = (address: string): boolean => {
+  const a = address.trim().toLowerCase();
+  return OWN_INBOXES.includes(a) || a.endsWith("@agentmail.to");
+};
+
+/** A mail server reporting on delivery, not a person. */
+export const isBounceSender = (address: string): boolean =>
+  /^(?:mailer-daemon|mail-daemon|postmaster|mail-delivery-subsystem)@/i.test(address.trim());
+
+const BOUNCE_SUBJECT = /delivery status notification|undeliverable|undelivered mail|returned mail|delivery (?:has )?failed|failure notice|mail delivery failed/i;
+const AUTO_SUBJECT = /\bauto(?:matic)?[- ]?(?:reply|response)\b|out of (?:the )?office|\baway from (?:the|my) (?:office|desk)\b|\bon vacation\b|thank you for (?:your (?:email|message)|contacting)|we(?:'ve| have) received your (?:email|message)/i;
+
+export type MailKind = "internal" | "bounce" | "auto" | "real";
+
+/** What one message is: our own test traffic, a bounce report, an auto-reply, or a real email. */
+export function mailKind(m: MailMessage): MailKind {
+  if (isOwnAddress(m.counterpart)) return "internal";
+  if (m.direction === "received" && (isBounceSender(m.counterpart) || BOUNCE_SUBJECT.test(m.subject))) return "bounce";
+  if (m.direction === "received" && AUTO_SUBJECT.test(m.subject)) return "auto";
+  return "real";
+}
+
+/** The inbox without our own test traffic: what every count and every list is made from. */
+export const realMail = (mail: readonly MailMessage[]): MailMessage[] => mail.filter((m) => mailKind(m) !== "internal");
+
+/** A message the shop itself wrote: not ours, not a bounce, not an auto-reply. */
+export const isRealReply = (m: MailMessage): boolean => m.direction === "received" && mailKind(m) === "real";
+
+/** A real email we sent a shop: not a self-test. */
+export const isRealSend = (m: MailMessage): boolean => m.direction === "sent" && mailKind(m) === "real";
+
+/** The address a bounce report says it could not deliver to, when it names one. */
+export function bouncedTo(m: MailMessage): string | null {
+  for (const found of `${m.subject}\n${m.preview}`.matchAll(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g)) {
+    const a = found[0].toLowerCase();
+    if (!isOwnAddress(a) && !isBounceSender(a) && !/amazonses\.com$/.test(a)) return a;
+  }
+  return null;
+}
+
+/** Webmail domains: two shops on gmail.com are not the same shop, so these never match by domain. */
+const SHARED_DOMAINS = /^(?:gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|aol|icloud|me|mac|comcast|sbcglobal|att|proton|protonmail|gmx)\.(?:com|net)$/;
+
+const addressMatches = (c: Pick<Client, "contact" | "domain">, address: string): boolean => {
+  const addr = address.trim().toLowerCase();
+  if (addr === "" || isOwnAddress(addr) || isBounceSender(addr)) return false;
   const email = c.contact.email.trim().toLowerCase();
   const domain = c.domain.trim().toLowerCase().replace(/^www\./, "");
+  return (email !== "" && addr === email) || (domain !== "" && !SHARED_DOMAINS.test(domain) && addr.endsWith(`@${domain}`));
+};
+
+/**
+ * Messages to or from this shop: its contact's address, or anyone at its own domain, plus a bounce
+ * report that names one of those addresses. Our own inboxes never match.
+ */
+export function mailFor<M extends MailMessage>(c: Pick<Client, "contact" | "domain">, mail: readonly M[]): M[] {
   return mail.filter((m) => {
-    const addr = m.counterpart.toLowerCase();
-    return (email !== "" && addr === email) || (domain !== "" && addr.endsWith(`@${domain}`));
+    const kind = mailKind(m);
+    if (kind === "internal") return false;
+    if (kind === "bounce") {
+      const to = bouncedTo(m);
+      return to !== null && addressMatches(c, to);
+    }
+    return addressMatches(c, m.counterpart);
   });
+}
+
+/** One message as a line a person scans: `Emailed: "Subject"`, "Email to X bounced", `Reply: "…"`. */
+export function mailLine(m: MailMessage, c?: Client): string {
+  const kind = mailKind(m);
+  if (kind === "bounce") return c ? `Email to ${shopName(c.name)} bounced` : "An email bounced";
+  if (kind === "auto") return "Automatic reply";
+  return m.direction === "sent" ? `Emailed: "${m.subject}"` : `Reply: "${m.subject}"`;
 }
 
 export function leadOf(c: Client, mail: readonly MailMessage[] = []): Lead {
   const events = eventsOf(c);
   const { status, rank } = statusOf(c, events);
   const mine = mailFor(c, mail);
-  // A message the shop wrote proves a reply even before an agent filed it.
-  const repliedByMail = mine.some((m) => m.direction === "received");
-  const fixedRank = repliedByMail && rank < 2 ? 2 : rank;
-  const fixedStatus: LeadStatus = fixedRank !== rank ? STATUSES[fixedRank]! : status;
+  // A message the shop wrote proves a reply even before an agent filed it. A bounce report or an
+  // auto-reply proves nothing; a bounce report alone marks the email bounced.
+  const repliedByMail = mine.some(isRealReply);
+  const bouncedByMail = mine.some((m) => mailKind(m) === "bounce");
+  const fixedRank = repliedByMail && rank < 2 ? 2 : bouncedByMail && rank < 1 ? 1 : rank;
+  const fixedStatus: LeadStatus = fixedRank >= 2
+    ? (fixedRank === rank ? status : STATUSES[fixedRank]!)
+    : status === "bounced" || bouncedByMail ? "bounced" : STATUSES[fixedRank]!;
   const dated = [
     ...events.filter((e) => e.at).map((e) => ({ at: e.at!, what: e.title })),
-    ...mine.map((m) => ({ at: m.at, what: m.direction === "sent" ? `Emailed: ${m.subject}` : `Reply: ${m.subject}` })),
+    ...mine.map((m) => ({ at: m.at, what: mailLine(m, c) })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   // An unprefixed note says nothing a person can scan; show the last event that does, or nothing.
   const undatedLast = [...events].reverse().find((e) => e.kind !== "note")?.title ?? null;
@@ -291,6 +504,47 @@ export function leadOf(c: Client, mail: readonly MailMessage[] = []): Lead {
     lastAt: dated[0]?.at ?? null,
     lastEvent: dated[0]?.what ?? undatedLast,
     events,
+  };
+}
+
+/**
+ * The funnel, counted once. Every screen that prints a pipeline number reads it from here, so the
+ * overview, the leads table, the pipeline and the rail can never disagree.
+ *
+ * `shops` is every lead; `emailed` every shop a cold email went to, bounced ones included;
+ * `bounced` the shops whose email came back; each later step counts the shops that reached it.
+ */
+export interface Funnel {
+  shops: number;
+  emailed: number;
+  bounced: number;
+  replied: number;
+  demo: number;
+  free_week: number;
+  paying: number;
+}
+
+export function funnelOf(leads: readonly Lead[]): Funnel {
+  const reached = (rank: number) => leads.filter((l) => l.rank >= rank).length;
+  return {
+    shops: leads.length,
+    emailed: reached(1),
+    bounced: leads.filter((l) => l.status === "bounced").length,
+    replied: reached(2),
+    demo: reached(3),
+    free_week: reached(4),
+    paying: reached(5),
+  };
+}
+
+/** Real emails out and real replies in on one day: no self-tests, no bounce reports, no auto-replies. */
+export function mailToday(mail: readonly MailMessage[], now = new Date()): { sent: number; replies: number; bounces: number } {
+  const today = (iso: string) => new Date(iso).toDateString() === now.toDateString();
+  const day = mail.filter((m) => today(m.at));
+  return {
+    sent: day.filter(isRealSend).length,
+    replies: day.filter(isRealReply).length,
+    bounces: day.filter((m) => mailKind(m) === "bounce").length,
   };
 }
 
@@ -321,6 +575,7 @@ export function agentLabel(name: string | undefined | null): string {
     research: "Research",
     sales: "Sales",
     "client-manager": "Client manager",
+    booking: "Shop receptionist",
     monitoring: "Monitoring",
     "self-improvement": "Self-improvement",
     ceo: "CEO",
