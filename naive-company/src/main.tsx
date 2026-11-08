@@ -17,6 +17,7 @@ import { Clients } from "./screens/Clients";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
 import { LaunchReview } from "./screens/LaunchReview";
+import { Runs } from "./screens/Runs";
 import { ProductAudit } from "./screens/ProductAudit";
 import { Settings } from "./screens/Settings";
 import { Studio } from "./screens/Studio";
@@ -30,6 +31,7 @@ const router = createBrowserRouter([
     Component: Shell,
     children: [
       { index: true, Component: Home },
+      { path: "runs", Component: Runs },
       { path: "launch-review", Component: LaunchReview },
       { path: "product-audit", Component: ProductAudit },
       { path: "crm", Component: Crm },
