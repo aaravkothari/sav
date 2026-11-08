@@ -180,6 +180,9 @@ export const isAutoSector = (sector: string | null): boolean => sector === null 
  */
 export const coldKey = (email: string): string => `sav-cold-1-${createHash("sha256").update(normEmail(email)).digest("hex").slice(0, 32)}`;
 
+/** A send refused by the provider's rate or recipient limit (HTTP 429), which says nothing about the address. */
+export const isRateLimit = (message: string): boolean => /HTTP 429|rate_limit|RateLimitError|recipient limit/i.test(message);
+
 /** Who gets the cold email, in CRM order, and why everyone else does not. */
 export function selectCandidates(clients: readonly CrmClient[], alreadyMailed: ReadonlySet<string>): { candidates: Candidate[]; skipped: Skip[] } {
   const candidates: Candidate[] = [];
@@ -556,8 +559,15 @@ class Engine {
           await log(`sent    ${c.client.id} "${c.client.name}" to ${c.email} (${r.message_id})`);
           await this.fileSentNote(row, c.client, c.subject, c.text);
         } catch (e) {
+          const message = (e as Error).message;
+          // The provider's sending limit (AgentMail's new-account recipient cap): not a bad address.
+          // Stop this tick without counting it against the ramp; the rest go out next tick.
+          if (isRateLimit(message)) {
+            await log(`limit   provider sending limit reached; holding the rest of this batch until the next tick: ${message.slice(0, 220)}`);
+            break;
+          }
           failed++;
-          await log(`fail    ${c.client.id} "${c.client.name}" to ${c.email}: ${(e as Error).message}`);
+          await log(`fail    ${c.client.id} "${c.client.name}" to ${c.email}: ${message}`);
         }
         if (i < batch.length - 1) await sleep(3000 + Math.floor(Math.random() * 3000));
       }

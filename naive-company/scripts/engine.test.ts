@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
+  badRate, baseLevel, batchSize, BAD_RATE, MAX_LEVEL, isAutoSector, sectorOf, coldKey, isRateLimit, bouncedAddress, classifyInbound, DAILY_SEND_CAP, latestByEmail, matchClient, next4amPacific,
   parseAddress, parseArgs, replyNote, selectCandidates, sentNote, wakeMessage, type CrmClient, type InboundMessage, type LedgerRow,
 } from "./engine.ts";
 
@@ -51,6 +51,13 @@ describe("the ramp", () => {
   it("never goes past the daily cap", () => {
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP - 10).size).toBe(10);
     expect(batchSize(start, at(6), null, DAILY_SEND_CAP).size).toBe(0);
+  });
+});
+
+describe("isRateLimit", () => {
+  it("tells a provider limit from a bad address", () => {
+    expect(isRateLimit('POST /v0/inboxes/x/messages/send: HTTP 429 {"name":"RateLimitError"}')).toBe(true);
+    expect(isRateLimit("HTTP 400 ValidationError")).toBe(false);
   });
 });
 
