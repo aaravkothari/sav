@@ -88,7 +88,7 @@ export function configFromEnv(env: Record<string, string | undefined>): ProxyCon
   if (!apiKey) return null;
   return {
     apiKey,
-    baseUrl: (env.NAIVE_API_URL ?? "https://api.usenaive.ai").replace(/\/$/, ""),
+    baseUrl: (env.NAIVE_API_URL ?? "https://api.vetta.sh").replace(/\/$/, ""),
     identityId: env.NAIVE_IDENTITY_ID ?? null,
     project: env.NAIVE_PROJECT ?? PROJECT,
   };
