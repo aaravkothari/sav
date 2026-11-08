@@ -347,6 +347,17 @@ describe("blank", () => {
     for (const step of PIPELINE) expect([step.key, seats.has(step.owner)]).toEqual([step.key, true]);
   });
 
+  it("onboards an owner who started a free week from the demo page, drafting only", () => {
+    const onboarding = blank.agents.find((a) => a.name === "client-manager")!;
+    expect(onboarding.system).toMatch(/starts with "FREE WEEK STARTED:", there is no card/);
+    expect(onboarding.system).toMatch(/using only what the message gives/);
+    expect(onboarding.system).toMatch(/Draft only, never send/);
+    for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline"]) {
+      expect([tool, onboarding.tools?.configs[tool]?.permission]).toEqual([tool, "allow"]);
+    }
+    expect(onboarding.tools?.configs["agentmail.send_message"]?.permission).toBe("ask");
+  });
+
   it("files the receptionist's kinds of work", () => {
     expect(blank.kinds.map((k) => k.id)).toEqual(["script", "report", "audit"]);
   });
