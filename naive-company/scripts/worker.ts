@@ -329,8 +329,10 @@ async function main() {
   const ids = new Map(leads.map((lead) => [lead, deriveShopId(lead.shop_input, shared)]));
   console.log(`${opts.execute ? "EXECUTE" : "DRY RUN"}: ${leads.length} lead(s) from ${leadsPath}${opts.priority ? `, priority ${opts.priority}` : ""}`);
 
-  const { shops } = await withRetry(() => call<{ shops: Array<{ shop_id: string; name: string }> }>("list_shops", {}));
+  const { shops: listed } = await withRetry(() => call<{ shops: Array<{ shop_id: string; name: string; vapi_assistant_id?: string | null }> }>("list_shops", {}));
   const leadIds = new Set(ids.values());
+  // A failed provision leaves a shop row with no assistant; re-provisioning the same shop_id updates that row.
+  const shops = listed.filter((shop) => !(leadIds.has(shop.shop_id) && !shop.vapi_assistant_id));
   const existing: ExistingShop[] = await Promise.all(shops.map((shop) =>
     leadIds.has(shop.shop_id)
       ? Promise.resolve({ shop_id: shop.shop_id, name: shop.name, phone: null, city: null })
