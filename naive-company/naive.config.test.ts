@@ -98,14 +98,14 @@ describe("naive.config.ts", () => {
             "google_search_console.inspect_url", "google_analytics.run_report",
           ],
         };
-        // blank: research reaches Monid's catalogue; reads run, a paid run waits for the operator.
+        // blank: research reaches Monid's catalogue; reads and paid runs both run, within the seat budget.
         const receptionist: Record<string, string[]> = {
-          research: ["monid.monid_discover", "monid.monid_inspect", "monid.monid_get_run", "monid.monid_list_runs", "monid.monid_balance", "autoops.provision_demo", "monid.monid_run"],
-          monitoring: ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call", "autoops.provision_receptionist", "autoops.update_receptionist"],
-          "self-improvement": ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call", "autoops.provision_receptionist", "autoops.update_receptionist"],
+          research: ["monid.monid_discover", "monid.monid_inspect", "monid.monid_get_run", "monid.monid_list_runs", "monid.monid_balance", "monid.monid_run", "autoops.provision_demo"],
+          monitoring: ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"],
+          "self-improvement": ["autoops.get_receptionist", "autoops.list_calls", "autoops.get_call", "autoops.list_shops", "autoops.simulate_call"],
         };
         expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO ? measurement[agent.name] : receptionist[agent.name]) || []]);
-        if (!SEO && agent.name === "research") expect(agent.tools?.configs["monid.monid_run"]?.permission).toBe("ask");
+        if (!SEO && agent.name === "research") expect(agent.tools?.configs["monid.monid_run"]?.permission).toBe("allow");
       }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is

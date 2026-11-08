@@ -22,7 +22,7 @@ How Naïve's built-in pieces are used:
 
 - **The CEO and its board.** `naive.config.ts` declares the company's first workflow as `tasks` (`PIPELINE` in `templates/receptionist.ts`). Declaring `tasks` is what makes `naive up` create the organization's CEO, give it the company board, and add this crew to its roster. A card assigned to a seat starts that seat working on it. When a card is `done` or `blocked`, the CEO is told.
 - **The per-shop receptionist.** This uses the blueprint's per-client crew. When a shop is moved to *active* in the dashboard, `server/proxy.ts` creates `booking--<shop-slug>` for it.
-- **Approval gates.** Every seat is deny-by-default. `email.send`, `web_search`, `web_fetch` and `data_run` are `ask`, so a call stops on the dashboard's **Approvals** screen until you decide.
+- **Approval gates.** Every seat is deny-by-default. The only tools that wait for you are the ones that send email (`email.send` and AgentMail's send, reply and forward), which stop on the dashboard's **Approvals** screen until you decide. Everything else a seat holds runs on its own, within its budget. An agent asking you a question (`ask_operator`) or asking for a new tool (`request_tools`) still lands there too.
 - **Kept from the blueprint:** `sales` and `client-manager` keep their names because the dashboard's chat talks to `client-manager`. The four other agency seats are not used. The shared crew in `templates/agents.ts` is untouched because the `seo-geo` template still builds on it.
 
 ### Where things live
@@ -41,8 +41,8 @@ src/ server/ site/         the blueprint's dashboard, API/MCP server and public 
 
 | Service | Used by | What runs freely | What waits for your approval |
 | --- | --- | --- | --- |
-| [AgentMail](https://agentmail.to) (email inboxes) | `sales`, `client-manager` | listing and reading inboxes, threads, messages, drafts | creating an inbox, creating or editing a draft, sending, replying, forwarding. Deleting is not offered. |
-| [Monid](https://monid.ai) (~2,800 data tools) | `research` | searching the catalogue, inspecting a tool, reading runs, balance | every `monid_run` (it spends your Monid balance). Top-ups and disputes are not offered. |
+| [AgentMail](https://agentmail.to) (email inboxes) | `sales`, `client-manager` | listing and reading inboxes, threads, messages, drafts; creating or editing a draft; creating the company inbox | sending, replying, forwarding. Deleting is not offered. |
+| [Monid](https://monid.ai) (~2,800 data tools) | `research` | searching the catalogue, inspecting a tool, every `monid_run` (spends your Monid balance, capped by the seat budget), reading runs, balance | nothing. Top-ups and disputes are not offered. |
 
 Both connect as MCP servers (`templates/receptionist.ts`). Their API keys come from `.env` (`AGENTMAIL_API_KEY`, `MONID_API_KEY`) and `naive up` seals them into the `agency-integrations` vault of the agency identity. Naïve injects each key when a session connects, so agents, prompts and transcripts never see it. Vault credentials are write-once: to rotate a key, create the new credential and delete the old one on the platform; editing `.env` and re-running `up` changes nothing.
 

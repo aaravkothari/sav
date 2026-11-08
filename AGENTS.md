@@ -69,9 +69,9 @@ FoggyReef has the final say on anything built on Naive.
 | Tool | Permission | Spend | Purpose |
 |---|---|---|---|
 | `provision_demo({ shop, shop_id? })` | allow | none | Prebuilt step. Forces `demo: true`, never attaches a number. Returns `demo_url`, `portal_url`. Idempotent per `shop_id`. |
-| `provision_receptionist({ shop, shop_id?, attach_phone_number? })` | **ask** | Vapi number if `attach_phone_number` | Real provisioning; keeps the same assistant and number on re-call, bumps `version`. |
+| `provision_receptionist({ shop, shop_id?, attach_phone_number? })` | allow (only the shop's `booking--<slug>` seat, created when the operator moves the shop to active) | Vapi number if `attach_phone_number` | Real provisioning; keeps the same assistant and number on re-call, bumps `version`. |
 | `get_receptionist({ shop_id })` | allow | none | Current prompt, first message, version, assistant id, phone, facts, URLs. |
-| `update_receptionist({ shop_id, system_prompt?, first_message?, policies?, services?, hours? })` | **ask** | none | New prompt version, pushed to Vapi. Prefer facts over `system_prompt`. |
+| `update_receptionist({ shop_id, system_prompt?, first_message?, policies?, services?, hours? })` | allow (`booking--<slug>` only; monitoring and self-improvement propose changes in notes) | none | New prompt version, pushed to Vapi. Prefer facts over `system_prompt`. |
 | `simulate_call({ shop_id, customer_script[] })` | allow | Anthropic tokens (Swayam) | Text-mode regression against the live prompt. Returns transcript, requests, `flags` (`quoted_price`, `confirmed_appointment`, `too_long`). |
 | `get_call({ call_id })` / `list_calls({ shop_id?, since?, limit? })` | allow | none | Transcripts, summaries, recordings, outcome, appointment requests (`pending | confirmed | declined`). |
 | `list_shops({ status? })` | allow | none | Every shop with `kind`, `demo`, `subscription_status`, latest free-week claim. **Signups = `status: "trialing"`.** |
