@@ -30,6 +30,9 @@ import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
 import { AGENTMAIL, AUTOOPS, MONID, PIPELINE } from "./templates/receptionist.ts";
 
+/** The vault key for the voice server's bearer: one per host (see the vault below). */
+export const AUTOOPS_VAULT_KEY = `autoops-voice-${new URL(AUTOOPS.url).hostname.split(".")[0]}`.slice(0, 60);
+
 /**
  * Every template this repo carries that the installed engine admits. `defineProject` refuses a repo
  * whose template list is not exactly its blueprint's (`BLUEPRINTS.agency.templates`), so a template
@@ -110,10 +113,11 @@ export default defineProject({
       credentials: [
         { kind: "static_bearer", key: "AgentMail", mcp_server_url: AGENTMAIL.url, value: { from_env: "AGENTMAIL_API_KEY" } },
         { kind: "static_bearer", key: "Monid", mcp_server_url: MONID.url, value: { from_env: "MONID_API_KEY" } },
-        // Credentials are immutable and keyed by name: the old "autoops-voice" one is bound to a dead
-        // tunnel URL and can only be removed by a person. A new key makes the live URL's credential
-        // additively; delete the stale "autoops-voice" credential in the morning (tracker #49).
-        { kind: "static_bearer", key: "autoops-voice-live", mcp_server_url: AUTOOPS.url, value: { from_env: "AUTOOPS_VOICE_TOKEN" } },
+        // Credentials are immutable and keyed by name, and the voice server's quick tunnel changes host
+        // when it restarts. Keying the credential by host makes a tunnel move a one-line AUTOOPS.url
+        // change: `naive up` adds the new host's credential and nothing is deleted (a person tidies the
+        // dead ones). Remove this once the voice server has a named tunnel (sav#38).
+        { kind: "static_bearer", key: AUTOOPS_VAULT_KEY, mcp_server_url: AUTOOPS.url, value: { from_env: "AUTOOPS_VOICE_TOKEN" } },
       ],
     },
   ],
