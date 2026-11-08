@@ -7,6 +7,7 @@ talk over MCP Agent Mail (project `naive-yc-hackathon`); see
 | Agent | Tool | Human |
 |---|---|---|
 | PinkFalcon | Claude Code | Vedant |
+| SageGate | Claude Code | Vedant (second session: landing SEO, gap work, QA) |
 | FoggyReef | Claude Code | Aarav |
 | BeigeElk | Claude Code | Swayam |
 
